@@ -1,0 +1,1011 @@
+arXiv:1508.07909v1  [cs.CL]  31 Aug 2015
+Neural Machine Translation of Rare Words with Subword Units
+Rico Sennrich and Barry Haddow and Alexandra Birch
+School of Informatics, University of Edinburgh
+{rico.sennrich,a.birch}@ed.ac.uk, bhaddow@inf.ed.ac.uk
+Abstract
+Neural machine translation (NMT) mod-
+els typically operate with a ﬁxed vocab-
+ulary, so the translation of rare and un-
+known words is an open problem. Previ-
+ous work addresses this problem through
+back-off dictionaries. In this paper, we in-
+troduce a simpler and more effective ap-
+proach, enabling the translation of rare
+and unknown words by encoding them
+as sequences of subword units, based on
+the intuition that various word classes are
+translatable via smaller units than words,
+for instance names (via character copying
+or transliteration), compounds (via com-
+positional translation), and cognates and
+loanwords (via phonological and morpho-
+logical transformations). We discuss the
+suitability of different word segmentation
+techniques, including simple character n-
+gram models and a segmentation based on
+the byte pair encoding compression algo-
+rithm, and empirically show that subword
+models improve over a back-off dictionary
+baseline for the WMT 15 translation tasks
+English→German and English→Russian
+by 0.8 and 1.5 BLEU, respectively.
+1 Introduction
+Neural machine translation has recently shown
+impressive results (Kalchbrenner and Blunsom,
+2013; Sutskever et al., 2014; Bahdanau et al.,
+2014). However, the translation of rare words is
+an open problem. The vocabulary of neural mod-
+els is typically limited to 30 000–50 000 words, but
+translation is an open-vocabulary problem, and es-
+pecially for languages with productive word for-
+The research results presented in this publication were
+conducted in the cooperation with Samsung Electronics Pol-
+ska sp. z o.o. - Samsung R&D Institute Poland.
+mation processes such as agglutination and com-
+pounding, translation models require mechanisms
+to translate and generate words that are rare or
+have never occurred during training.
+Jean et al. (2015a) recently proposed techniques
+for efﬁciently increasing the vocabulary size by
+keeping only part of the vocabulary in memory
+during training, and ﬁltering the vocabulary dur-
+ing decoding. They present results with a vocab-
+ulary size of 500 000 words. However, we will
+show that translation accuracy is still low for rare
+words, even if they are in the network vocabulary.
+The translation of out-of-vocabulary words is
+addressed in (Jean et al., 2015a; Luong et al.,
+2015) through a back-off to a dictionary look-
+up. We note that such techniques make assump-
+tions that often do not hold true in practice. For
+instance, there is not always a 1-to-1 correspon-
+dence between source and target words because of
+variance in the degree of morphological synthesis
+between languages. For example, German com-
+pounds such as Sonnensystem corresponds to mul-
+tiple tokens in English (‘solar system’). Also, a
+back-off dictionary is unable to translate or gener-
+ate unseen words. Copying unknown words into
+the target text, as done by (Jean et al., 2015a;
+Luong et al., 2015), is a reasonable strategy for
+names, but transliteration is often required, espe-
+cially if alphabets differ.
+This paper has two main contributions:
+• We propose a simple technique to increase
+the effective vocabulary of neural translation
+models. Instead of replacing rare words with
+special tokens which are later used for a back-
+off translation (Jean et al., 2015a; Luong et
+al., 2015), we segment them into subword
+units, allowing the neural networks to learn
+their translation.
+• We investigate different algorithms for word
+segmentation and compare them in terms of
+vocabulary size, text length, and translation
+quality. We adapt byte pair encoding (Gage,
+1994), a simple compression algorithm, to
+the task of word segmentation.
+We show that neural translation models with
+subword units not only eliminate the need for a
+back-off dictionary, but are also more powerful.
+The subword models achieve better accuracy for
+the translation of rare words than a back-off dic-
+tionary, and are able to productively generate new
+words that were not seen at training time. Our
+analysis shows that the neural networks are able
+to learn compounding and transliteration from our
+subword representations.
+2 Neural Machine Translation
+We follow the neural machine translation architec-
+ture by Bahdanau et al. (2014), which we will here
+brieﬂy summarize. However, we note that out ap-
+proach is not speciﬁc to this architecture.
+The neural machine translation system is imple-
+mented as an encoder-decoder network with recur-
+rent neural networks.
+The encoder is a bidirectional neural network
+with gated recurrent units (Cho et al., 2014)
+that reads an input sequence x = ( x1, ..., xm)
+and calculates a forward sequence of hidden
+states (− →h1, ...,−→hm), and a backward sequence
+(← −h1, ...,←−hm). The hidden states− →hj and← −hj are con-
+catenated to obtain the annotation vector hj.
+The decoder is a recurrent neural network that
+predicts a target sequence y = ( y1, ..., yn). Each
+word yi is predicted based on a recurrent hidden
+state si, the previously predicted word yi−1, and
+a context vector ci. ci is computed as a weighted
+sum of the annotations hj. The weight of each
+annotation hj is computed through an alignment
+model αij, which models the probability that yi is
+aligned to xj. The alignment model is a single-
+layer feedforward neural network that is learned
+jointly with the rest of the network through back-
+propagation.
+A detailed description can be found in (Bah-
+danau et al., 2014). Training is performed on a
+parallel corpus with stochastic gradient descent.
+For translation, a beam search with small beam
+size is employed.
+3 Subword Translation
+The main motivation behind this paper is that
+the translation of some words is transparent in
+that they are translatable by a competent transla-
+tor even if they are novel to him or her, based
+on a translation of known subword units such as
+morphemes or phonemes. Word categories whose
+translation is potentially transparent include:
+• named entities. Between languages that share
+an alphabet, names can often be copied from
+source to target text. Transcription or translit-
+eration may be required, especially if the al-
+phabets or syllabaries differ. Example:
+Barack Obama (English; German)
+Барак Обама (Russian)
+バラク・オバマ (ba-ra-ku o-ba-ma) (Japanese)
+• cognates and loanwords. Cognates and loan-
+words with a common origin can differ in
+regular ways between languages, so that
+character-level translation rules are sufﬁcient
+(Tiedemann, 2012). Example:
+claustrophobia (English)
+Klaustrophobie (German)
+Клаустрофобия (Klaustrofobiâ) (Russian)
+• morphologically complex words. Words con-
+taining multiple morphemes, for instance
+formed via compounding, afﬁxation, or in-
+ﬂection, may be translatable by translating
+the morphemes separately. Example:
+solar system (English)
+Sonnensystem (Sonne + System) (German)
+Naprendszer (Nap + Rendszer) (Hungarian)
+In an analysis of 100 rare tokens (not among the
+50 000 most frequent types) in a German training
+text, the majority of tokens are potentially trans-
+latable from English through smaller units. We
+ﬁnd 56 compounds, 21 names, 6 loanwords with
+a common origin ( emancipate→emanzipieren), 5
+cases of transparent afﬁxation (sweetish ‘sweet’ +
+‘-ish’→ süßlich ‘süß’ + ‘-lich’), 1 number and 1
+computer language identiﬁer.
+Our hypothesis is that a segmentation of rare
+words into appropriate subword units is sufﬁ-
+cient to allow for the neural translation network
+to learn transparent translations, and even gener-
+alize this knowledge to translate and produce un-
+seen words.1 The rest of this paper is focused on
+1Not every segmentation we produce is transparent.
+While we expect no performance beneﬁt from opaque seg-
+discussing and evaluating different segmentation
+strategies.
+3.1 Related Work
+For Statistical Machine Translation, the transla-
+tion of unknown words has been the subject of
+intensive research. The segmentation of morpho-
+logically complex words such as compounds is
+widely used, and various algorithm for morpheme
+segmentation have been investigated (Nießen and
+Ney, 2000; Koehn and Knight, 2003; Virpioja et
+al., 2007).
+A large proportion of unknown words are
+names, which can just be copied into the target text
+if both languages use the same alphabet. If alpha-
+bets differ, transliteration is required (Durrani et
+al., 2014). Character-based translation has been
+successfully used for closely related languages
+(Tiedemann, 2012).
+Mikolov et al. (2012) investigates subword lan-
+guage models, and proposes to use syllables as
+units. We test a slightly more sophisticated syl-
+lable segmentation developed for word hyphen-
+ation (Liang, 1983). The best choice of subword
+units may be task-speciﬁc, and for speech recogni-
+tion, phone-level language models have been used
+(Bazzi and Glass, 2000).
+Various techniques have been proposed to pro-
+duce ﬁxed-length continuous word vectors based
+on characters or morphemes (Luong et al., 2013;
+Botha and Blunsom, 2014; Ling et al., 2015).
+These approaches offer no obvious mechanism for
+producing strings from the continuous word vec-
+tors, which is central for NMT decoding. We
+could theoretically employ such techniques on the
+source side of the encoder–decoder architecture,
+but we expect that the attention mechanism ben-
+eﬁts from our variable-length representation: the
+network can learn to place attention on different
+subword units at each step.
+Neural machine translation differs from phrase-
+based methods in that there are strong incentives
+to minimize the vocabulary size of neural models
+to increase time and space efﬁciency. At the same
+time, we also want a compact representation of the
+text itself, since an increase in text length reduces
+efﬁciency and increases the distances over which
+neural models need to pass information.
+mentations, i.e. segmentations where the units cannot be
+translated independently, our NMT models seem to be robust
+towards such oversplitting.
+A simple method to manipulate the trade-off be-
+tween vocabulary size and text size is to use short-
+lists of unsegmented words, using subword units
+only for rare words. As an alternative, we pro-
+pose a segmentation algorithm based on byte pair
+encoding (BPE), which lets us learn a vocabulary
+that provides a good compression rate of the text.
+3.2 Byte Pair Encoding (BPE)
+Byte Pair Encoding (BPE) (Gage, 1994) is a sim-
+ple data compression technique that iteratively re-
+places the most frequent pair of bytes in a se-
+quence with a single, unused byte. We adapt this
+algorithm for word segmentation. Instead of merg-
+ing frequent pairs of bytes, we merge characters or
+character sequences.
+As starting point, we initialize the symbol vo-
+cabulary with the character vocabulary, and repre-
+sent each word as a sequence of characters, plus a
+special end-of-word symbol ‘</w>’, which allows
+us to restore the original tokenization after trans-
+lation. We iteratively count all symbol pairs and
+replace each occurrence of the most frequent pair
+(‘A’, ‘B’) with a new symbol ‘AB’. Each merge
+operation produces a new symbol which represent
+a character n-gram, resulting in a variable-length
+encoding of each word. BPE will learn to repre-
+sent frequent words as a single symbol, and we ap-
+ply it without a shortlist. The ﬁnal symbol vocab-
+ulary size is equal to the size of the initial vocab-
+ulary, plus the number of merge operations. The
+number of merge operations is the only hyperpa-
+rameter of the algorithm.
+For efﬁciency, we do not consider pairs that
+cross word boundaries. The algorithm can thus be
+run on the dictionary extracted from a text, with
+each word being weighted by its frequency. Al-
+gorithm 1 shows a minimal Python implementa-
+tion of the algorithm. In practice, we increase efﬁ-
+ciency by indexing all pairs, and updating the data
+structures incrementally.
+The main difference to other compression al-
+gorithms, such as Huffman encoding, which have
+been proposed to produce a variable-length en-
+coding of words for NMT (Chitnis and DeNero,
+2015), is that our symbol sequences are still in-
+terpretable as subword units, and that the network
+can generalize to translate and produce new words
+(unseen at training time) on the basis of these sub-
+word units. From the example dictionary {‘low’,
+‘lower’, ‘newest’, ‘widest’} in algorithm 1, we
+Algorithm 1 character-level BPE applied to dic-
+tionary.
+import re, collections
+def get_stats(vocab):
+pairs = collections.defaultdict(int)
+for word, freq in vocab.items():
+symbols = word.split()
+for i in range(len(symbols)-1):
+pairs[symbols[i],symbols[i+1]] += freq
+return pairs
+def merge_vocab(pair, v_in):
+v_out = {}
+p = re.compile(r'(?<!\S)' + ' '.join(pair) + r'(?!\S)')
+for word in v_in:
+w_out = p.sub(''.join(pair), word)
+v_out[w_out] = v_in[word]
+return v_out
+vocab = {'l o w </w>' : 5, 'l o w e r </w>' : 2,
+'n e w e s t </w>' : 6, 'w i d e s t </w>' : 3}
+num_merges = 10
+for i in range(num_merges):
+pairs = get_stats(vocab)
+best = max(pairs, key=pairs.get)
+vocab = merge_vocab(best, vocab)
+print(best)
+learn to merge the character sequences ‘low’, and
+‘est</w>’, among others. The merge operations
+can be applied to out-of-vocabulary items such as
+"lowest" to segment it into ‘low est</w>’.
+We evaluate two methods of applying BPE:
+learning two independent encodings, one for the
+source, one for the target vocabulary, or learning
+the encoding on the joint vocabulary. The former
+has the advantage of being more compact in terms
+of text and vocabulary size, whereas the latter im-
+proves consistency between the source and the tar-
+get segmentation. If we apply BPE independently,
+the same name may be segmented differently in
+the two languages, which makes it harder for the
+neural models to learn a mapping between the sub-
+word units. To increase the consistency between
+English and Russian segmentation despite the dif-
+fering alphabets, we transliterate the Russian vo-
+cabulary into Latin characters with ISO-9 to learn
+the joint BPE encoding, then transliterate the BPE
+merge operations back into Cyrillic to apply them
+to the Russian training text.2
+4 Evaluation
+We aim to answer the following empirical ques-
+tions:
+• Can we improve the translation of rare and
+unseen words in neural machine translation
+by representing them via subword units?
+2Since the Russian training text also contains words that
+use the Latin alphabet, we also apply the Latin BPE opera-
+tions.
+• Which segmentation into subword units per-
+forms best in terms of vocabulary size, text
+size, and translation quality?
+We perform experiments on data from the
+shared translation task of the 2015 Work-
+shop on Statistical Machine Translation. For
+English→German, our training set consists of 4.2
+million sentence pairs, or approximately 100 mil-
+lion tokens. For English→Russian, the training set
+consists of 2.6 million sentence pairs, or approx-
+imately 50 million tokens. We tokenize and true-
+case the data with the scripts provided in Moses
+(Koehn et al., 2007).
+We use Groundhog 3 as the implementation of
+the NMT system for all experiments (Bahdanau et
+al., 2014).
+We report BLEU with the mteval-v13a.pl script
+for comparability with ofﬁcial WMT results. We
+use newstest2013 as development set, and report
+results on newstest2014 and newstest2015.
+We generally follow settings by previous work
+(Bahdanau et al., 2014; Jean et al., 2015a). All
+networks have a hidden layer size of 1000, and an
+embedding layer size of 620. Following Jean et al.
+(2015a), we only keep a shortlist of τ = 30000
+words in memory.
+During training, we use Adadelta (Zeiler, 2012),
+a minibatch size of 80, and reshufﬂe the training
+set between epochs. We train a network for ap-
+proximately 7 days, then take the last 4 saved mod-
+els (models being saved every 12 hours), and con-
+tinue training each with a ﬁxed embedding layer
+(as suggested by (Jean et al., 2015a)) for 12 hours.
+We report results of the system that performed best
+on our development set (newstest2013), and of an
+ensemble of all 4 models.
+We use a beam size of 12 for beam search,
+with probabilities normalized by sentence length.
+We use a bilingual dictionary based on fast-align
+(Dyer et al., 2013). For our baseline, this serves
+to speed up translation, since only a ﬁltered list
+of candidate translations is stored in memory (like
+Jean et al. (2015a), we useK = 30000; K ′ = 10),
+and as back-off dictionary for rare words. For the
+experimental systems with subword units, the use
+as back-off dictionary falls away, and the candi-
+date list is of varying importance for speed, de-
+pending on the size of the target vocabulary.
+3https://github.com/sebastien-j/LV_
+groundhog
+4.1 Subword statistics
+Apart from translation quality, which we will ver-
+ify empirically, our objectives are efﬁciency and
+model compactness. The time complexity of
+encoder-decoder architectures is at least 4 linear
+to sequence length, and oversplitting harms efﬁ-
+ciency. On the other hand, an algorithm that per-
+forms few splits produces large vocabularies, and
+our aim is to allow for compact networks with
+small vocabularies, and to encode unknown words
+through subword units that are known to the net-
+work. We compare different segmentation algo-
+rithms on the basis of the number of tokens, which
+affects efﬁciency, the vocabulary size, which af-
+fects model compactness and efﬁciency, and the
+number of unknown tokens in a test set.
+We perform experiments with different segmen-
+tation techniques on the German section of the
+parallel training data. A simple baseline is the
+segmentation of words into character n-grams.5
+Compound splitting (Koehn and Knight, 2003) is
+a popular technique in SMT. Morfessor (Creutz
+and Lagus, 2002) implements word segmentation
+based on minimum description length. Syllabiﬁ-
+cation has been used to produce subword units for
+language modelling in (Mikolov et al., 2012), and
+we employ a word hyphenation algorithm (Liang,
+1983).
+Results are shown in table 1. Charactern-grams
+allow for different trade-offs between sequence
+length (# tokens) and vocabulary size (# types), de-
+pending on the choice of n. However, the increase
+in sequence length is substantial for all1≤ n≤ 3.
+Of the more sophisticated segmentation methods,
+morfessor and BPE offer interesting trade-offs be-
+tween sequence length and vocabulary size, while
+we consider compound splitting too conservative,
+hyphenation too aggressive for our purposes.6 We
+also note that there is noise in our subword symbol
+sets, e.g. because of characters from foreign alpha-
+bets, and we can use a pruned subset for the neural
+network. We use the 500 most frequent charac-
+4The attention model of (Bahdanau et al., 2014) has com-
+plexity O(m · n), m and n being the number of source and
+target symbols.
+5Our character n-grams do not cross word boundaries. We
+mark whether a subword is word-ﬁnal or not with a special
+character, which allows us to restore the original tokenization.
+6Note that hyperparameters and the choice of training
+corpus affect morfessor, compound splitting, and BPE. Our
+overview only shows one possible setting – typically defaul t
+settings, 59 500 merge operations for BPE, and 89 500 for
+BPE applied on the joint vocabulary.
+segmentation # tokens # types # UNK
+none 100 m 1 750 000 1079
+characters 550 m 3000 0
+character bigrams 306 m 20 000 34
+character trigrams 214 m 120 000 59
+compound splitting△ 102 m 1 100 000 643
+morfessor* 109 m 544 000 237
+hyphenation⋄ 186 m 404 000 230
+BPE 112 m 63 000 0
+BPE (joint) 111 m 82 000 0
+character bigrams 129 m 69 000 34(shortlist: 50 000)
+Table 1: Corpus statistics for German training cor-
+pus with different word segmentation techniques.
+△: (Koehn and Knight, 2003); *: (Creutz and La-
+gus, 2002);⋄: (Liang, 1983). #UNK: number of
+unknown tokens in newstest2013.
+ters, the 10 000 most frequent character bigrams,
+or the 50 000 most frequent character trigrams, in
+the NMT systems that use either of these as back-
+off.
+Different segmentation methods can be com-
+bined: we perform experiments in which we leave
+the 50 000 most frequent word types unsegmented,
+and represent all other words through character n-
+grams. For character bigrams, this leads to a 29%
+increase in the number of tokens compared to the
+baseline without segmentation, reducing the num-
+ber of types to 69 000. The BPE encoding is more
+compact, increasing text size only by 12% with a
+similar vocabulary size.
+We evaluate various character n-gram segmen-
+tations, Morfessor and BPE in terms of translation
+quality.
+4.2 Translation experiments
+English→German translation results are shown in
+Table 2. Our internal baseline WDict is a system
+without segmentation and with a back-off dictio-
+nary. The back-off dictionary yields an improve-
+ment of about 1 B LEU over the system WUnk,
+which just represents out-of-vocabulary words as
+UNK.7 We attempted to reproduce the results by
+Jean et al. (2015a), but our baseline is slightly
+worse8; We speculate that the difference is caused
+by differences in preprocessing and cleanup, train-
+ing time, different hyperparameters, and/or ran-
+7We use UNK to denote words that are outside the model
+vocabulary, andOOV to denote words that do not occur in the
+training text.
+8The published results are not directly comparable be-
+cause of different evaluation scripts, but WDict obtains a
+BLEU of 19.0 on newstest2014 with the multi-bleu.pl script,
+as compared to 19.4 BLEU reported by (Jean et al., 2015a).
+BLEU
+vocabulary newstest2014 newstest2015
+name segmentation shortlist source target single ens-4 single ens-4
+syntax-based (Sennrich and Haddow, 2015) 22.6 - 24.4 -
+WUnk - - 300 000 500 000 17.1 18.8 19.9 21.7
+WDict - - 300 000 500 000 18.1 19.9 21.1 23.1
+MDict morfessor - 300 000 500 000 18.1 20.0 20.5 22.7
+C2-3/500k char-bigrams 3/500 000 310 000 510 000 18.4 20.3 21.8 23.0
+C2-50k char-bigrams 50 000 60 000 60 000 18.7 20.7 21.9 23.9
+C3-50k char-trigrams 50 000 100 000 100 000 18.9 20.5 21.5 23.9
+BPE-60k BPE - 60 000 60 000 18.6 20.8 21.1 23.6
+BPE-J90k BPE (joint) - 90 000 90 000 19.4 20.8 22.2 23.7
+Table 2: English→German translation performance (BLEU) on newstest2014 and newstest2015 test sets.
+Ens-4: ensemble of 4 models. Best NMT system in bold.
+dom variation.
+The system with morfessor segmentation
+MDict yields no improvement over the baseline,
+and was not pursued further. However, we do
+observe improvements over the baseline from us-
+ing character n-grams to represent rare words.
+The subword system closest to WDict is the sys-
+tem C2-3/500k with the same unsegmented vo-
+cabulary of 300 000 source and 500 000 target
+words, with out-of-vocabulary words represented
+via character bigrams, for which we observe an av-
+erage improvement of 0.3 BLEU over our baseline.
+Reducing the size of the shortlist to 50k (C2-50k)
+yields further improvements, for an average BLEU
+improvement of 0.8 over the baseline. Character
+trigrams (C3-50k), and BPE with a jointly learned
+encoding (BPE-J90k) yield similar improvements
+over the baseline than character bigrams, which
+indicates that the Neural network robustly learns
+from different subword representations. On av-
+erage, BPE-J90k outperforms BPE with indepen-
+dent encodings (BPE-60k).
+The performance of our NMT systems is below
+our syntax-based baseline by Sennrich and Had-
+dow (2015). We note that Jean et al. (2015b) re-
+port a score of 24.8 BLEU on newstest2015, using
+an ensemble of 8 NMT models. We are conﬁdent
+that our improvements to the translation of rare
+words are orthogonal to improvements achievable
+through other improvements in the network archi-
+tecture, training algorithm, or better ensembles.
+We test a subset of the systems on the language
+pair English→Russian. Results are shown in Ta-
+ble 3. The back-off dictionary is less effective for
+this language pair, partially because the back-off
+dictionary is incapable of transliterating unknown
+names. The quality of the WDict baseline is sub-
+stantially below the phrase-based state-of-the-art:
+the English→Russian system by Haddow et al.
+(2015) outperforms WDict by 4.5 B LEU on new-
+stest2014, and by 3.3 BLEU on newstest2015. The
+subword models are a step towards closing this
+gap, and BPE-J90k yields an average improve-
+ment of 1.5 BLEU over WDict.
+As a further comment on our translation results,
+we want to emphasize that performance variabil-
+ity is still an open problem with NMT. On our de-
+velopment set, we observe differences of up to 1
+BLEU between different models. For single sys-
+tems, we report the results of the model that per-
+forms best on dev (out of 4), which has a stabiliz-
+ing effect, but how to control for randomness de-
+serves further attention in future research. To eval-
+uate the effect of different subword segmentation
+strategies on the translation of rare and unknown
+words, we conduct a more focused analysis.
+5 Analysis
+5.1 Unigram accuracy
+Our main claims are that the translation of rare
+and unknown words is poor in state-of-the-art
+NMT models, and that subword models improve
+the translation of these word types. We empir-
+ically verify these claims by measuring clipped
+unigram precision and recall of words of differ-
+ent frequency.9 We report the harmonic mean be-
+tween precision and recall, f1, and we plot target-
+side words sorted by their frequency in the training
+9Clipped unigram precision is essentially 1-gram BLEU
+without brevity penalty.
+BLEU
+vocabulary newstest2014 newstest2015
+name segmentation shortlist source target single ens-4 single ens-4
+phrase-based (Haddow et al., 2015) 29.8 - 24.3 -
+WUnk - - 300 000 500 000 21.3 24.9 17.9 20.7
+WDict - - 300 000 500 000 21.6 25.3 18.2 21.0
+C2-50k char-bigrams 50 000 60 000 60 000 22.8 26.0 20.1 22.8
+BPE-60k BPE - 60 000 60 000 22.5 25.7 19.5 22.0
+BPE-J90k BPE (joint) - 90 000 100 000 22.8 26.4 20.3 22.6
+Table 3: English→Russian translation performance (B LEU) on newstest2014 test set. Ens-4: ensemble
+of 4 models. Best NMT system in bold.
+set.10
+Figure 1 shows results for the English–German
+ensemble systems on newstest2013. Unigram
+f1 of all systems tends to decrease for lower-
+frequency words. The baseline system has a spike
+in f1 for OOVs, i.e. words that do not occur in
+the training text. This is because a high propor-
+tion of OOVs are names, for which a copy from
+the source to the target text is a good strategy for
+English→German.
+The systems with a target vocabulary of 500 000
+words mostly differ in how well they translate
+words with rank > 500 000. A back-off dictionary
+is an obvious improvement over producing UNK,
+which results in 0 f1, but the subword system C2-
+3/500k achieves better performance. Note that the
+subword system can also produce new OOVs such
+as compounds, while the back-off dictionary can
+only produce those OOVs which can be copied
+from the source, usually names.
+For the 50 000 most frequent words, the repre-
+sentation is the same for all neural networks, and
+all neural networks achieve comparable unigram
+f1 for this category. For the interval between fre-
+quency rank 50 000 and 500 000, the comparison
+between C2-3/500k and C2-50k unveils an inter-
+esting difference. The two systems only differ in
+the size of the shortlist, with C2-3/500k represent-
+ing words in this interval as single units, and C2-
+50k via subword units. We ﬁnd that the perfor-
+mance of C2-3/500k degrades heavily up to fre-
+quency rank 500 000, at which point the model
+switches to a subword representation and perfor-
+mance recovers. The performance of C2-50k re-
+mains more stable. We attribute this to the fact
+that subword units are less sparse than words. In
+10We perform binning of words with the same training set
+frequency, and apply bezier smoothing to the graph.
+our training set, the frequency rank 50 000 corre-
+sponds to a frequency of 60 in the training data;
+the frequency rank 500 000 to a frequency of 2.
+Because subword representations are less sparse,
+reducing the size of the network vocabulary, and
+representing more words via subword units, can
+lead to better performance.
+Not shown in the graph, but interesting to note,
+is the fact that the back-off dictionary itself does
+not beneﬁt from an ensemble of neural networks.
+In contrast, the subword models improve in the
+translation of rare words and OOVs when mov-
+ing from a single model to an ensemble. This is a
+further argument in favour of modelling the trans-
+lation of rare words in the main model, rather than
+backing off to an external model: we hope that fu-
+ture improvements in the NMT architecture and
+training regime will further increase the magni-
+tude by which subword models outperform back-
+off approaches.
+To put the f1 curve in relation to the total BLEU
+scores reported in Table 2, we note that the 50 000
+most frequent word types in the training data make
+up 92.8% of tokens in the reference translation.
+4.7% fall into the range 50 000–500 000, 0.8%
+into the range 500 000–∞, and 1.7% are OOV .
+While the comparison between WDict and BPE-
+J90k shows massive improvements in f1 for rare
+words (from 34% to 38% for the range 50 000–
+500 000; from 13% to 34% for the range 500 000–
+∞), the relative rarity of these categories means
+that that the total improvement in BLEU is a more
+modest 0.6 points. However, rare words tend to
+be content words such as names and compounds,
+which carry central information in a sentence. We
+suspect that BLEU underestimates the effect on ac-
+tual translation quality of improving the transla-
+tion of these rare words.
+100 101 102 103 104 105 1060
+0.2
+0.4
+0.6
+0.8
+1
+50 000 500 000
+training set frequency rank
+unigram f1
+BPE-J90k
+C2-50k
+C2-3/500k
+WDict
+WUnk
+Figure 1: English→German unigram f1 on new-
+stest2013 plotted by training set frequency rank
+for different NMT systems.
+Figure 2 shows unigram f1 for the translation
+direction English→Russian. The most obvious
+difference is that the there is no spike in f1 for
+OOVs because unknown names can only rarely be
+copied, and usually require transliteration.
+The f1 graphs hides some qualitative differ-
+ences between systems. For English →German,
+the dictionary back-off system produces few
+OOVs, but with high precision, whereas the sub-
+word systems achieve higher recall, but lower pre-
+cision. Precision, recall and f1 for words of dif-
+ferent frequencies are shown in Tables 4 and 5.
+For common words (category <50k), we attribute
+differences to random variation between models;
+differences in output length affect the precision–
+recall trade-off. We note that the character bigram
+model C2-50k produces the most OOV words, and
+achieves relatively low precision for this category.
+BPE-60k produces fewer OOVs, but its recall suf-
+fers from transliteration (or copy) errors due to
+segmentation inconsistencies. The joint BPE en-
+coding of BPE-J90k improves the quality of the
+subword translations, particularly for names in the
+category OOV .
+5.2 Manual Analysis
+Table 6 shows two translation examples for the
+translation direction English→German, Table 7
+for English→Russian. The baseline system fails
+for all of the examples, either by deleting con-
+tent ( health, situation), or by copying source
+words that should be translated or transliterated.
+The subword translations of health research in-
+100 101 102 103 104 105 1060
+0.2
+0.4
+0.6
+0.8
+1
+50 000 500 000
+training set frequency rank
+unigram f1
+BPE-J90k
+C2-50k
+WDict
+WUnk
+Figure 2: English→Russian unigram f1 on new-
+stest2013 plotted by training set frequency rank
+for different NMT systems.
+stitutes show that the subword systems are capa-
+ble of learning translations when oversplitting (re-
+search→Fo|rs|ch|un|g), or when the segmentation
+does not match morpheme boundaries: the seg-
+mentation Forschungs|instituten would be linguis-
+tically more plausible, and simpler to align to the
+English research institutes, than the segmentation
+Forsch|ungsinstitu|ten in the BPE-60k system, but
+still, a correct translation is produced. If the sys-
+tems have failed to learn a translation due to data
+sparseness, like forasinine, which should be trans-
+lated as dumm, we see translations that are wrong,
+but could be plausible for (partial) loanwords (asi-
+nine Situation→Asinin-Situation).
+The English→Russian examples show that
+the subword systems are capable of translitera-
+tion. However, transliteration errors do occur,
+either due to ambiguous transliterations, or be-
+cause of non-consistent segmentations between
+source and target text which make it hard for
+the system to learn a transliteration mapping.
+Note that the BPE-60k system encodes Mirza-
+yeva inconsistently for the two language pairs
+(Mirz|ayeva→Мир|за|ева Mir|za|eva). This ex-
+ample is still translated correctly, but we ob-
+serve spurious insertions and deletions of char-
+acters in the BPE-60k system. An example
+is the transliteration of rakﬁsk, where a п is
+inserted and a к is deleted. We trace this
+error back to translation pairs in the training
+data with inconsistent segmentations, such as
+(p|rak|ri|ti→пра|крит|и (pra|krit|i)), from which
+the translation (rak→пра) is erroneously learned.
+system
+<50k 50k-500k 500k-∞ OOV
+nref=58 837 nref=2974 nref=522 nref=1079
+p r f1 p r f1 p r f1 p r f1
+WDict 55.8 57.7 56.7 42.3 28.6 34.1 24.5 9.0 13.2 49.1 20.9 29.3
+C2-3/500k 56.1 58.2 57.1 40.1 28.2 33.1 56.0 20.7 30.2 30.2 25.3 27.5
+C2-50k 57.5 56.4 56.9 44.6 31.0 36.6 43.3 30.5 35.8 22.9 29.9 26.0
+BPE-60k 57.1 57.5 57.3 44.2 32.6 37.5 39.4 25.3 30.8 23.4 21.6 22.5
+BPE-J90k 56.8 57.7 57.2 44.3 33.7 38.3 43.5 28.2 34.2 31.5 27.4 29.3
+Table 4: Unigram precision, recall and f1 of English→German NMT ensembles on newstest2013. Ger-
+man words grouped by their training set frequency rank.
+system <50k 50k-500k 500k-∞ OOV
+nref=56 197 nref=2915 nref=258 nref=420
+p r f1 p r f1 p r f1 p r f1
+WDict 51.2 55.2 53.1 32.2 19.6 24.4 23.6 10.7 14.8 10.7 5.7 7.4
+C2-50k 54.9 53.2 54.0 25.0 21.6 23.2 25.0 18.0 20.9 13.9 17.1 15.3
+BPE-60k 52.9 54.8 53.8 28.2 23.7 25.8 29.7 15.1 20.0 13.7 12.6 13.2
+BPE-J90k 53.9 54.7 54.3 27.6 23.5 25.4 24.1 14.1 17.8 14.7 13.1 13.9
+Table 5: Unigram precision, recall and f1 of English→Russian NMT ensembles on newstest2013. Rus-
+sian words grouped by their training set frequency rank.
+system sentence
+source health research institutes
+reference Gesundheitsforschungsinstitute
+WDict Forschungsinstitute
+C2-50k Fo|rs|ch|un|gs|in|st|it|ut|io|ne|n
+BPE-60k Gesundheits|forsch|ungsinstitu|ten
+BPE-J90k Gesundheits|forsch|ungsin|stitute
+source asinine situation
+reference dumme Situation
+WDict asinine situation → UNK → asinine
+C2-50k as|in|in|e situation → As|in|en|si|tu|at|io|n
+BPE-60k as|in|ine situation → A|in|line-|Situation
+BPE-J90K as|in|ine situation → As|in|in-|Situation
+Table 6: English→German translation examples.
+“|” marks subword boundaries.
+The segmentation of the BPE system with a jointly
+learned segmentation (BPE-J90k) is more consis-
+tent (pra|krit|i→пра|крит|и (pra|krit|i)).
+6 Conclusion
+The main contribution of this paper is that we
+show that neural network encoder–decoder trans-
+lation systems are able to translate rare and un-
+seen words by representing them as a sequence
+of subword units. This is both simpler and more
+effective than using an external translation sys-
+tem (even just a simple dictionary) as a back-off
+model. The NMT system is relatively robust re-
+garding the type of subword unit, and we observe
+similar performance gains over the baseline with
+system sentence
+source Mirzayeva
+reference Мирзаева (Mirzaeva)
+WDict Mirzayeva → UNK → Mirzayeva
+C2-50k Mi|rz|ay|ev|a → Ми|рз|ае|ва (Mi|rz|ae|va)
+BPE-60k Mirz|ayeva → Мир|за|ева (Mir|za|eva)
+BPE-J90k Mir|za|yeva → Мир|за|ева (Mir|za|eva)
+source rakﬁsk
+reference ракфиска (rakﬁska)
+WDict rakﬁsk → UNK → rakﬁsk
+C2-50k ra|kf|is|k → ра|кф|ис|к (ra|kf|is|k)
+BPE-60k rak|f|isk → пра|ф|иск (pra|f|isk)
+BPE-J90k rak|f|isk → рак|ф|иска (rak|f|iska)
+Table 7: English→Russian translation examples.
+“|” marks subword boundaries.
+character bigrams, character trigrams, or variable-
+length units. In regards to efﬁciency, we achieve
+the most compact representation of the text and
+vocabulary with a word segmentation technique
+based on byte pair encoding.
+Our analysis shows that not only out-of-
+vocabulary words, but also rare in-vocabulary
+words are translated poorly by our baseline NMT
+system. We ﬁnd that for rare words, a sub-
+word representation improves the model’s ability
+to learn their translation. We expect the optimal
+point at which to switch from full-word to sub-
+word representation to depend on the language
+pair and the amount of training data. In this work,
+our choice of vocabulary size is somewhat arbi-
+trary, and mainly motivated by comparison to prior
+work. One avenue of future research is to learn the
+optimal vocabulary size for a translation task auto-
+matically. We also believe there is further potential
+in bilingually informed segmentation algorithms
+to create more semantically meaningful and trans-
+latable subword units, although the segmentation
+algorithm cannot rely on the target text at runtime.
+Despite language-speciﬁc differences, we believe
+that a subword representation of rare words is suit-
+able for NMT for most language pairs, eliminating
+the need for large network vocabularies or back-
+off models.
+Acknowledgments
+The research results presented in this publication
+were conducted in the cooperation with Samsung
+Electronics Polska sp. z o.o. - Samsung R&D
+Institute Poland. This project received funding
+from the European Union’s Horizon 2020 research
+and innovation programme under grant agreement
+645452 (QT21).
+References
+Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua
+Bengio. 2014. Neural Machine Translation by
+Jointly Learning to Align and Translate. CoRR,
+abs/1409.0473.
+Issam Bazzi and James R. Glass. 2000. Modeling out-
+of-vocabulary words for robust speech recognition.
+In Sixth International Conference on Spoken Lan-
+guage Processing, ICSLP 2000 / INTERSPEECH
+2000, Beijing, China, October 16-20, 2000 , pages
+401–404.
+Jan A. Botha and Phil Blunsom. 2014. Compositional
+Morphology for Word Representations and Lan-
+guage Modelling. In Proceedings of the 31st Inter-
+national Conference on Machine Learning (ICML) ,
+Beijing, China.
+Rohan Chitnis and John DeNero. 2015. Variable-
+Length Word Encodings for Neural Translation
+Models. In Proceedings of the 2015 Conference on
+Empirical Methods in Natural Language Processing
+(EMNLP).
+Kyunghyun Cho, Bart van Merrienboer, Caglar Gul-
+cehre, Dzmitry Bahdanau, Fethi Bougares, Hol-
+ger Schwenk, and Yoshua Bengio. 2014. Learn-
+ing Phrase Representations using RNN Encoder–
+Decoder for Statistical Machine Translation. In Pro-
+ceedings of the 2014 Conference on Empirical Meth-
+ods in Natural Language Processing (EMNLP) ,
+pages 1724–1734, Doha, Qatar, October. Associa-
+tion for Computational Linguistics.
+Mathias Creutz and Krista Lagus. 2002. Unsupervised
+Discovery of Morphemes. In Proceedings of the
+ACL-02 Workshop on Morphological and Phonolog-
+ical Learning, pages 21–30. Association for Compu-
+tational Linguistics.
+Nadir Durrani, Hassan Sajjad, Hieu Hoang, and Philipp
+Koehn. 2014. Integrating an Unsupervised Translit-
+eration Model into Statistical Machine Translation.
+In Proceedings of the 14th Conference of the Euro-
+pean Chapter of the Association for Computational
+Linguistics, EACL 2014, April 26-30, 2014, Gothen-
+burg, Sweden, pages 148–153.
+Chris Dyer, Victor Chahuneau, and Noah A. Smith.
+2013. A Simple, Fast, and Effective Reparame-
+terization of IBM Model 2. In Proceedings of the
+2013 Conference of the North American Chapter of
+the Association for Computational Linguistics: Hu-
+man Language Technologies , pages 644–648, At-
+lanta, Georgia, June. Association for Computational
+Linguistics.
+Philip Gage. 1994. A New Algorithm for Data Com-
+pression. C Users J., 12(2):23–38, February.
+Barry Haddow, Matthias Huck, Alexandra Birch, Niko-
+lay Bogoychev, and Philipp Koehn. 2015. The
+Edinburgh/JHU Phrase-based Machine Translation
+Systems for WMT 2015. In Proceedings of the
+Tenth Workshop on Statistical Machine Translation.
+Sébastien Jean, Kyunghyun Cho, Roland Memisevic,
+and Yoshua Bengio. 2015a. On Using Very Large
+Target V ocabulary for Neural Machine Translation.
+In Proceedings of the 53rd Annual Meeting of the
+Association for Computational Linguistics and the
+7th International Joint Conference on Natural Lan-
+guage Processing (Volume 1: Long Papers) , pages
+1–10, Beijing, China, July. Association for Compu-
+tational Linguistics.
+Sébastien Jean, Orhan Firat, Kyunghyun Cho, Roland
+Memisevic, and Yoshua Bengio. 2015b. Montreal
+Neural Machine Translation Systems for WMT’15 .
+In Proceedings of the Tenth Workshop on Statistical
+Machine Translation.
+Nal Kalchbrenner and Phil Blunsom. 2013. Recurrent
+Continuous Translation Models. In Proceedings of
+the 2013 Conference on Empirical Methods in Natu-
+ral Language Processing, Seattle, October. Associa-
+tion for Computational Linguistics.
+Philipp Koehn and Kevin Knight. 2003. Empirical
+Methods for Compound Splitting. In EACL ’03:
+Proceedings of the Tenth Conference on European
+Chapter of the Association for Computational Lin-
+guistics, pages 187–193, Budapest, Hungary. Asso-
+ciation for Computational Linguistics.
+Philipp Koehn, Hieu Hoang, Alexandra Birch, Chris
+Callison-Burch, Marcello Federico, Nicola Bertoldi,
+Brooke Cowan, Wade Shen, Christine Moran,
+Richard Zens, Chris Dyer, Ondˇrej Bojar, Alexandra
+Constantin, and Evan Herbst. 2007. Moses: Open
+Source Toolkit for Statistical Machine Translation.
+In Proceedings of the ACL-2007 Demo and Poster
+Sessions, pages 177–180, Prague, Czech Republic.
+Association for Computational Linguistics.
+Franklin M. Liang. 1983. Word hy-phen-a-tion by
+com-put-er. Ph.D. thesis, Stanford University, De-
+partment of Linguistics, Stanford, CA.
+Wang Ling, Chris Dyer, Alan W. Black, Isabel Tran-
+coso, Ramon Fermandez, Silvio Amir, Luis Marujo,
+and Tiago Luis. 2015. Finding Function in Form:
+Compositional Character Models for Open V ocab-
+ulary Word Representation. In Proceedings of the
+2015 Conference on Empirical Methods in Natural
+Language Processing (EMNLP).
+Thang Luong, Richard Socher, and Christopher D.
+Manning. 2013. Better Word Representations
+with Recursive Neural Networks for Morphology.
+In Proceedings of the Seventeenth Conference on
+Computational Natural Language Learning, CoNLL
+2013, Soﬁa, Bulgaria, August 8-9, 2013, pages 104–
+113.
+Thang Luong, Ilya Sutskever, Quoc Le, Oriol Vinyals,
+and Wojciech Zaremba. 2015. Addressing the
+Rare Word Problem in Neural Machine Translation.
+In Proceedings of the 53rd Annual Meeting of the
+Association for Computational Linguistics and the
+7th International Joint Conference on Natural Lan-
+guage Processing (Volume 1: Long Papers) , pages
+11–19, Beijing, China, July. Association for Com-
+putational Linguistics.
+Tomas Mikolov, Ilya Sutskever, Anoop Deoras, Hai-
+Son Le, Stefan Kombrink, and Jan Cernocký. 2012.
+Subword Language Modeling with Neural Net-
+works. Unpublished.
+Sonja Nießen and Hermann Ney. 2000. Improving
+SMT quality with morpho-syntactic analysis. In
+18th Int. Conf. on Computational Linguistics, pages
+1081–1085.
+Rico Sennrich and Barry Haddow. 2015. A Joint
+Dependency Model of Morphological and Syntac-
+tic Structure for Statistical Machine Translation.
+In Proceedings of the 2015 Conference on Em-
+pirical Methods in Natural Language Processing
+(EMNLP), Lisbon, Portugal. Association for Com-
+putational Linguistics.
+Ilya Sutskever, Oriol Vinyals, and Quoc V . Le. 2014.
+Sequence to Sequence Learning with Neural Net-
+works. In Advances in Neural Information Process-
+ing Systems 27: Annual Conference on Neural In-
+formation Processing Systems 2014, December 8-
+13 2014, Montreal, Quebec, Canada , pages 3104–
+3112.
+Jörg Tiedemann. 2012. Character-Based Pivot Trans-
+lation for Under-Resourced Languages and Do-
+mains. In Proceedings of the 13th Conference of the
+European Chapter of the Association for Computa-
+tional Linguistics, pages 141–151, Avignon, France,
+April. Association for Computational Linguistics.
+Sami Virpioja, Jaakko J. Väyrynen, Mathias Creutz,
+and Markus Sadeniemi. 2007. Morphology-Aware
+Statistical Machine Translation Based on Morphs
+Induced in an Unsupervised Manner. In Proceed-
+ings of the Machine Translation Summit XI , pages
+491–498, Copenhagen, Denmark, September.
+Matthew D. Zeiler. 2012. ADADELTA: An Adaptive
+Learning Rate Method. CoRR, abs/1212.5701.

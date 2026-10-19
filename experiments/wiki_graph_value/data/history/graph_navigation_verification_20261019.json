@@ -1,0 +1,35 @@
+{
+  "type": "OFFLINE_NAVIGATION_VERIFICATION",
+  "provider_calls": 0,
+  "cumulative_calls_unchanged": 3409,
+  "source_binding_verified": true,
+  "prior_articles_binding_unchanged": true,
+  "prior_historical_hashes_unchanged": true,
+  "unique_entry_queries": 6,
+  "unique_entry_target_tasks": 7,
+  "posthoc_exact_duplicate_sensitivity": {
+    "direct": {
+      "hits": 6,
+      "targets": 22,
+      "micro_recall": 0.2727272727272727,
+      "macro_recall": 0.2619047619047619,
+      "target_density": 0.14285714285714285
+    },
+    "graph": {
+      "hits": 12,
+      "targets": 22,
+      "micro_recall": 0.5454545454545454,
+      "macro_recall": 0.5476190476190476,
+      "target_density": 0.2857142857142857
+    },
+    "permuted": {
+      "hits": 6,
+      "targets": 22,
+      "micro_recall": 0.2727272727272727,
+      "macro_recall": 0.2738095238095238,
+      "target_density": 0.14285714285714285
+    }
+  },
+  "note": "M01/M05 same entry and targets; exploratory duplicate removal, not independent user samples",
+  "result_sha256": "c715fd9092435c3cf1bca935e080241662a6a7f726b8294bf513f659f6bffe42"
+}

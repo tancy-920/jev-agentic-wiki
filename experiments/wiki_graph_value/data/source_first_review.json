@@ -1,0 +1,429 @@
+{
+  "type": "LOCAL_CODEX_ORIGINAL_SOURCE_AI_FIRST_REVIEW",
+  "provider_calls": 0,
+  "source_first_review_complete": true,
+  "human_attested": false,
+  "ground_truth_release": false,
+  "provider_predictions_consulted": false,
+  "source_binding": {
+    "sources.jsonl": "2f0df305904f2236492a476a881d2436d419ee1af4e2b8d8045af1cf0b1a1682",
+    "chunks.jsonl": "0bf63b2c00efb98d266eb0a8e4db04295d1d5e00069a2c6bded8264d63016045",
+    "wiki.json": "82c088ba8bac7ae6859ea28f7f9aed9683cbaea39667d41107afe60d773cb3f0",
+    "index.json": "fc90476d88428625197cda29e5ff15b67ee2f23f01676b86c3d84d7cb5de0445"
+  },
+  "cases": [
+    {
+      "id": "N01",
+      "items": [
+        {
+          "index": 1,
+          "criterion": "每头64及形状推导前提",
+          "proposed_supported_content": "768/12=64 assumes standard equal-width MHA with total Q/K/V width768, not GQA head-count inference.",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 2,
+          "criterion": "Q/K/V分头和拼接输出投影",
+          "proposed_supported_content": "Each head Q/K projections d_model by d_k, V by d_v; concatenate h*d_v then W_O to d_model.",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 3,
+          "criterion": "缩放使用每头key维度",
+          "proposed_supported_content": "Scale by sqrt(d_k), not sqrt(total model width).",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 4,
+          "criterion": "头数不是端到端加速倍率",
+          "proposed_supported_content": "Paper says comparable total compute with reduced head width; no head-count latency multiplier follows.",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "N02",
+      "items": [
+        {
+          "index": 1,
+          "criterion": "LN/RMSNorm/BN统计轴区分",
+          "proposed_supported_content": "LN last feature dimensions per token/sample; BN per channel minibatch (and sequence/spatial as applicable); RMS last normalized_shape dimensions.",
+          "source_ids": [
+            "foundation-1607.06450:2e66a69eecc9:c5764-7454",
+            "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131",
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 2,
+          "criterion": "RMSNorm不去均值",
+          "proposed_supported_content": "RMS scales x by sqrt(epsilon+mean x squared); no mean subtraction.",
+          "source_ids": [
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 3,
+          "criterion": "Pre/Post结构式及残差路径",
+          "proposed_supported_content": "Post LN(x+F(x)); pre x+F(LN(x)), pre retains identity branch; possible final LN.",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 4,
+          "criterion": "初始化和warmup论文范围而非普遍保证",
+          "proposed_supported_content": "Pre-LN gradient at initialization and tested translation/BERT tasks support scoped warmup removal, not all optimizers/depths/models.",
+          "source_ids": [
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "N03",
+      "items": [
+        {
+          "index": 1,
+          "criterion": "原始编码器解码器与Decoder-only差异",
+          "proposed_supported_content": "Original encoder-decoder cross-attention Q from decoder, K/V encoder; mygpt decoder-only has no encoder cross module.",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "mygpt-model.py:e05006957de4:c12523-14451"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 2,
+          "criterion": "目标右移及因果可见性",
+          "proposed_supported_content": "Offset targets plus forbidden future mask prevents target leakage.",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 3,
+          "criterion": "FFN逐位置且参数共享",
+          "proposed_supported_content": "FFN separately identically each position, distinct layer parameters.",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 4,
+          "criterion": "训练并行前向与生成循环区别",
+          "proposed_supported_content": "Known sequence positions permit parallel masked forward; generated tokens depend sequentially on earlier generations.",
+          "source_ids": [
+            "paper-2309.06180:7ba2ff703be1:c3049-5192"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 5,
+          "criterion": "缓存复用历史KV但不消除历史注意力读取",
+          "proposed_supported_content": "Cache old KV per layer, current query attends to concatenated history; reuse avoids recomputation not history reads.",
+          "source_ids": [
+            "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "N04",
+      "items": [
+        {
+          "index": 1,
+          "criterion": "baseline在softmax后乘V前应用attn_dropout",
+          "proposed_supported_content": "masked_fill before softmax, attn_dropout after softmax before att@v.",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c7739-9025"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 2,
+          "criterion": "SDPA显式mask.bool而非is_causal=True",
+          "proposed_supported_content": "Executable kwargs attn_mask=mask.bool(); no is_causal=True; comment discusses different alignment.",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-model.py:e05006957de4:c7739-9025"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 3,
+          "criterion": "dropout_p训练self.dropout而eval为0",
+          "proposed_supported_content": "Executable dropout_p=self.dropout if self.training else0.",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 4,
+          "criterion": "引用真实代码定位并区分注释观察与新测量",
+          "proposed_supported_content": "Use code locator; timings and numerical differences in docstrings are historical observations, not this run.",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c7739-9025",
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "N05",
+      "items": [
+        {
+          "index": 1,
+          "criterion": "局部分块softmax平均不等价",
+          "proposed_supported_content": "Softmax denominators couple all keys; independent normalized block means lose relative partition mass.",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 2,
+          "criterion": "维护运行最大值/指数和/加权和",
+          "proposed_supported_content": "Keep row max m, shifted exponential sum l, weighted numerator u (or normalized output with l).",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 3,
+          "criterion": "合并最大值与旧新统计重缩放公式及最终归一化",
+          "proposed_supported_content": "m=max(m_old,m_block), alpha=exp(m_old-m), beta=exp(m_block-m); l=alpha*l_old+beta*l_block, u=alpha*u_old+beta*u_block, O=u/l. Algebraic restatement of original scaled block merge.",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 4,
+          "criterion": "IO/物化优化不等于线性算术或逐bit一致",
+          "proposed_supported_content": "Still dense all-pairs arithmetic; optimize HBM/avoid materialization; exact mathematical attention need not bitwise match due to floating point ordering.",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c11869-13995",
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "N06",
+      "items": [
+        {
+          "index": 1,
+          "criterion": "SDPA接口不保证某融合后端或普遍提速",
+          "proposed_supported_content": "SDPA chooses backend from inputs; forced backend availability is not proof of automatic actual choice; trace profiler or scoped forcing and report restrictions.",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 2,
+          "criterion": "固定输入配置及容差正确性",
+          "proposed_supported_content": "Fix weights/input/dtype/mask/dropout then compare with reference using stated tolerance; not universal bitwise equality.",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 3,
+          "criterion": "预热同步重复统计和测量边界",
+          "proposed_supported_content": "Warmup, GPU synchronize, repeated samples and explicit timing/reset boundary; old code minimum statistic is not mean.",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c979-2847"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        },
+        {
+          "index": 4,
+          "criterion": "prefill/decode及allocated/reserved区分",
+          "proposed_supported_content": "Prefill whole prompt parallel vs sequential single-token decode; old helper max_memory_allocated only, not reserved. Corpus has no authoritative allocator-definition excerpt; do not certify the reserved definition from Wiki alone.",
+          "source_ids": [
+            "paper-2309.06180:7ba2ff703be1:c3049-5192",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "conclusion": "partial_source_support_allocator_definition_gap",
+          "human_confirmed": false
+        },
+        {
+          "index": 5,
+          "criterion": "旧JSON不是当前硬件新实验",
+          "proposed_supported_content": "Existing JSON and source comments are historical artifacts; no current GPU benchmark executed by this retrieval experiment.",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "conclusion": "source_supported_with_stated_conditions",
+          "human_confirmed": false
+        }
+      ]
+    }
+  ],
+  "original_excerpts": {
+    "paper-1706.03762:eee8b5a0bcc2:c11426-13973": {
+      "locator": "PDF file p. 5",
+      "source_url": "https://arxiv.org/abs/1706.03762v7",
+      "text": "output values. These are concatenated and once again projected, resulting in the final values, as\ndepicted in Figure 2.\nMulti-head attention allows the model to jointly attend to information from different representation\nsubspaces at different positions. With a single attention head, averaging inhibits this.\nMultiHead(Q,K,V ) = Concat(head 1,..., headh)W O\nwhere headi = Attention(QW Q\ni ,KW K\ni ,VW V\ni )\nWhere the projections are parameter matricesW Q\ni ∈ Rdmodel×dk,W K\ni ∈ Rdmodel×dk,W V\ni ∈ Rdmodel×dv\nandW O∈ Rhdv×dmodel.\nIn this work we employ h = 8 parallel attention layers, or heads. For each of these we use\ndk =dv =dmodel/h = 64. Due to the reduced dimension of each head, the total computational cost\nis similar to that of single-head attention with full dimensionality.\n3.2.3 Applications of Attention in our Model\nThe Transformer uses multi-head attention in three different ways:\n• In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer,\nand the memory keys and values come from the output of the encoder. This allows every\nposition in the decoder to attend over all positions in the input sequence. This mimics the\ntypical encoder-decoder attention mechanisms in sequence-to-sequence models such as\n[38, 2, 9].\n• The encoder contains self-attention layers. In a self-attention layer all of the keys, values\nand queries come from the same place, in this case, the output of the previous layer in the\nencoder. Each position in the encoder can attend to all positions in the previous layer of the\nencoder.\n• Similarly, self-attention layers in the decoder allow each position in the decoder to attend to\nall positions in the decoder up to and including that position. We need to prevent leftward\ninformation flow in the decoder to preserve the auto-regressive property. We implement this\ninside of scaled dot-product attention by masking out (setting to−∞) all values in the input\nof the softmax which correspond to illegal connections. See Figure 2.\n3.3 Position-wise Feed-Forward Networks\nIn addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully\nconnected feed-forward network, which is applied to each position separately and identically. This\nconsists of two linear transformations with a ReLU activation in between.\nFFN(x) = max(0,xW 1 +b1)W2 +b2 (2)\nWhile the linear transformations are the same across different positions, they use different parameters\nfrom layer to layer. Another way of describing this is as two convolutions with kernel size 1.\n"
+    },
+    "paper-1706.03762:eee8b5a0bcc2:c8934-11426": {
+      "locator": "PDF file p. 4",
+      "source_url": "https://arxiv.org/abs/1706.03762v7",
+      "text": "Scaled Dot-Product Attention\n Multi-Head Attention\nFigure 2: (left) Scaled Dot-Product Attention. (right) Multi-Head Attention consists of several\nattention layers running in parallel.\nof the values, where the weight assigned to each value is computed by a compatibility function of the\nquery with the corresponding key.\n3.2.1 Scaled Dot-Product Attention\nWe call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of\nqueries and keys of dimensiondk, and values of dimensiondv. We compute the dot products of the\nquery with all keys, divide each by√dk, and apply a softmax function to obtain the weights on the\nvalues.\nIn practice, we compute the attention function on a set of queries simultaneously, packed together\ninto a matrixQ. The keys and values are also packed together into matricesK andV . We compute\nthe matrix of outputs as:\nAttention(Q,K,V ) = softmax(QK T\n√dk\n)V (1)\nThe two most commonly used attention functions are additive attention [2], and dot-product (multi-\nplicative) attention. Dot-product attention is identical to our algorithm, except for the scaling factor\nof 1√dk\n. Additive attention computes the compatibility function using a feed-forward network with\na single hidden layer. While the two are similar in theoretical complexity, dot-product attention is\nmuch faster and more space-efficient in practice, since it can be implemented using highly optimized\nmatrix multiplication code.\nWhile for small values ofdk the two mechanisms perform similarly, additive attention outperforms\ndot product attention without scaling for larger values ofdk [3]. We suspect that for large values of\ndk, the dot products grow large in magnitude, pushing the softmax function into regions where it has\nextremely small gradients 4. To counteract this effect, we scale the dot products by 1√dk\n.\n3.2.2 Multi-Head Attention\nInstead of performing a single attention function withdmodel-dimensional keys, values and queries,\nwe found it beneficial to linearly project the queries, keys and valuesh times with different, learned\nlinear projections todk,dk anddv dimensions, respectively. On each of these projected versions of\nqueries, keys and values we then perform the attention function in parallel, yieldingdv-dimensional\n4To illustrate why the dot products get large, assume that the components of q and k are independent random\nvariables with mean 0 and variance 1. Then their dot product, q · k = Pdk\ni=1 qiki, has mean 0 and variance dk.\n4\n"
+    },
+    "foundation-1607.06450:2e66a69eecc9:c5764-7454": {
+      "locator": "PDF file p. 2",
+      "source_url": "https://arxiv.org/pdf/1607.06450v1",
+      "text": "i is normalized summed inputs to theith hidden unit in thelth layer andgi is a gain parame-\nter scaling the normalized activation before the non-linear activation function. Note the expectation\nis under the whole training data distribution. It is typically impractical to compute the expectations\nin Eq. (2) exactly, since it would require forward passes through the whole training dataset with the\ncurrent set of weights. Instead, µ andσ are estimated using the empirical samples from the current\nmini-batch. This puts constraints on the size of a mini-batch and it is hard to apply to recurrent\nneural networks.\n3 Layer normalization\nWe now consider the layer normalization method which is designed to overcome the drawbacks of\nbatch normalization.\nNotice that changes in the output of one layer will tend to cause highly correlated changes in the\nsummed inputs to the next layer, especially with ReLU units whose outputs can change by a lot.\nThis suggests the “covariate shift” problem can be reduced by ﬁxing the mean and the variance of\nthe summed inputs within each layer. We, thus, compute the layer normalization statistics over all\nthe hidden units in the same layer as follows:\nµl = 1\nH\nH∑\ni=1\nal\ni σl =\nvuu√ 1\nH\nH∑\ni=1\n(\nal\ni−µl)2\n(3)\nwhereH denotes the number of hidden units in a layer. The difference between Eq. (2) and Eq. (3)\nis that under layer normalization, all the hidden units in a layer share the same normalization terms\nµ andσ, but different training cases have different normalization terms. Unlike batch normalization,\nlayer normaliztion does not impose any constraint on the size of a mini-batch and it can be used in\nthe pure online regime with batch size 1.\n2\n"
+    },
+    "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131": {
+      "locator": "L265–L316",
+      "source_url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/nn/modules/batchnorm.py",
+      "text": "                if not isinstance(self.weight, UninitializedParameter):\n                    raise AssertionError(\n                        \"self.weight must be an UninitializedParameter\"\n                    )\n                if not isinstance(self.bias, UninitializedParameter):\n                    raise AssertionError(\"self.bias must be an UninitializedParameter\")\n                self.weight.materialize((self.num_features,))\n                self.bias.materialize((self.num_features,))\n            if self.track_running_stats:\n                self.running_mean.materialize(  # type:ignore[union-attr]\n                    (self.num_features,)\n                )\n                self.running_var.materialize(  # type:ignore[union-attr]\n                    (self.num_features,)\n                )\n            self.reset_parameters()\n\n\nclass BatchNorm1d(_BatchNorm):\n    r\"\"\"Applies Batch Normalization over a 2D or 3D input.\n\n    Method described in the paper\n    `Batch Normalization: Accelerating Deep Network Training by Reducing\n    Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`__ .\n\n    .. math::\n\n        y = \\frac{x - \\mathrm{E}[x]}{\\sqrt{\\mathrm{Var}[x] + \\epsilon}} * \\gamma + \\beta\n\n    The mean and standard-deviation are calculated per-dimension over\n    the mini-batches and :math:`\\gamma` and :math:`\\beta` are learnable parameter vectors\n    of size `C` (where `C` is the number of features or channels of the input). By default, the\n    elements of :math:`\\gamma` are set to 1 and the elements of :math:`\\beta` are set to 0.\n    At train time in the forward pass, the variance is calculated via the biased estimator,\n    equivalent to ``torch.var(input, correction=0)``. However, the value stored in the\n    moving average of the variance is calculated via the unbiased  estimator, equivalent to\n    ``torch.var(input, correction=1)``.\n\n    Also by default, during training this layer keeps running estimates of its\n    computed mean and variance, which are then used for normalization during\n    evaluation. The running estimates are kept with a default :attr:`momentum`\n    of 0.1.\n\n    If :attr:`track_running_stats` is set to ``False``, this layer then does not\n    keep running estimates, and batch statistics are instead used during\n    evaluation time as well.\n\n    .. note::\n        This :attr:`momentum` argument is different from one used in optimizer\n        classes and the conventional notion of momentum. Mathematically, the\n        update rule for running statistics here is\n        :math:`\\hat{x}_\\text{new} = (1 - \\text{momentum}) \\times \\hat{x} + \\text{momentum} \\times x_t`,\n"
+    },
+    "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532": {
+      "locator": "L1–L27",
+      "source_url": "https://docs.pytorch.org/docs/2.11/generated/torch.nn.RMSNorm.html",
+      "text": "L3134: # RMSNormcite2729†#\nL3135: \nL3136: class torch.nn.RMSNorm(normalized_shape, eps=None, elementwise_affine=True, device=None, dtype=None)cite2730†[source]†github.com cite2731†#\nL3137: \nL3138: \nL3139: Applies Root Mean Square Layer Normalization over a mini-batch of inputs.\nL3140: \nL3141: This layer implements the operation as described in the paper cite2732†Root Mean Square Layer Normalization†arxiv.org\nL3142: \nL3143: $$y_i = \\frac{x_i}{\\mathrm{RMS}(x)} * \\gamma_i, \\quad\nL3144: \\text{where} \\quad \\text{RMS}(x) = \\sqrt{\\epsilon + \\frac{1}{n} \\sum_{i=1}^{n} x_i^2}\nL3145: $$y i​=RMS(x)x i​​∗γ i​,where RMS(x)=ϵ+n 1​i=1∑n​x i 2​​\nL3146: \nL3147: The RMS is taken over the last `D` dimensions, where `D` is the dimension of `normalized_shape`. For example, if `normalized_shape` is `(3, 5)` (a 2-dimensional shape), the RMS is computed over the last 2 dimensions of the input.\nL3148: \nL3149: Parameters:\nL3150: \nL3151: \nL3152:   * normalized_shape (cite2733†int†docs.python.org or cite2734†list†docs.python.org or cite2735†torch.Size ) –\nL3153: \nL3154: input shape from an expected input of size\nL3155: $$[* \\times \\text{normalized\\_shape}[0] \\times \\text{normalized\\_shape}[1]\nL3156:     \\times \\ldots \\times \\text{normalized\\_shape}[-1]]\nL3157: \nL3158: $$[∗×normalized_shape[0]×normalized_shape[1]×…×normalized_shape[−1]]\nL3159: \nL3160: If a single integer is used, it is treated as a singleton list, and this module will normalize over the last dimension which is expected to be of that specific size.\n"
+    },
+    "paper-1706.03762:eee8b5a0bcc2:c7110-8934": {
+      "locator": "PDF file p. 3",
+      "source_url": "https://arxiv.org/abs/1706.03762v7",
+      "text": "Figure 1: The Transformer - model architecture.\nThe Transformer follows this overall architecture using stacked self-attention and point-wise, fully\nconnected layers for both the encoder and decoder, shown in the left and right halves of Figure 1,\nrespectively.\n3.1 Encoder and Decoder Stacks\nEncoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two\nsub-layers. The first is a multi-head self-attention mechanism, and the second is a simple, position-\nwise fully connected feed-forward network. We employ a residual connection [11] around each of\nthe two sub-layers, followed by layer normalization [ 1]. That is, the output of each sub-layer is\nLayerNorm(x + Sublayer(x)), where Sublayer(x) is the function implemented by the sub-layer\nitself. To facilitate these residual connections, all sub-layers in the model, as well as the embedding\nlayers, produce outputs of dimensiondmodel = 512.\nDecoder: The decoder is also composed of a stack ofN = 6 identical layers. In addition to the two\nsub-layers in each encoder layer, the decoder inserts a third sub-layer, which performs multi-head\nattention over the output of the encoder stack. Similar to the encoder, we employ residual connections\naround each of the sub-layers, followed by layer normalization. We also modify the self-attention\nsub-layer in the decoder stack to prevent positions from attending to subsequent positions. This\nmasking, combined with fact that the output embeddings are offset by one position, ensures that the\npredictions for positioni can depend only on the known outputs at positions less thani.\n3.2 Attention\nAn attention function can be described as mapping a query and a set of key-value pairs to an output,\nwhere the query, keys, values, and output are all vectors. The output is computed as a weighted sum\n3\n"
+    },
+    "mygpt-model.py:e05006957de4:c12523-14451": {
+      "locator": "L319–L369",
+      "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/model.py",
+      "text": "        self.c_proj = nn.Linear(4 * config.n_embd, config.n_embd, bias=config.bias)\n        self.dropout = nn.Dropout(config.dropout)\n\n    def forward(self, x):\n        return self.dropout(self.c_proj(self.gelu(self.c_fc(x))))\n\n\n# ============================================================\n# 一层 Block\n# ============================================================\nclass Block(nn.Module):\n    \"\"\"一层 = 先自注意力（每个位置汇总前文）+ 再 MLP（各自加工）。\n\n    `x = x + ...` 是残差连接：把输入原样加回输出，使梯度沿这条路径直接回传，\n    深层网络才训得动。\n    \"\"\"\n\n    def __init__(self, config):\n        super().__init__()\n        self.ln_1 = make_norm(config, config.n_embd)\n        self.attn = CausalSelfAttention(config)\n        self.ln_2 = make_norm(config, config.n_embd)\n        self.mlp = MLP(config)\n\n    def forward(self, x, past_kv=None, use_cache=False):\n        attn_out, new_kv = self.attn(self.ln_1(x), past_kv=past_kv, use_cache=use_cache)\n        x = x + attn_out\n        x = x + self.mlp(self.ln_2(x))\n        return x, new_kv\n\n\n# ============================================================\n# 完整模型\n# ============================================================\nclass GPT(nn.Module):\n    def __init__(self, config):\n        super().__init__()\n        self.config = config\n        self.wte = nn.Embedding(config.vocab_size, config.n_embd)   # 字符编号 → 向量\n        self.wpe = nn.Embedding(config.block_size, config.n_embd)   # 位置编号 → 向量\n        self.drop = nn.Dropout(config.dropout)\n        self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layer)])\n        self.ln_f = make_norm(config, config.n_embd)\n        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)\n\n        self.apply(self._init_weights)\n        # 参考 nanoGPT：对参与残差相加的投影层，按层数缩小初始化标准差，训练更稳定\n        for pn, p in self.named_parameters():\n            if pn.endswith(\"c_proj.weight\"):\n                torch.nn.init.normal_(p, mean=0.0, std=0.02 / math.sqrt(2 * config.n_layer))\n\n"
+    },
+    "depth-2002.04745:8e1c3e3564f6:c4702-7341": {
+      "locator": "PDF file p. 2",
+      "source_url": "https://arxiv.org/pdf/2002.04745v2",
+      "text": "On Layer Normalization in the Transformer Architecture\nFigure 1. (a) Post-LN Transformer layer; (b) Pre-LN Transformer\nlayer.\nare large. Therefore, without the warm-up stage, directly\nusing a large learning rate to those parameters can make\nthe optimization process unstable. Using a warm-up stage\nand training the model with small learning rates practically\navoid this problem. Extensive experiments are provided to\nsupport our theoretical ﬁndings.\nOur theory also shows that the layer normalization plays a\ncrucial role in controlling the gradient scales. This motivates\nus to investigate whether there are some other ways of po-\nsitioning the layer normalization that lead to well-behaved\ngradients. In particular, we study another variant, the Trans-\nformer with Pre-Layer Normalization (Pre-LN) (Baevski\n& Auli, 2018; Child et al., 2019; Wang et al., 2019). The\nPre-LN Transformer puts the layer normalization inside the\nresidual connection and equips with an additionalﬁnal-layer\nnormalization before prediction (Please see Figure 1 for the\ndifferences between the two variants of the Transformer\narchitectures). We show that at initialization, the gradients\nare well-behaved without any exploding or vanishing for the\nPre-LN Transformer both theoretically and empirically.\nGiven the gradients are well-behaved in the Pre-LN Trans-\nformer, it is natural to consider removing the learning rate\nwarm-up stage during training. We conduct a variety of\nexperiments, including IWSLT14 German-English transla-\ntion, WMT14 English-German translation, and BERT pre-\ntraining tasks. We show that, in all tasks, the learning rate\nwarm-up stage can be safely removed, and thus, the number\nof hyper-parameter is reduced. Furthermore, we observe\nthat the loss decays faster for the Pre-LN Transformer model.\nIt can achieve comparable ﬁnal performances but use much\nless training time. This is particularly important for training\nlarge-scale models on large-scale datasets.\nOur contributions are summarized as follows:\n• We investigate two Transformer variants, the Post-LN\nTransformer and the Pre-LN Transformer, using mean ﬁeld\ntheory. By studying the gradients at initialization, we pro-\nvide evidence to show why the learning rate warm-up stage\nis essential in training the Post-LN Transformer.\n• We are the ﬁrst to show that the learning-rate warm-up\nstage can be removed for the Pre-LN Transformer, which\neases the hyperparameter tuning. We further show that by\nusing proper learning rate schedulers, the training time can\nbe largely reduced on a wide range of applications.\n2. Related work\nGradient descent-based methods (Kingma & Ba, 2014;\n"
+    },
+    "paper-2309.06180:7ba2ff703be1:c3049-5192": {
+      "locator": "L20–L27",
+      "source_url": "https://arxiv.org/html/2309.06180v1",
+      "text": "L115: This means that the KV cache of the same token appearing at different positions in a sequence will be different.\nL116: Given a request prompt, the generation computation in the LLM service can be decomposed into two phases:\nL117: The prompt phase takes the whole user prompt $(x_{1},\\ldots,x_{n})$ as input and computes the probability of the first new token $P(x_{n+1}\\mid x_{1},\\ldots,x_{n})$. During this process, also generates the key vectors $k_{1},\\ldots,k_{n}$ and value vectors $v_{1},\\ldots,v_{n}$. Since prompt tokens $x_{1},\\ldots,x_{n}$ are all known, the computation of the prompt phase can be parallelized using matrix-matrix multiplication operations.\nL118: Therefore, this phase can efficiently use the parallelism inherent in GPUs.\nL119: The autoregressive generation phase generates the remaining new tokens sequentially. At iteration $t$, the model takes one token $x_{n+t}$ as input and computes the probability $P(x_{n+t+1}\\mid x_{1},\\ldots,x_{n+t})$ with the key vectors $k_{1},\\ldots,k_{n+t}$ and value vectors $v_{1},\\ldots,v_{n+t}$. Note that the key and value vectors at positions $1$ to $n+t-1$ are cached at previous iterations, only the new key and value vector $k_{n+t}$ and $v_{n+t}$ are computed at this iteration.\nL120: This phase completes either when the sequence reaches a maximum length (specified by users or limited by LLMs) or when an end-of-sequence (<eos>) token is emitted. The computation at different iterations cannot be parallelized due to the data dependency and often uses matrix-vector multiplication, which is less efficient. As a result, this phase severely underutilizes GPU computation and becomes memory-bound, being responsible for most portion of the latency of a single request.\nL121: Figure 3. KV cache memory management in existing systems. Three types of memory wastes – reserved, internal fragmentation, and external fragmentation – exist that prevent other requests from fitting into the memory. The token in each memory slot represents its KV cache. Note the same tokens can have different KV cache when at different positions.\nL122: ### 2.3. Batching Techniques for LLMs\n"
+    },
+    "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394": {
+      "locator": "L40–L75",
+      "source_url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.0/docs/source/en/cache_explanation.md",
+      "text": "$$\n\nThe query (`Q`), key (`K`), and value (`V`) matrices are projections from the input embeddings of shape `(b, h, T, d_head)`.\n\nFor causal attention, the mask prevents the model from attending to future tokens. Once a token is processed, its representation never changes with respect to future tokens, which means \\\\( K_{\\text{past}} \\\\) and \\\\( V_{\\text{past}} \\\\) can be cached and reused to compute the last token's representation.\n\n$$\n\\text{Attention}(q_t, [\\underbrace{k_1, k_2, \\dots, k_{t-1}}_{\\text{cached}}, k_{t}], [\\underbrace{v_1, v_2, \\dots, v_{t-1}}_{\\text{cached}}, v_{t}])\n$$\n\nAt inference time, you only need the last token's query to compute the representation \\\\( x_t \\\\) that predicts the next token \\\\( t+1 \\\\). At each step, the new key and value vectors are **stored** in the cache and **appended** to the past keys and values.\n\n$$\nK_{\\text{cache}} \\leftarrow \\text{concat}(K_{\\text{past}}, k_t), \\quad V_{\\text{cache}} \\leftarrow \\text{concat}(V_{\\text{past}}, v_t)\n$$\n\nAttention is calculated independently in each layer of the model, and caching is done on a per-layer basis.\n\nRefer to the table below to compare how caching improves efficiency.\n\n| without caching | with caching |\n|---|---|\n| for each step, recompute all previous `K` and `V`  | for each step, only compute current `K` and `V`\n| attention cost per step is **quadratic** with sequence length | attention cost per step is **linear** with sequence length (memory grows linearly, but compute/token remains low) |\n\n## Cache class\n\nA basic KV cache interface takes a key and value tensor for the current token and returns the updated `K` and `V` tensors. This is internally managed by a model's `forward` method.\n\n```py\nnew_K, new_V = cache.update(k_t, v_t, layer_idx)\nattn_output = attn_layer_idx_fn(q_t, new_K, new_V)\n```\n\nWhen you use Transformers' [`Cache`] class, the self-attention module performs several critical steps to integrate past and present information.\n\n"
+    },
+    "mygpt-model.py:e05006957de4:c7739-9025": {
+      "locator": "L212–L242",
+      "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/model.py",
+      "text": "        return self.resid_dropout(self.c_proj(y)), new_kv\n\n    def _expand_kv(self, k, v):\n        \"\"\"改进 C：k/v 头数少于 q 头数时，把每个 k/v 头复制若干份，各自服务一组 q 头。\n\n        效果：KV cache 的显存占用按 n_kv_head / n_head 缩小。\n        \"\"\"\n        if self.n_kv_head == self.n_head:\n            return k, v\n        rep = self.n_head // self.n_kv_head\n        return k.repeat_interleave(rep, dim=1), v.repeat_interleave(rep, dim=1)\n\n    def _attn_baseline(self, q, k, v, mask):\n        \"\"\"基线实现：先把完整的 Tq×Tk 分数矩阵算出来，再 softmax、加权求和。\n\n        最直白的做法，显存占用随 Tk 线性增长（B=8、4 头、T=2048 实测峰值 532 MiB）。\n        \"\"\"\n        k, v = self._expand_kv(k, v)\n        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))   # (B, nh, Tq, Tk)\n        att = att.masked_fill(mask == 0, float(\"-inf\"))\n        att = self.attn_dropout(F.softmax(att, dim=-1))\n        return att @ v                                                       # (B, nh, Tq, hd)\n\n    def _attn_sdpa(self, q, k, v, mask):\n        \"\"\"交给 PyTorch 的融合注意力内核（scaled_dot_product_attention）计算。\n\n        两个容易踩错的地方，都是实测确认过的，写在这里避免以后改错：\n          1. 掩码用 bool 张量显式传入，不要用 is_causal=True。SDPA 的 is_causal 是\n             「左上对齐」：Tq=1、Tk=64 时它只让当前这个 query 看到第 0 个 key，而基线实现\n             允许它看到全部 64 个，两者输出相差 3.2（不是舍入误差）。显式传掩码则与基线\n             实现逐元素一致（差值 2.9e-3，bf16 精度量级）。\n"
+    },
+    "mygpt-model.py:e05006957de4:c8927-10267": {
+      "locator": "L241–L267",
+      "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/model.py",
+      "text": "             允许它看到全部 64 个，两者输出相差 3.2（不是舍入误差）。显式传掩码则与基线\n             实现逐元素一致（差值 2.9e-3，bf16 精度量级）。\n          2. 掩码的数据类型要和 q 一致。q 是 bf16 而掩码是 float32 时会算出错误结果，\n             而且不报错 —— 传 bool 张量最省事，也绕开了这个坑。\n        enable_gqa=True 让内核直接使用未展开的 k/v（n_kv_head < n_head 时），省掉一次复制。\n\n        3. 必须把融合内核显式列出来（sdpa_kernel 上下文）。默认分发器在 GQA 这组形状下\n           会挑中 MATH 后端 —— 那是按定义逐步算的参考实现，实测 T=2048 时要 21.6 ms、\n           1256 MiB，比融合内核慢一个数量级。显式指定后同样条件下是 1.35 ms、40 MiB。\n        \"\"\"\n        kwargs = dict(\n            attn_mask=mask.bool(),\n            dropout_p=self.dropout if self.training else 0.0,\n            scale=1.0 / math.sqrt(self.head_dim),\n            enable_gqa=(self.n_kv_head != self.n_head),\n        )\n        if _SDPA_FUSED_BACKENDS is None:            # 老版本 PyTorch，只能用默认分发器\n            return F.scaled_dot_product_attention(q, k, v, **kwargs)\n        try:\n            # 指定后端列表后，分发器会对被排除的内核逐条发 UserWarning（本机哪些内核可用\n            # 已由 bench.py 记录在 results/bench_attention_impls.json 里），这里不再重复输出。\n            with warnings.catch_warnings(), sdpa_kernel(_SDPA_FUSED_BACKENDS):\n                warnings.simplefilter(\"ignore\")\n                return F.scaled_dot_product_attention(q, k, v, **kwargs)\n        except RuntimeError:                        # 本机融合内核不支持这组输入时退回默认分发器\n            return F.scaled_dot_product_attention(q, k, v, **kwargs)\n\n"
+    },
+    "paper-2205.14135:b86de4ee5c52:c13633-15122": {
+      "locator": "PDF file p. 4",
+      "source_url": "https://arxiv.org/abs/2205.14135v2",
+      "text": "matrices for the backward pass. This yields an attention algorithm that is both memory eﬃcient and faster in\nwall-clock time. We analyze its IO complexity, showing that our method requires much fewer HBM accesses\ncompared to standard attention. We further show thatFlashAttention can serve as a useful primitive by\nextending it to handle block-sparse attention.\nWe focus here on the forward pass for ease of exposition; Appendix B contains details for the backward.\n3.1 An Eﬃcient Attention Algorithm With Tiling and Recomputation\nGiven the inputsQ K V2 R𝑁\u0002𝑑 in HBM, we aim to compute the attention outputO2 R𝑁\u0002𝑑 and write it to\nHBM. Our goal is to reduce the amount of HBM accesses (to sub-quadratic in𝑁).\nWe apply two established techniques (tiling, recomputation) to overcome the technical challenge of\ncomputing exact attention in sub-quadratic HBM accesses. We describe this in Algorithm 1. The main idea\nis that we split the inputsQ K V into blocks, load them from slow HBM to fast SRAM, then compute the\nattention output with respect to those blocks. By scaling the output of each block by the right normalization\nfactor before adding them up, we get the correct result at the end.\nTiling. We compute attention by blocks. Softmax couples columns ofK, so we decompose the large\nsoftmax with scaling [51, 60, 66]. For numerical stability, the softmax of vector𝑥2 R𝐵 is computed as:\n𝑚„𝑥”:= max\n𝑖\n𝑥𝑖 𝑓 „𝑥”:=\n\u0002\n𝑒𝑥1\u0000𝑚„𝑥” 𝑒 𝑥𝐵\u0000𝑚„𝑥”\u0003\n ℓ „𝑥”:=\n∑︁\n𝑖\n𝑓„𝑥”𝑖 softmax„𝑥”:= 𝑓„𝑥”\nℓ„𝑥”\n4\n"
+    },
+    "paper-2205.14135:b86de4ee5c52:c15122-16331": {
+      "locator": "PDF file p. 5",
+      "source_url": "https://arxiv.org/abs/2205.14135v2",
+      "text": "For vectors𝑥„1”𝑥„2”2 R𝐵, we can decompose the softmax of the concatenated𝑥=\n\u0002\n𝑥„1”𝑥„2”\u0003\n2 R2𝐵 as:\n𝑚„𝑥”=𝑚„\n\u0002\n𝑥„1”𝑥„2”\u0003\n”= max„𝑚„𝑥„1””𝑚„𝑥„2””” 𝑓 „𝑥”=\nh\n𝑒𝑚„𝑥„1””\u0000𝑚„𝑥”𝑓„𝑥„1””𝑒𝑚„𝑥„2””\u0000𝑚„𝑥”𝑓„𝑥„2””\ni\n\nℓ„𝑥”=ℓ„\n\u0002\n𝑥„1”𝑥„2”\u0003\n”=𝑒𝑚„𝑥„1””\u0000𝑚„𝑥”ℓ„𝑥„1””‚𝑒𝑚„𝑥„2””\u0000𝑚„𝑥”ℓ„𝑥„2”” softmax„𝑥”= 𝑓„𝑥”\nℓ„𝑥”\nTherefore if we keep track of some extra statistics (𝑚„𝑥”ℓ„𝑥”), we can compute softmax one block at a time.2\nWe thus split the inputsQ K V into blocks (Algorithm 1 line 3), compute the softmax values along with\nextra statistics (Algorithm 1 line 10), and combine the results (Algorithm 1 line 12).\nRecomputation. One of our goals is to not store𝑂„𝑁 2”intermediate values for the backward pass. The\nbackward pass typically requires the matricesS P2 R𝑁\u0002𝑁 to compute the gradients with respect toQ K V.\nHowever, by storing the outputO and the softmax normalization statistics„𝑚ℓ”, we can recompute the\nattention matrix S and P easily in the backward pass from blocks ofQ K V in SRAM. This can be seen as a\nform of selective gradient checkpointing [10, 34]. While gradient checkpointing has been suggested to reduce\nthe maximum amount of memory required [66], all implementations (that we know oﬀ) have to trade speed\n"
+    },
+    "paper-2205.14135:b86de4ee5c52:c11869-13995": {
+      "locator": "PDF file p. 4",
+      "source_url": "https://arxiv.org/abs/2205.14135v2",
+      "text": "However, in the context of model training, the intermediate values still need to be written to HBM to save\nfor the backward pass, reducing the eﬀectiveness of naive kernel fusion.\n2.2 Standard Attention Implementation\nGiven input sequencesQ K V2 R𝑁\u0002𝑑 where 𝑁 is the sequence length and𝑑 is the head dimension, we want\nto compute the attention outputO2 R𝑁\u0002𝑑:\nS= QK>2 R𝑁\u0002𝑁 P= softmax„S”2R𝑁\u0002𝑁 O= PV2 R𝑁\u0002𝑑\nwhere softmax is applied row-wise.\nStandard attention implementations materialize the matricesS and P to HBM, which takes𝑂„𝑁 2”memory.\nOften 𝑁\u001d 𝑑 (e.g., for GPT2,𝑁 = 1024 and 𝑑 = 64). We describe the standard attention implementation\nin Algorithm 0. As some or most of the operations are memory-bound (e.g., softmax), the large number of\nmemory accesses translates to slow wall-clock time.\nThis problem is exacerbated by other elementwise operations applied to the attention matrix, such as\nmasking applied toS or dropout applied toP. As a result, there have been many attempts to fuse several\nelementwise operations, such as fusing masking with softmax [77].\nIn Section 3.2, we will show that the standard attention implementation performs HBM accesses quadratic\nin the sequence length𝑁. We also compare the number of FLOPs and number of HBM accesses of standard\nattention and of our method (FlashAttention).\nAlgorithm 0Standard Attention Implementation\nRequire: Matrices Q K V2 R𝑁\u0002𝑑 in HBM.\n1: Load Q K by blocks from HBM, computeS= QK>, write S to HBM.\n2: Read S from HBM, computeP= softmax„S”, write P to HBM.\n3: Load P and V by blocks from HBM, computeO= PV, write O to HBM.\n4: Return O.\n3 FlashA ttention: Algorithm, Analysis, and Extensions\nWe show how to compute exact attention with fewer HBM reads/writes and without storing large intermediate\nmatrices for the backward pass. This yields an attention algorithm that is both memory eﬃcient and faster in\nwall-clock time. We analyze its IO complexity, showing that our method requires much fewer HBM accesses\ncompared to standard attention. We further show thatFlashAttention can serve as a useful primitive by\nextending it to handle block-sparse attention.\n"
+    },
+    "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776": {
+      "locator": "L70–L89",
+      "source_url": "https://docs.pytorch.org/docs/2.11/generated/torch.nn.functional.scaled_dot_product_attention.html",
+      "text": "L3203: >\nL3204: >   * cite2733†Memory-Efficient Attention†github.com\nL3205: >\nL3206: >   * A PyTorch implementation defined in C++ matching the above formulation\nL3207: \nL3208: The function may call optimized kernels for improved performance when using the CUDA backend. For all other backends, the PyTorch implementation will be used.\nL3209: All implementations are enabled by default. Scaled dot product attention attempts to automatically select the most optimal implementation based on the inputs. In order to provide more fine-grained control over what implementation is used, the following functions are provided for enabling and disabling implementations. The context manager is the preferred mechanism:\nL3210: >   * cite2734†`torch.nn.attention.sdpa_kernel()` : A context manager used to enable or disable any of the implementations.\nL3211: >\nL3212: >   * cite2735†`torch.backends.cuda.enable_flash_sdp()` : Globally enables or disables FlashAttention.\nL3213: >\nL3214: >   * cite2736†`torch.backends.cuda.enable_mem_efficient_sdp()` : Globally enables or disables Memory-Efficient Attention.\nL3215: >\nL3216: >   * cite2737†`torch.backends.cuda.enable_math_sdp()` : Globally enables or disables the PyTorch C++ implementation.\nL3217: Each of the fused kernels has specific input limitations. If the user requires the use of a specific fused implementation, disable the PyTorch C++ implementation using cite2734†`torch.nn.attention.sdpa_kernel()` . In the event that a fused implementation is not available, a warning will be raised with the reasons why the fused implementation cannot run.\nL3218: Due to the nature of fusing floating point operations, the output of this function may be different depending on what backend kernel is chosen. The c++ implementation supports torch.float64 and can be used when higher precision is required. For math backend, all intermediates are kept in torch.float if inputs are in torch.half or torch.bfloat16.\nL3219: \nL3220: For more information please see cite108†Numerical accuracy\nL3221: > Grouped Query Attention (GQA) is an experimental feature. It currently works only for Flash_attention and math kernel on CUDA tensor, and does not support Nested tensor. Constraints for GQA:\nL3222: >\n"
+    },
+    "mygpt-bench.py:4ab37b20b5e7:c6545-7944": {
+      "locator": "L198–L250",
+      "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/bench.py",
+      "text": "# ---------------- 计时与显存的小工具 ----------------\ndef _sync():\n    \"\"\"只有用 GPU 时才需要等设备把活干完；CPU 上跑就跳过。\"\"\"\n    if DEVICE == \"cuda\":\n        torch.cuda.synchronize()\n\n\ndef _time_ms(fn, warmup=3, repeats=10):\n    \"\"\"预热 warmup 次，再正式测 repeats 次，取最小值（与实验 1、2 的口径一致）。\"\"\"\n    for _ in range(warmup):\n        fn()\n    _sync()\n    best = float(\"inf\")\n    for _ in range(repeats):\n        _sync()\n        t0 = time.perf_counter()\n        fn()\n        _sync()\n        best = min(best, time.perf_counter() - t0)\n    return best * 1000\n\n\ndef _peak_mb(fn):\n    \"\"\"单次调用的峰值显存：先把统计清零，跑一次，再读峰值。\"\"\"\n    if DEVICE != \"cuda\":\n        return 0.0\n    _sync()\n    torch.cuda.reset_peak_memory_stats()\n    fn()\n    _sync()\n    return torch.cuda.max_memory_allocated() / 1024 / 1024\n\n\ndef _set_attn(model, impl):\n    \"\"\"把模型里每一层的注意力实现切换成 impl（权重不变，便于直接比数值）。\"\"\"\n    for blk in model.blocks:\n        blk.attn.attn_impl = impl\n\n\ndef _detect_sdpa_backends(n_head, n_kv_head, T, head_dim, dtype, batch=8):\n    \"\"\"判定本机实际能用哪些 SDPA 内核。\n\n    这台机器的 profiler（CUPTI 初始化失败）与 nvidia-smi（NVML 报错）都取不到 kernel 名，\n    所以只能用「强制指定某个后端，看它报不报错」的办法来判断谁真的能跑。\n    输入形状与掩码类型都对齐 _attn_sdpa 的真实调用（bool 掩码 + enable_gqa）。\n    \"\"\"\n    if DEVICE != \"cuda\":\n        return []\n    try:\n        from torch.nn.attention import SDPBackend, sdpa_kernel\n    except ImportError:\n        return []\n    q = torch.randn(batch, n_head, T, head_dim, device=DEVICE, dtype=dtype)\n"
+    },
+    "mygpt-bench.py:4ab37b20b5e7:c7703-9607": {
+      "locator": "L243–L288",
+      "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/bench.py",
+      "text": "    \"\"\"\n    if DEVICE != \"cuda\":\n        return []\n    try:\n        from torch.nn.attention import SDPBackend, sdpa_kernel\n    except ImportError:\n        return []\n    q = torch.randn(batch, n_head, T, head_dim, device=DEVICE, dtype=dtype)\n    k = torch.randn(batch, n_kv_head, T, head_dim, device=DEVICE, dtype=dtype)\n    v = torch.randn_like(k)\n    mask = torch.tril(torch.ones(T, T, device=DEVICE, dtype=torch.bool))\n    usable = []\n    for name in (\"FLASH_ATTENTION\", \"CUDNN_ATTENTION\", \"EFFICIENT_ATTENTION\", \"MATH\"):\n        try:\n            with warnings.catch_warnings(), sdpa_kernel([getattr(SDPBackend, name)]):\n                warnings.simplefilter(\"ignore\")     # 逐后端试跑会刷一堆内核选择提示，结果记在返回值里\n                F.scaled_dot_product_attention(q, k, v, attn_mask=mask,\n                                               enable_gqa=(n_kv_head != n_head))\n            _sync()\n            usable.append(name)\n        except Exception:\n            pass\n    return usable\n\n\ndef _sdpa_dispatcher_vs_forced(head_dim=64, T=2048, batch=8, n_head=4, n_kv_head=1,\n                               dtype=torch.bfloat16):\n    \"\"\"对比「默认分发器」与「显式指定融合内核」在同一组输入下的差别。\n\n    这是 _attn_sdpa 要显式列出融合内核的原因：默认分发器在 GQA 形状下会挑中 MATH\n    —— 那是按定义逐步算的参考实现，耗时与峰值显存都差一个数量级。\n    \"\"\"\n    if DEVICE != \"cuda\" or sdpa_kernel is None or _SDPA_FUSED_BACKENDS is None:\n        return None\n    q = torch.randn(batch, n_head, T, head_dim, device=DEVICE, dtype=dtype)\n    k = torch.randn(batch, n_kv_head, T, head_dim, device=DEVICE, dtype=dtype)\n    v = torch.randn_like(k)\n    mask = torch.tril(torch.ones(T, T, device=DEVICE, dtype=torch.bool))\n    kwargs = dict(attn_mask=mask, enable_gqa=(n_kv_head != n_head))\n\n    def default_call():\n        return F.scaled_dot_product_attention(q, k, v, **kwargs)\n\n    def forced_call():\n        with warnings.catch_warnings(), sdpa_kernel(_SDPA_FUSED_BACKENDS):\n            warnings.simplefilter(\"ignore\")\n"
+    },
+    "mygpt-bench.py:4ab37b20b5e7:c979-2847": {
+      "locator": "L36–L89",
+      "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/bench.py",
+      "text": "except ImportError:                     # pragma: no cover\n    sdpa_kernel = None\n\nRESULTS_DIR = Path(__file__).resolve().parent / \"results\"\nRESULTS_DIR.mkdir(exist_ok=True)\n\nDEVICE = \"cuda\" if torch.cuda.is_available() else \"cpu\"\n\n\ndef time_generate(model, prompt, max_new_tokens, use_cache, repeats=2):\n    \"\"\"跑 repeats 次生成，取最快的一次（避免首次编译/预热干扰）。\"\"\"\n    best = float(\"inf\")\n    for _ in range(repeats):\n        torch.cuda.synchronize()\n        t0 = time.perf_counter()\n        model.generate(prompt.clone(), max_new_tokens=max_new_tokens, use_cache=use_cache)\n        torch.cuda.synchronize()\n        best = min(best, time.perf_counter() - t0)\n    return best\n\n\n# ---------------- 实验 1：KV cache 加速比 vs batch ----------------\ndef exp1_speedup_vs_batch():\n    print(\"=\" * 74)\n    print(\"实验 1  改进 B：KV cache 加速比 —— 随 batch 变化\")\n    print(\"=\" * 74)\n\n    block, gen_tokens, prompt_len = 512, 479, 32\n    rows = []\n    print(f\"{'batch':<8}{'无cache':<14}{'有cache':<14}{'加速比':<10}\")\n    print(\"-\" * 46)\n\n    for B in [1, 8, 32]:\n        torch.manual_seed(0)\n        cfg = GPTConfig(block_size=block, n_layer=4, n_embd=256, n_head=4, n_kv_head=4)\n        model = GPT(cfg).to(DEVICE).eval()\n        prompt = torch.randint(0, 65, (B, prompt_len), device=DEVICE)\n\n        time_generate(model, prompt, 8, use_cache=True, repeats=1)   # 预热\n        t_off = time_generate(model, prompt, gen_tokens, use_cache=False)\n        t_on = time_generate(model, prompt, gen_tokens, use_cache=True)\n\n        speedup = t_off / t_on\n        rows.append({\n            \"batch\": B,\n            \"gen_tokens\": gen_tokens,\n            \"no_cache_sec\": round(t_off, 3),\n            \"with_cache_sec\": round(t_on, 3),\n            \"speedup\": round(speedup, 2),\n        })\n        print(f\"{B:<8}{t_off:>10.3f}s{'':<3}{t_on:>10.3f}s{'':<3}{speedup:>6.2f}x\")\n        del model\n        torch.cuda.empty_cache()\n\n"
+    }
+  },
+  "limitations": [
+    "AI-authored development criteria, not human ground truth",
+    "N06 allocator reserved definition lacks primary excerpt in frozen corpus; disclose separately, do not silently fill corpus",
+    "64-dimensional N01 assumes ordinary equal-width Q/K/V MHA; distinguish conditional inference",
+    "N05 PDF math extraction has damaged glyphs; merge algebra cross-checked against text and local online-softmax code; no new source alteration"
+  ]
+}

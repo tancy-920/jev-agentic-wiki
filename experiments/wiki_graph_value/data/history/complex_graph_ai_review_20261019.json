@@ -1,0 +1,1367 @@
+{
+  "type": "LOCAL_SOURCE_GROUNDED_AI_REVIEW_NOT_HUMAN_GT",
+  "study_id": "06b89a2f-dad9-47d3-935f-2015fc52c20f",
+  "provider_calls": 9,
+  "exact_replays": 5,
+  "human_attested": false,
+  "ground_truth_release": false,
+  "strict_criterion_totals": {
+    "wiki_direct6": 16,
+    "wiki_three_hop": 19
+  },
+  "criterion_denominator": 24,
+  "strict_delta_pp": 12.5,
+  "comparisons": [
+    {
+      "id": "K01",
+      "scores": [
+        2,
+        4
+      ],
+      "delta": 2,
+      "identical_request": false
+    },
+    {
+      "id": "K02",
+      "scores": [
+        3,
+        4
+      ],
+      "delta": 1,
+      "identical_request": false
+    },
+    {
+      "id": "K03",
+      "scores": [
+        4,
+        4
+      ],
+      "delta": 0,
+      "identical_request": true
+    },
+    {
+      "id": "K04",
+      "scores": [
+        2,
+        2
+      ],
+      "delta": 0,
+      "identical_request": true
+    },
+    {
+      "id": "K05",
+      "scores": [
+        1,
+        1
+      ],
+      "delta": 0,
+      "identical_request": true
+    },
+    {
+      "id": "K06",
+      "scores": [
+        4,
+        4
+      ],
+      "delta": 0,
+      "identical_request": false
+    }
+  ],
+  "rows": [
+    {
+      "id": "K01",
+      "arm": "wiki_direct6",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K01-B-wiki_direct6.json",
+      "answer": "**物理块写入追踪（分情况）**。设块大小为B，共享前缀占满n个整块，两请求末块分别为满块与未满块。情形一：末块已填满且两请求末块内容相同——该块可物理共享，两请求块表指向同一物理块，引用计数为2；此后各自生成不同token时，第一个新token写入新分配的私有块，触发对该共享末块的COW，即复制该块到新物理块后追加，原块引用计数递减[E1][E2]。情形二：末块未填满——未满块本身含未使用槽位，但两请求的末块内容不同（或位置/掩码不同），不能共享，各自持有私有末块，新token直接追加到该私有块的空槽，无需COW[E1]。因此\"所有共享前缀都必须COW\"不成立：只有被多请求引用且将被写入的物理块才需COW，独占块与未共享的未满块直接写[E1]。\n\n**同条件逻辑KV比例**。按缓存字节公式 \\(2\\cdot L\\cdot B\\cdot T\\cdot H_{kv}\\cdot d_{head}\\cdot s\\)，仅把 \\(H_{kv}\\) 从32降到4，其他维度与精度不变时，逻辑KV容量为原来的 \\(4/32=1/8\\)[E2][E4]。这是逻辑张量层面的比例，不含分页与共享带来的物理占用变化。\n\n**三类机制须分开**。头共享（GQA/MQA）改变投影结构与每token实际保存的K/V元素数，与分页、前缀共享正交，不自动消除预留浪费或碎片[E4][E2]。物理共享（前缀引用同一物理块+引用计数+COW）降低重复存储，但末块仍可能未填满，分页不消除全部内部碎片[E1]。请求调度（迭代级/连续批处理）在迭代边界换入换出请求，利用变长输出留下的空位，不降低单token固有计算量，也不等于分页[E3]。\n\n**逐一纠正四个结论**。(1)\"所有共享前缀都必须COW\"——错，仅被共享且将被写的块需COW，独占块与未共享未满块直接写[E1]。(2)\"逻辑缓存减少八倍\"——头数32→4确实使逻辑KV容量变为1/8，但这是头共享的贡献，与分页、COW无关；若把八倍归因于分页或共享则错[E2][E4]。(3)\"总显存减少八倍\"——错，总显存还含权重、激活、块表、碎片与未满末块空位，且分页只改善分配与共享，不缩小独有token的KV张量，故物理总占用降幅一般小于8倍，具体数值证据未给出[E1][E2]。(4)\"吞吐提高八倍\"——无依据，缓存容量下降比例不是端到端提速比例；调度收益受负载与延迟目标影响，且证据明确不提供通用加速倍数[E4][E3][E5][E6]。",
+      "citations": {
+        "E1": "wiki-article:paged-kv",
+        "E2": "wiki-article:kv-cache",
+        "E3": "wiki-article:continuous-batching",
+        "E4": "wiki-article:gqa",
+        "E5": "wiki-article:prefill-decode",
+        "E6": "wiki-article:measurement"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "同条件逻辑KV为1/8，不能推出总显存或吞吐1/8/八倍",
+          "passed": true,
+          "answer_excerpt": "1/8",
+          "reasoning": "same-shape logical proportion; rejects total/speed equivalence",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "完整不再写的共享块可保持共享，新私有块不要求复制旧完整块",
+          "passed": false,
+          "answer_excerpt": "触发对该共享末块的COW",
+          "reasoning": "contradicts new-private-block write after an immutable full block; copying a full block cannot provide an append slot",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "未满共享末块被独立修改时需隔离/COW，不能写坏另一请求",
+          "passed": false,
+          "answer_excerpt": "不能共享，各自持有私有末块",
+          "reasoning": "assumes away the shared partially filled case; fails to trace isolation on modifying that shared block",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "分页与迭代调度分别管理物理块及接纳请求，不等于KV头共享",
+          "passed": true,
+          "answer_excerpt": "迭代边界换入换出请求",
+          "reasoning": "correctly separates scheduling, head count and physical management",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "complete_items": 2,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "触发对该共享末块的COW",
+          "kind": "MAJOR",
+          "reasoning": "copies immutable full prefix while claiming new token uses private block; incorrect write path"
+        },
+        {
+          "answer_excerpt": "两请求的末块内容不同",
+          "kind": "MAJOR",
+          "reasoning": "introduces an unsupported premise to bypass the asked shared partial-block case"
+        },
+        {
+          "answer_excerpt": "一般小于8倍",
+          "kind": "UNSUPPORTED_SCOPE",
+          "reasoning": "combined physical sharing plus head reduction need not have a universal eightfold ceiling"
+        }
+      ],
+      "request_sha256": "b37ab1cf7fec397907ff8a4677aa678c0e91480031e12f79e431dd2729a29763"
+    },
+    {
+      "id": "K01",
+      "arm": "wiki_three_hop",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K01-B-wiki_three_hop.json",
+      "answer": "【物理块写入追踪】设块大小为B个token，共享前缀占P个token，两请求前缀完全相同。情形一：前缀恰好填满整块（P为B的整数倍），则两请求的块表可全部指向同一组物理块，前缀部分零复制；各自生成不同token时，只需为各自新token分配新物理块并写入，前缀块保持只读共享，引用计数加一即可[E1][E2]。情形二：前缀末块未填满（P mod B ≠ 0），该末块仍含共享前缀的有效K/V，但后续不同token要追加到同一逻辑位置，因此该末块必须COW：先复制该物理块，再在副本上写入各自的新token，其余已填满的前缀块仍共享[E1]。所以\"所有共享前缀都必须COW\"不成立——只有被写入触及的块（典型是未填满的末块）需要复制，已填满且不再写入的块无需复制[E1][E2]。\n\n【同条件逻辑KV比例】按缓存字节公式 \\(2 \\cdot L \\cdot B \\cdot T \\cdot H_{kv} \\cdot d_{head} \\cdot s\\)，其他维度与精度不变时，\\(H_{kv}\\) 从32降到4，逻辑KV容量变为原来的 \\(4/32 = 1/8\\)[E2][E4]。这是逻辑张量容量的比例，不是物理占用比例：物理占用还取决于分页按需分配、末块空位与共享前缀复用，末块仍可能有未使用空间[E1][E2]。\n\n【三类机制区分】头共享（GQA/MQA）改变投影结构与实际保存的K/V元素数量，降低逻辑容量与加载数据量[E4][E6]；物理共享（分页+前缀共享+COW）改变内存组织与重复存储，不改变每个独有token所需的K/V元素数[E1][E2]；请求调度（迭代级/连续批处理）在迭代边界调整活动请求集合，利用输出长度差异填补空闲位置，不降低单token固有计算量，也不等于分页[E3]。\n\n【逐一纠正四个结论】(1)\"所有共享前缀都必须COW\"：错，仅被写入的块需复制，已填满的共享块可只读复用[E1]。(2)\"逻辑缓存减少八倍\"：条件成立——仅当其他维度与精度不变、且确实把KV头从32改为4时，逻辑容量为 \\(1/8\\)；但这是结构变化，需训练或uptraining，不能保证原checkpoint直接转换后质量不变[E4][E6]。(3)\"总显存减少八倍\"：错，总显存还含权重、激活、块表元数据、末块空位与未共享部分，分页只改善分配与共享，不单独缩小每个独有token的KV张量，故不能推出八倍[E1][E2]。(4)\"吞吐提高八倍\"：无依据，缓存容量下降比例不是端到端提速比例；调度收益受负载与延迟目标影响，且需分开prefill/decode阶段并计入队列、调度与分配成本，证据不提供通用加速倍数[E3][E4][E5]。",
+      "citations": {
+        "E1": "wiki-article:paged-kv",
+        "E2": "wiki-article:kv-cache",
+        "E3": "wiki-article:continuous-batching",
+        "E4": "wiki-article:gqa",
+        "E5": "wiki-article:prefill-decode",
+        "E6": "wiki-article:mqa"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "同条件逻辑KV为1/8，不能推出总显存或吞吐1/8/八倍",
+          "passed": true,
+          "answer_excerpt": "1/8",
+          "reasoning": "same-shape logical proportion, not total-memory/speed claim",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "完整不再写的共享块可保持共享，新私有块不要求复制旧完整块",
+          "passed": true,
+          "answer_excerpt": "前缀块保持只读共享",
+          "reasoning": "new token uses a private block without copying immutable full prefix",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "未满共享末块被独立修改时需隔离/COW，不能写坏另一请求",
+          "passed": true,
+          "answer_excerpt": "该末块必须COW",
+          "reasoning": "within the explicitly shared partial-last-block case, isolates divergent writes; not universal prefix COW",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "分页与迭代调度分别管理物理块及接纳请求，不等于KV头共享",
+          "passed": true,
+          "answer_excerpt": "迭代边界调整活动请求集合",
+          "reasoning": "separates scheduling from allocation/head sharing",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "complete_items": 4,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "引用计数加一即可",
+          "kind": "AMBIGUOUS",
+          "reasoning": "reference count increments when mapping a new sharer, not necessarily whenever appending to a new private block; wording is imprecise"
+        }
+      ],
+      "request_sha256": "70d5d916c8d682bbd9f1c47e905e4a367397707647be543eb88b73f9b1da03d1"
+    },
+    {
+      "id": "K02",
+      "arm": "wiki_direct6",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K02-B-wiki_direct6.json",
+      "answer": "正确的合并必须同时重缩放旧块的指数和与未归一化加权和，而不是只对已归一化输出做加权平均。设已处理块保留运行最大值 m、指数和 l、未归一化加权和 o（注意 o 是未除以 l 的量），新块给出 m_b、l_b、o_b，则 m'=max(m,m_b)，l'=exp(m−m')l+exp(m_b−m')l_b，o'=exp(m−m')o+exp(m_b−m')o_b，最终输出为 o'/l'[E2]。若各块已归一化输出 O_b=o_b/l_b，则等价形式为 O'=(exp(m−m')l·O+exp(m_b−m')l_b·O_b)/l'，即权重必须含 l_b 因子；仅用 exp(m_b−m) 加权平均 O_b 会丢掉各块的归一化分母，一般不等价[E2]。在线 softmax 的定义就是\"用运行最大值和归一化量合并分块结果\"，而非逐块独立 softmax 后直接平均[E2]。\n\n全掩码行（整行 logit 为 −∞）不能机械套用上式：此时 l_b=0、m_b=−∞，exp(m_b−m') 与 l' 都可能为 0，出现 0/0。掩码与空块需专门处理[E2]；全屏蔽行的 softmax 数值行为依实现/后端而变，既不能统一保证 NaN，也不能统一保证 0，应实测并显式处理[E5]。有限精度下，exp(m−m') 的缩放、浮点累加顺序不同会带来容差内差异，精确算法不等于逐 bit 相同[E4]；若 m' 与 m 相差很大，重缩放因子可能下溢，需注意数值边界。\n\n关于\"显存峰值下降即证明用了融合内核\"：减少峰值中间存储不保证端到端更快，Python 教学分块代码也不等同于融合 GPU 内核[E2]。SDPA 是接口，具体后端由设备、dtype、形状与支持条件决定，不是 FlashAttention 的同义词，自动 fallback 也不必然发 warning[E3]。因此仅凭显存峰值下降无法断言后端为融合内核，必须注明实际后端[E3]。FlashAttention 是精确注意力的 IO 优化，收益依序列长度、硬件与内核限制而变，二次算术复杂度并未因此变为线性[E4]。\n\n关于\"decode 一定加速\"：prefill 与 decode 的并行度和瓶颈不同，decode 每轮只有一个新 query 并需读取已有 K/V，不能用 prefill 长序列 SDPA 测量直接解释 batch1 增量 decode 的收益[E6]。性能结果必须与任务、硬件、配置绑定，需固定输入、dtype、batch、头数、Tq/Tk，先核对输出容差，再预热、同步、重复计时并报告统计量；allocated 与 reserved 含义不同，峰值统计须在明确边界重置[E1]。缺失硬件/重复次数/实际后端时应写未知，不能补造[E1]。\n\n结论：正确的合并式成立（含 l_b 权重的重缩放形式）；\"仅 exp(m_b−m) 加权平均即精确等价\"不成立；全掩码行需专门处理，不能统一保证 NaN 或 0；\"显存峰值下降⇒融合内核\"不成立，需实测后端；\"decode 一定加速\"不成立，须分阶段测量并计入系统成本[E6]。",
+      "citations": {
+        "E1": "wiki-article:measurement",
+        "E2": "wiki-article:online-softmax",
+        "E3": "wiki-article:sdpa",
+        "E4": "wiki-article:flash-attention",
+        "E5": "wiki-article:padding-mask",
+        "E6": "wiki-article:prefill-decode"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "归一化块输出权重必须含exp(m_b-m)*l_b，最终除相应权重和",
+          "passed": true,
+          "answer_excerpt": "权重必须含 l_b",
+          "reasoning": "normalized-output formula includes block exponential sums",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "全掩码行需单独约定处理，实数精确不等于浮点逐位一致",
+          "passed": false,
+          "answer_excerpt": "都可能为 0",
+          "reasoning": "acknowledges special handling, but mechanically assigns l_b=0 and treats exp(-inf-(-inf)) as possibly zero; undefined max-subtraction needs an explicit convention",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "output of this function may be different",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "不物化注意力矩阵是IO机制，显存降低不足以识别实际内核",
+          "passed": true,
+          "answer_excerpt": "仅凭显存峰值下降无法断言后端",
+          "reasoning": "distinguishes IO mechanism from backend identification",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "后端约束及实际选择须核查，正确性/同步预热重复测量且区分prefill/decode",
+          "passed": true,
+          "answer_excerpt": "预热、同步、重复计时",
+          "reasoning": "checks actual backend and separates decode measurements",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "complete_items": 3,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "都可能为 0",
+          "kind": "BOUNDARY_ERROR",
+          "reasoning": "exp(-inf-(-inf)) is undefined without a convention, not numerically zero by the stated formula"
+        }
+      ],
+      "request_sha256": "d4d3f07ad66dcd61c784abf1acd32a26c6438fdccab7c29e222de6d03b823783"
+    },
+    {
+      "id": "K02",
+      "arm": "wiki_three_hop",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K02-B-wiki_three_hop.json",
+      "answer": "正确的合并必须同时重缩放\"指数和\"与\"未归一化加权和\"，而不是只对已归一化输出做加权平均。设已处理块保留运行最大值 $m$、指数和 $l$、未归一化加权和 $o$（最终输出为 $o/l$），新块给出 $m_b,l_b,o_b$，则\n$$m'=\\max(m,m_b),\\quad l'=e^{m-m'}l+e^{m_b-m'}l_b,\\quad o'=e^{m-m'}o+e^{m_b-m'}o_b,$$\n最终输出 $o'/l'$。旧块必须按新最大值重缩放，否则两块用了不同分母，结果不等价[E2]。仅用 $e^{m_b-m}$ 对 $O_b$ 加权平均，既漏掉 $l_b$ 的权重，也没有把旧块按 $m'$ 重缩放，因此不是精确等价，只是近似或错误实现[E2]。\n\n边界情况：全掩码行（整行 logit 为 $-\\infty$）不能机械套用上式，因为 $m=-\\infty$ 时 $e^{m-m'}$ 出现 $-\\infty-(-\\infty)$ 或 $0/0$ 型未定义；空块同样需专门处理，通常约定输出为 0 或按实现定义[E2]。有限精度下，$e^{m-m'}$ 与 $e^{m_b-m'}$ 中较小者可能下溢为 0，导致该块贡献被丢弃；若两块最大值差距很大，重缩放还会引入舍入误差。因此\"精确\"指数学上等价，浮点累加顺序不同会产生容差内差异，不等于逐 bit 相同[E4]。\n\n关于显存峰值下降：FlashAttention 类 IO 优化确实通过分块与片上存储避免物化 $T\\times T$ 分数/概率矩阵，从而降低峰值中间存储[E4]。但峰值下降本身不能证明 SDPA 走了融合内核——SDPA 只是接口，后端由设备、dtype、形状与支持条件决定，可能 fallback 到 math 实现，且自动 fallback 不一定发 warning[E3]。要断言用了融合内核，需记录实际后端（如 sdpa_kernel 选择、profiler 或后端日志），并注明硬件、dtype、batch、头数、Tq/Tk[E1][E3]。\n\n关于 decode 一定加速：不能成立。prefill 与 decode 的并行度和瓶颈不同，decode 每请求每轮只有一个新 query，需读取已有 K/V，是访存受限；用 prefill 长序列的 SDPA 测量不能直接解释 batch1 增量 decode 的收益[E5]。此外，减少峰值中间存储也不保证端到端更快[E2]，收益依序列长度、硬件与内核限制而变[E4]。正确做法是分阶段测量：固定输入、dtype、batch、头数，先核对输出容差，再预热、GPU 同步、重复计时并报告统计量；区分 allocated 与 reserved，明确峰值统计边界[E1]。缺少硬件、重复次数或实际后端时应写\"未知\"，不能补造[E1]。\n\n综上：合并式必须含 $l$ 的重缩放，仅加权平均 $O_b$ 的\"精确等价\"说法不成立；全掩码行与下溢需专门处理；显存峰值下降只支持\"减少了中间物化\"，不支持\"用了融合内核\"；decode 加速需独立的 decode 阶段测量，不能由 prefill 结果或显存指标推出。",
+      "citations": {
+        "E1": "wiki-article:measurement",
+        "E2": "wiki-article:online-softmax",
+        "E3": "wiki-article:sdpa",
+        "E4": "wiki-article:flash-attention",
+        "E5": "wiki-article:prefill-decode",
+        "E6": "wiki-article:kv-cache"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "归一化块输出权重必须含exp(m_b-m)*l_b，最终除相应权重和",
+          "passed": true,
+          "answer_excerpt": "漏掉 $l_b$ 的权重",
+          "reasoning": "correct unnormalized recurrence and explicitly required block-sum factor",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "全掩码行需单独约定处理，实数精确不等于浮点逐位一致",
+          "passed": true,
+          "answer_excerpt": "未定义",
+          "reasoning": "identifies -inf subtraction and floating non-bitwise equivalence",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "output of this function may be different",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "不物化注意力矩阵是IO机制，显存降低不足以识别实际内核",
+          "passed": true,
+          "answer_excerpt": "峰值下降本身不能证明",
+          "reasoning": "correct backend distinction, although later adds a separate unsupported memory-cause inference",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "后端约束及实际选择须核查，正确性/同步预热重复测量且区分prefill/decode",
+          "passed": true,
+          "answer_excerpt": "GPU 同步、重复计时",
+          "reasoning": "requires stage-specific measurements and configuration",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "complete_items": 4,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "显存峰值下降只支持",
+          "kind": "NEW_UNSUPPORTED_CAUSE",
+          "reasoning": "lower peak alone does not identify reduced materialization as its cause; allocation, shapes and other changes can lower peaks"
+        }
+      ],
+      "request_sha256": "932a026196a1f68d7983d3ad4f13b0b2280426da09ce8629199ce95e8bae5e12"
+    },
+    {
+      "id": "K03",
+      "arm": "wiki_direct6",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K03-B-wiki_direct6.json",
+      "answer": "先写结构。Post-LN：$y=\\mathrm{Norm}(x+F(x))$，令 $u=x+F(x)$，则 $\\partial y/\\partial x=J_{\\mathrm{Norm}}(u)\\,(I+J_F(x))$，恒等项被归一化Jacobian左乘，不再以裸 $I$ 出现。Pre-LN：$y=x+F(\\mathrm{Norm}(x))$，则 $\\partial y/\\partial x=I+J_F(\\mathrm{Norm}(x))\\,J_{\\mathrm{Norm}}(x)$，残差支路保留直接恒等项，但子层支路多出 $J_{\\mathrm{Norm}}$ 因子[E1][E3]。归一化类型上，LN 对每个位置的特征维计算当前输入的 $\\mu,\\sigma^2$ 再施加 $\\gamma,\\beta$；RMSNorm 为 $x/\\sqrt{\\mathrm{mean}(x^2+\\varepsilon)}\\cdot g$，不减均值[E2][E4]。因此 $J_{\\mathrm{Norm}}$ 的具体形式不同，且 RMSNorm 的缩放对输入尺度近似齐次，LN 的方差归一化则显式抵消尺度；两者不可互换，也不能由\"换成RMSNorm\"推出梯度性质相同[E4]。\n\n工程师的推断至少遗漏以下条件。其一，$I+J_F$ 只是单块形式上的 Jacobian，实际梯度还受堆叠、归一化与损失影响，$L$ 层连乘 $\\prod(I+J_F^{(\\ell)})$ 的谱行为不由\"存在恒等项\"保证[E3]。其二，Pre-LN 论文的梯度规模分析是在其初始化设置下进行的，属于条件性结论，不能推广为任意深度、任意初始化下梯度不变[E1][E5]。其三，warmup 的必要性与学习率、优化器、初始化绑定；原论文用 Adam 与 $d_{\\mathrm{model}}^{-0.5}\\min(\\text{step}^{-0.5},\\text{step}\\cdot\\text{warmup}^{-1.5})$、warmup_steps=4000，Pre-LN 论文的结论不保证任意大模型与优化器下可无条件去掉 warmup[E5][E1]。其四，推理确定性：nn.Dropout 的 eval 模式通常为恒等，但不能假定所有 dropout 接口都由 model.eval 自动关闭——SDPA 总按传入的 dropout_p 应用，评估时须显式传 0；不同随机 mask 会影响正确性比较[E6]。故\"保留 dropout 也不影响确定性\"不成立，除非显式关闭所有随机源。此外 RMSNorm 省去中心化不自动保证更快，属具体实验结论[E4]。",
+      "citations": {
+        "E1": "wiki-article:pre-ln",
+        "E2": "wiki-article:layernorm",
+        "E3": "wiki-article:residual",
+        "E4": "wiki-article:normalization",
+        "E5": "wiki-article:training",
+        "E6": "wiki-article:dropout"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "PostLN是J_LN*(I+J_F)，PreLN是I+J_F*J_LN，不能统一写成I+J_F",
+          "passed": true,
+          "answer_excerpt": "J_{\\mathrm{Norm}}(u)",
+          "reasoning": "correct chain-rule order and evaluation arguments",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "归一化类型与位置是独立选择，RMSNorm不减均值但不能据此保证梯度恒定",
+          "passed": true,
+          "answer_excerpt": "不减均值",
+          "reasoning": "distinguishes normalization type from placement and does not infer constant gradients",
+          "original_support": [
+            {
+              "source_id": "depth-1910.07467:14a6a097250f:c7675-10103",
+              "source_quote": "removing the re-centering operation",
+              "title": "Root Mean Square Layer Normalization",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "多层Jacobian乘积和初始化范围不支持任意深度稳定或普遍免warmup",
+          "passed": true,
+          "answer_excerpt": "不能推广为任意深度",
+          "reasoning": "initialization setting is scoped, no universal warmup removal",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "dropout随机性及eval/train状态影响确定性，不能据结构保证速度或优化效果",
+          "passed": true,
+          "answer_excerpt": "SDPA 总按传入的 dropout_p",
+          "reasoning": "distinguishes module eval state from functional SDPA dropout",
+          "original_support": [
+            {
+              "source_id": "foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281",
+              "source_quote": "chosen independently for each forward call",
+              "title": "PyTorch v2.11.0 dropout",
+              "locator": "L1–L79"
+            }
+          ]
+        }
+      ],
+      "complete_items": 4,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "LN 的方差归一化则显式抵消尺度",
+          "kind": "NUMERICAL_SCOPE",
+          "reasoning": "exact scale invariance needs epsilon/scale conditions; RMSNorm was qualified approximately, LN was not"
+        }
+      ],
+      "request_sha256": "839f3a6103b0be9610bd1a2e83170b526882d645cd545ec2a616f75e104fdd7d"
+    },
+    {
+      "id": "K03",
+      "arm": "wiki_three_hop",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K03-B-wiki_three_hop.json",
+      "answer": "先写结构。Post-LN：$y=\\mathrm{Norm}(x+F(x))$，令 $u=x+F(x)$，则 $\\partial y/\\partial x=J_{\\mathrm{Norm}}(u)\\,(I+J_F(x))$，恒等项被归一化Jacobian左乘，不再以裸 $I$ 出现。Pre-LN：$y=x+F(\\mathrm{Norm}(x))$，则 $\\partial y/\\partial x=I+J_F(\\mathrm{Norm}(x))\\,J_{\\mathrm{Norm}}(x)$，残差支路保留直接恒等项，但子层支路多出 $J_{\\mathrm{Norm}}$ 因子[E1][E3]。归一化类型上，LN 对每个位置的特征维计算当前输入的 $\\mu,\\sigma^2$ 再施加 $\\gamma,\\beta$；RMSNorm 为 $x/\\sqrt{\\mathrm{mean}(x^2+\\varepsilon)}\\cdot g$，不减均值[E2][E4]。因此 $J_{\\mathrm{Norm}}$ 的具体形式不同，且 RMSNorm 的缩放对输入尺度近似齐次，LN 的方差归一化则显式抵消尺度；两者不可互换，也不能由\"换成RMSNorm\"推出梯度性质相同[E4]。\n\n工程师的推断至少遗漏以下条件。其一，$I+J_F$ 只是单块形式上的 Jacobian，实际梯度还受堆叠、归一化与损失影响，$L$ 层连乘 $\\prod(I+J_F^{(\\ell)})$ 的谱行为不由\"存在恒等项\"保证[E3]。其二，Pre-LN 论文的梯度规模分析是在其初始化设置下进行的，属于条件性结论，不能推广为任意深度、任意初始化下梯度不变[E1][E5]。其三，warmup 的必要性与学习率、优化器、初始化绑定；原论文用 Adam 与 $d_{\\mathrm{model}}^{-0.5}\\min(\\text{step}^{-0.5},\\text{step}\\cdot\\text{warmup}^{-1.5})$、warmup_steps=4000，Pre-LN 论文的结论不保证任意大模型与优化器下可无条件去掉 warmup[E5][E1]。其四，推理确定性：nn.Dropout 的 eval 模式通常为恒等，但不能假定所有 dropout 接口都由 model.eval 自动关闭——SDPA 总按传入的 dropout_p 应用，评估时须显式传 0；不同随机 mask 会影响正确性比较[E6]。故\"保留 dropout 也不影响确定性\"不成立，除非显式关闭所有随机源。此外 RMSNorm 省去中心化不自动保证更快，属具体实验结论[E4]。",
+      "citations": {
+        "E1": "wiki-article:pre-ln",
+        "E2": "wiki-article:layernorm",
+        "E3": "wiki-article:residual",
+        "E4": "wiki-article:normalization",
+        "E5": "wiki-article:training",
+        "E6": "wiki-article:dropout"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "PostLN是J_LN*(I+J_F)，PreLN是I+J_F*J_LN，不能统一写成I+J_F",
+          "passed": true,
+          "answer_excerpt": "J_{\\mathrm{Norm}}(u)",
+          "reasoning": "correct chain-rule order and evaluation arguments",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "归一化类型与位置是独立选择，RMSNorm不减均值但不能据此保证梯度恒定",
+          "passed": true,
+          "answer_excerpt": "不减均值",
+          "reasoning": "distinguishes normalization type from placement and does not infer constant gradients",
+          "original_support": [
+            {
+              "source_id": "depth-1910.07467:14a6a097250f:c7675-10103",
+              "source_quote": "removing the re-centering operation",
+              "title": "Root Mean Square Layer Normalization",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "多层Jacobian乘积和初始化范围不支持任意深度稳定或普遍免warmup",
+          "passed": true,
+          "answer_excerpt": "不能推广为任意深度",
+          "reasoning": "initialization setting is scoped, no universal warmup removal",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "dropout随机性及eval/train状态影响确定性，不能据结构保证速度或优化效果",
+          "passed": true,
+          "answer_excerpt": "SDPA 总按传入的 dropout_p",
+          "reasoning": "distinguishes module eval state from functional SDPA dropout",
+          "original_support": [
+            {
+              "source_id": "foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281",
+              "source_quote": "chosen independently for each forward call",
+              "title": "PyTorch v2.11.0 dropout",
+              "locator": "L1–L79"
+            }
+          ]
+        }
+      ],
+      "complete_items": 4,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "LN 的方差归一化则显式抵消尺度",
+          "kind": "NUMERICAL_SCOPE",
+          "reasoning": "exact scale invariance needs epsilon/scale conditions; RMSNorm was qualified approximately, LN was not"
+        }
+      ],
+      "request_sha256": "839f3a6103b0be9610bd1a2e83170b526882d645cd545ec2a616f75e104fdd7d"
+    },
+    {
+      "id": "K04",
+      "arm": "wiki_direct6",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K04-B-wiki_direct6.json",
+      "answer": "先看内积。RoPE 对位置 m 的 query 与位置 n 的 key 施加块对角旋转，得 q_m=R_m q、k_n=R_n k，分数为 q^T R_m^T R_n k，在固定频率构造下只依赖相对位移 n−m[E1]。因此对同一组固定频率的 Q/K 同时施加共同平移 t，即把 m、n 都换成 m+t、n+t，内积不变：q^T R_{m+t}^T R_{n+t} k = q^T R_m^T R_n k，因为 R_{m+t}^T R_{n+t}=R_{n-m}。这是由旋转构造直接推出的恒等式，属于条件推导，不是实验结论。\n\n而\"只把新 query 的位置归零、旧 key 保持原样\"是另一回事：它把新 query 的旋转设为 R_0=I，旧 key 仍是 R_n k，于是分数变成 q^T R_n k，依赖的是绝对位置 n 而非 n−0 之外的相对结构——严格说它等价于把新 query 放在位置 0、旧 key 放在位置 n，相对位移被改成 n 而不是真实的 n−m。只有当新 query 的真实位置恰好为 0（即序列首 token）时两者才一致。所以\"归零\"不是\"共同平移\"，它破坏了相对位移结构，不能声称输出完全等价[E1]。\n\n缓存复用还需满足：位置索引与旋转约定一致，上下文、位置偏移和 mask 必须一致[E1][E2]。具体包括：(1) 每个缓存 key 必须携带其真实位置索引，复用时按该索引重新施加旋转或保持原旋转，不能混用不同偏移；(2) 因果掩码在 T_query≠T_key 时不能假定方形对齐，需按实际 query/key 长度构造可见性[E5]；(3) 跨请求复用前缀时，共享块的物理复用不改变逻辑位置，位置偏移仍需按请求内真实位置计算[E2]；(4) padding 与布尔 mask 语义（True 表示屏蔽还是允许）依 API 而异，需核对[E5]。\n\n头合并（MQA/GQA）是改变 KV 头数 H_kv 的结构性改动，把 H 个 KV 头减到 1 或分组，缓存容量按比例缩小[E2][E6]；它改变的是模型投影结构，可能需要训练或 uptraining，不能保证原 checkpoint 直接转换后质量不变[E2]。它与位置处理正交，合并 KV 头不会使\"归零\"变得等价，也不会带来位置外推能力。\n\n外推方面，相对位移结构并不保证任意长上下文准确；上下文扩展、频率缩放或插值是额外策略，不能混作原始 RoPE[E1]。固定公式可计算训练长度外的位置，不等于模型在那些位置仍准确[E3]。因此\"任意长度外推\"不能由上述内积恒等式或头合并推出，需要单独的长度扩展方案与实测验证。综上，共同平移保持内积是成立的恒等式，但\"只重置新 query 位置\"不满足该条件，缓存复用还需位置索引、掩码与偏移一致，头合并与外推均不能由此推出。",
+      "citations": {
+        "E1": "wiki-article:rope",
+        "E2": "wiki-article:kv-cache",
+        "E3": "wiki-article:position",
+        "E4": "wiki-article:self-attention",
+        "E5": "wiki-article:causal-mask",
+        "E6": "wiki-article:mqa"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "固定旋转频率下共同位置平移保持Q/K相对位移内积，只重置新query一般不保持",
+          "passed": false,
+          "answer_excerpt": "只有当新 query 的真实位置恰好为 0",
+          "reasoning": "common-shift derivation is correct, but only-if excludes degenerate q/k and other coincidences; frozen criterion requires generally-not, not universal necessity",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "缓存需要模型/前缀/位置约定及可见上下文兼容，内积不变量不保证滑窗后的全模型输出",
+          "passed": false,
+          "answer_excerpt": "上下文、位置偏移和 mask 必须一致",
+          "reasoning": "partial compatibility list, but never explains why removal of window context changes hidden states/full model despite inner-product invariance",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "GQA/MQA头合并不是已有MHA任意权重的精确等价变换",
+          "passed": true,
+          "answer_excerpt": "不能保证原 checkpoint",
+          "reasoning": "head merging is not a guaranteed exact checkpoint transformation",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "可计算旋转不保证任意长度的准确率或无条件跨请求复用",
+          "passed": true,
+          "answer_excerpt": "并不保证任意长上下文准确",
+          "reasoning": "properly limits extrapolation and reuse",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        }
+      ],
+      "complete_items": 2,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "只有当新 query",
+          "kind": "OVERGENERALIZATION",
+          "reasoning": "zero or degenerate q/k gives equality at other query positions; generic noninvariance is valid"
+        },
+        {
+          "answer_excerpt": "每个缓存 key 必须携带其真实位置索引",
+          "kind": "IMPLEMENTATION_OVERCLAIM",
+          "reasoning": "logical positions can be inferred/stored outside each key; a per-key metadata layout is not universally required"
+        }
+      ],
+      "request_sha256": "c7b56c071739bb6c04ff5c90ae1cf4a17b980e8e9ebec54fc9d329f4602d9515"
+    },
+    {
+      "id": "K04",
+      "arm": "wiki_three_hop",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K04-B-wiki_three_hop.json",
+      "answer": "先看内积。RoPE 对位置 m 的 query 与位置 n 的 key 施加块对角旋转，得 q_m=R_m q、k_n=R_n k，分数为 q^T R_m^T R_n k，在固定频率构造下只依赖相对位移 n−m[E1]。因此对同一组固定频率的 Q/K 同时施加共同平移 t，即把 m、n 都换成 m+t、n+t，内积不变：q^T R_{m+t}^T R_{n+t} k = q^T R_m^T R_n k，因为 R_{m+t}^T R_{n+t}=R_{n-m}。这是由旋转构造直接推出的恒等式，属于条件推导，不是实验结论。\n\n而\"只把新 query 的位置归零、旧 key 保持原样\"是另一回事：它把新 query 的旋转设为 R_0=I，旧 key 仍是 R_n k，于是分数变成 q^T R_n k，依赖的是绝对位置 n 而非 n−0 之外的相对结构——严格说它等价于把新 query 放在位置 0、旧 key 放在位置 n，相对位移被改成 n 而不是真实的 n−m。只有当新 query 的真实位置恰好为 0（即序列首 token）时两者才一致。所以\"归零\"不是\"共同平移\"，它破坏了相对位移结构，不能声称输出完全等价[E1]。\n\n缓存复用还需满足：位置索引与旋转约定一致，上下文、位置偏移和 mask 必须一致[E1][E2]。具体包括：(1) 每个缓存 key 必须携带其真实位置索引，复用时按该索引重新施加旋转或保持原旋转，不能混用不同偏移；(2) 因果掩码在 T_query≠T_key 时不能假定方形对齐，需按实际 query/key 长度构造可见性[E5]；(3) 跨请求复用前缀时，共享块的物理复用不改变逻辑位置，位置偏移仍需按请求内真实位置计算[E2]；(4) padding 与布尔 mask 语义（True 表示屏蔽还是允许）依 API 而异，需核对[E5]。\n\n头合并（MQA/GQA）是改变 KV 头数 H_kv 的结构性改动，把 H 个 KV 头减到 1 或分组，缓存容量按比例缩小[E2][E6]；它改变的是模型投影结构，可能需要训练或 uptraining，不能保证原 checkpoint 直接转换后质量不变[E2]。它与位置处理正交，合并 KV 头不会使\"归零\"变得等价，也不会带来位置外推能力。\n\n外推方面，相对位移结构并不保证任意长上下文准确；上下文扩展、频率缩放或插值是额外策略，不能混作原始 RoPE[E1]。固定公式可计算训练长度外的位置，不等于模型在那些位置仍准确[E3]。因此\"任意长度外推\"不能由上述内积恒等式或头合并推出，需要单独的长度扩展方案与实测验证。综上，共同平移保持内积是成立的恒等式，但\"只重置新 query 位置\"不满足该条件，缓存复用还需位置索引、掩码与偏移一致，头合并与外推均不能由此推出。",
+      "citations": {
+        "E1": "wiki-article:rope",
+        "E2": "wiki-article:kv-cache",
+        "E3": "wiki-article:position",
+        "E4": "wiki-article:self-attention",
+        "E5": "wiki-article:causal-mask",
+        "E6": "wiki-article:mqa"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "固定旋转频率下共同位置平移保持Q/K相对位移内积，只重置新query一般不保持",
+          "passed": false,
+          "answer_excerpt": "只有当新 query 的真实位置恰好为 0",
+          "reasoning": "common-shift derivation is correct, but only-if excludes degenerate q/k and other coincidences; frozen criterion requires generally-not, not universal necessity",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "缓存需要模型/前缀/位置约定及可见上下文兼容，内积不变量不保证滑窗后的全模型输出",
+          "passed": false,
+          "answer_excerpt": "上下文、位置偏移和 mask 必须一致",
+          "reasoning": "partial compatibility list, but never explains why removal of window context changes hidden states/full model despite inner-product invariance",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "GQA/MQA头合并不是已有MHA任意权重的精确等价变换",
+          "passed": true,
+          "answer_excerpt": "不能保证原 checkpoint",
+          "reasoning": "head merging is not a guaranteed exact checkpoint transformation",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "可计算旋转不保证任意长度的准确率或无条件跨请求复用",
+          "passed": true,
+          "answer_excerpt": "并不保证任意长上下文准确",
+          "reasoning": "properly limits extrapolation and reuse",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        }
+      ],
+      "complete_items": 2,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "只有当新 query",
+          "kind": "OVERGENERALIZATION",
+          "reasoning": "zero or degenerate q/k gives equality at other query positions; generic noninvariance is valid"
+        },
+        {
+          "answer_excerpt": "每个缓存 key 必须携带其真实位置索引",
+          "kind": "IMPLEMENTATION_OVERCLAIM",
+          "reasoning": "logical positions can be inferred/stored outside each key; a per-key metadata layout is not universally required"
+        }
+      ],
+      "request_sha256": "c7b56c071739bb6c04ff5c90ae1cf4a17b980e8e9ebec54fc9d329f4602d9515"
+    },
+    {
+      "id": "K05",
+      "arm": "wiki_direct6",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K05-B-wiki_direct6.json",
+      "answer": "**一、被选中但保持原token的位置是否有梯度？** 有。BERT随机选15%的WordPiece位置作为预测目标，其中80%替[MASK]、10%替随机token、10%保持原token；损失只对被选预测位置计算[E1]。因此\"保持原token\"只是输入替换层面的选择，该位置仍参与loss，其输出logit与目标token的交叉熵产生梯度，梯度经该位置的表示回传到编码器。需要区分两点：其一，输入替换（把token换成[MASK]/随机token/原token）与注意力连接掩码是两个不同层面的操作[E1]；其二，被选位置即使输入未被破坏，其表示仍可读取左右上下文，因为MLM没有对全部token做因果屏蔽[E1]。所以\"未替换\"不等于\"无监督信号\"，也不等于\"梯度为零\"。若某实现把该位置从loss中排除，那才是无梯度，但这不是80/10/10规则的含义。\n\n**二、只改mask、加padding mask与KV缓存、减少KV头，能否免训练得到等价自回归模型？** 不能保证等价。逐项看：\n\n- **可见性**：因果mask只约束注意力可见性（位置i通常只允许j≤i），它不提供位置向量本身，顺序信号仍需绝对位置、RoPE或相对偏置承担[E3]。BERT编码器训练时是双向可见，改成三角mask后，每个位置看到的上下文集合与训练分布不同，权重未针对该可见性优化。\n- **输入替换**：MLM训练时输入含[MASK]与随机token，推理时自回归输入是干净前缀，存在训练-推理输入分布差异；且原论文解码器还将目标输入右移以防泄露[E3]，BERT没有这一结构。\n- **padding mask**：它屏蔽无效key，与因果mask可共同约束可见性，但合并后不一定仍可用纯causal优化提示[E5]；且key被屏蔽不代表padding query行自动为0，输出与损失需单独控制[E5]。这属于正确性细节，不解决分布不匹配。\n- **KV缓存**：缓存复用历史K/V，但要求上下文、位置偏移和mask一致[E2]；训练或非自回归全序列任务不应直接套用增量推理收益[E2]。BERT式并行训练与逐步解码的query形状不同（T_query与T_key可能不同，非方形causal对齐方式不能假定[E3]），缓存有效性需逐层核对。\n- **减少KV头**：MQA/GQA减少H_kv，缓存字节约为$2 \\cdot L \\cdot B \\cdot T \\cdot H_{kv} \\cdot d_{head} \\cdot s$[E2]。但改变投影结构可能需要训练或uptraining，不能保证原checkpoint直接转换后质量不变[E2]。\n\n**三、已知序列并行训练 vs 未知token逐步解码**：prefill同时处理多个已知token并写入KV，decode每轮只有一个新query并读取已有K/V，二者并行度与瓶颈不同[E6]；不能用prefill长序列SDPA测量直接解释batch1增量decode的收益[E6]。MLM的并行训练属于\"已知全序列、双向可见\"，与\"未知token、单向可见、逐token\"在信息结构与计算形态上都不同。\n\n**四、结构变化需要怎样的验证**：至少应（1）逐层比对因果mask下并行前向与增量解码（含缓存）的logit一致性，确认位置偏移与mask语义（布尔True在MHA表示屏蔽、在SDPA表示允许[E3][E5]）；（2）对减少KV头后的模型做质量评估而非仅形状检查，因为转换可能需训练[E2]；（3）分开测量prefill与decode阶段，计入队列、调度与缓存分配成本[E6]。证据未提供\"免训练等价\"的实测结果，故该结论只能作为条件性推断，不能推广为普遍保证。",
+      "citations": {
+        "E1": "wiki-article:bert-mlm",
+        "E2": "wiki-article:kv-cache",
+        "E3": "wiki-article:causal-mask",
+        "E4": "wiki-article:speculative",
+        "E5": "wiki-article:padding-mask",
+        "E6": "wiki-article:prefill-decode"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "被选MLM目标即使保持原token也参与预测loss，不能说未替换等于无监督",
+          "passed": true,
+          "answer_excerpt": "该位置仍参与loss",
+          "reasoning": "selected unchanged targets are supervised; extra false unselected-gradient claim separately flagged",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "MLM目标/输入替换与causal/padding可见性分离，换mask不等于学好next-token",
+          "passed": false,
+          "answer_excerpt": "权重未针对该可见性优化",
+          "reasoning": "explains visibility distribution shift, but does not explicitly distinguish same-position MLM target from next-token target; partial",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "缓存须历史状态不因未来新增而改变且位置一致，不能无条件缓存双向状态",
+          "passed": false,
+          "answer_excerpt": "缓存有效性需逐层核对",
+          "reasoning": "mentions mask/position compatibility but omits history-state independence from future tokens and bidirectional-cache consequence",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "因果训练已知序列也可并行；头合并需适配训练/验证，不保证等价或速度",
+          "passed": false,
+          "answer_excerpt": "prefill同时处理多个已知token",
+          "reasoning": "prefill parallelism does not explicitly establish causal next-token training also parallelizes a known sequence; partial",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "complete_items": 1,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "从loss中排除，那才是无梯度",
+          "kind": "MAJOR",
+          "reasoning": "excluding an output position from direct loss does not preclude gradients through that token's attention connections to supervised positions"
+        }
+      ],
+      "request_sha256": "97f25304396a1a1d5888109b2e1ab7658155bf824607588ab72985946a1182e4"
+    },
+    {
+      "id": "K05",
+      "arm": "wiki_three_hop",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K05-B-wiki_three_hop.json",
+      "answer": "**一、被选中但保持原token的位置是否有梯度？** 有。BERT随机选15%的WordPiece位置作为预测目标，其中80%替[MASK]、10%替随机token、10%保持原token；损失只对被选预测位置计算[E1]。因此\"保持原token\"只是输入替换层面的选择，该位置仍参与loss，其输出logit与目标token的交叉熵产生梯度，梯度经该位置的表示回传到编码器。需要区分两点：其一，输入替换（把token换成[MASK]/随机token/原token）与注意力连接掩码是两个不同层面的操作[E1]；其二，被选位置即使输入未被破坏，其表示仍可读取左右上下文，因为MLM没有对全部token做因果屏蔽[E1]。所以\"未替换\"不等于\"无监督信号\"，也不等于\"梯度为零\"。若某实现把该位置从loss中排除，那才是无梯度，但这不是80/10/10规则的含义。\n\n**二、只改mask、加padding mask与KV缓存、减少KV头，能否免训练得到等价自回归模型？** 不能保证等价。逐项看：\n\n- **可见性**：因果mask只约束注意力可见性（位置i通常只允许j≤i），它不提供位置向量本身，顺序信号仍需绝对位置、RoPE或相对偏置承担[E3]。BERT编码器训练时是双向可见，改成三角mask后，每个位置看到的上下文集合与训练分布不同，权重未针对该可见性优化。\n- **输入替换**：MLM训练时输入含[MASK]与随机token，推理时自回归输入是干净前缀，存在训练-推理输入分布差异；且原论文解码器还将目标输入右移以防泄露[E3]，BERT没有这一结构。\n- **padding mask**：它屏蔽无效key，与因果mask可共同约束可见性，但合并后不一定仍可用纯causal优化提示[E5]；且key被屏蔽不代表padding query行自动为0，输出与损失需单独控制[E5]。这属于正确性细节，不解决分布不匹配。\n- **KV缓存**：缓存复用历史K/V，但要求上下文、位置偏移和mask一致[E2]；训练或非自回归全序列任务不应直接套用增量推理收益[E2]。BERT式并行训练与逐步解码的query形状不同（T_query与T_key可能不同，非方形causal对齐方式不能假定[E3]），缓存有效性需逐层核对。\n- **减少KV头**：MQA/GQA减少H_kv，缓存字节约为$2 \\cdot L \\cdot B \\cdot T \\cdot H_{kv} \\cdot d_{head} \\cdot s$[E2]。但改变投影结构可能需要训练或uptraining，不能保证原checkpoint直接转换后质量不变[E2]。\n\n**三、已知序列并行训练 vs 未知token逐步解码**：prefill同时处理多个已知token并写入KV，decode每轮只有一个新query并读取已有K/V，二者并行度与瓶颈不同[E6]；不能用prefill长序列SDPA测量直接解释batch1增量decode的收益[E6]。MLM的并行训练属于\"已知全序列、双向可见\"，与\"未知token、单向可见、逐token\"在信息结构与计算形态上都不同。\n\n**四、结构变化需要怎样的验证**：至少应（1）逐层比对因果mask下并行前向与增量解码（含缓存）的logit一致性，确认位置偏移与mask语义（布尔True在MHA表示屏蔽、在SDPA表示允许[E3][E5]）；（2）对减少KV头后的模型做质量评估而非仅形状检查，因为转换可能需训练[E2]；（3）分开测量prefill与decode阶段，计入队列、调度与缓存分配成本[E6]。证据未提供\"免训练等价\"的实测结果，故该结论只能作为条件性推断，不能推广为普遍保证。",
+      "citations": {
+        "E1": "wiki-article:bert-mlm",
+        "E2": "wiki-article:kv-cache",
+        "E3": "wiki-article:causal-mask",
+        "E4": "wiki-article:speculative",
+        "E5": "wiki-article:padding-mask",
+        "E6": "wiki-article:prefill-decode"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "被选MLM目标即使保持原token也参与预测loss，不能说未替换等于无监督",
+          "passed": true,
+          "answer_excerpt": "该位置仍参与loss",
+          "reasoning": "selected unchanged targets are supervised; extra false unselected-gradient claim separately flagged",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "MLM目标/输入替换与causal/padding可见性分离，换mask不等于学好next-token",
+          "passed": false,
+          "answer_excerpt": "权重未针对该可见性优化",
+          "reasoning": "explains visibility distribution shift, but does not explicitly distinguish same-position MLM target from next-token target; partial",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "缓存须历史状态不因未来新增而改变且位置一致，不能无条件缓存双向状态",
+          "passed": false,
+          "answer_excerpt": "缓存有效性需逐层核对",
+          "reasoning": "mentions mask/position compatibility but omits history-state independence from future tokens and bidirectional-cache consequence",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "因果训练已知序列也可并行；头合并需适配训练/验证，不保证等价或速度",
+          "passed": false,
+          "answer_excerpt": "prefill同时处理多个已知token",
+          "reasoning": "prefill parallelism does not explicitly establish causal next-token training also parallelizes a known sequence; partial",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "complete_items": 1,
+      "flagged_claims": [
+        {
+          "answer_excerpt": "从loss中排除，那才是无梯度",
+          "kind": "MAJOR",
+          "reasoning": "excluding an output position from direct loss does not preclude gradients through that token's attention connections to supervised positions"
+        }
+      ],
+      "request_sha256": "97f25304396a1a1d5888109b2e1ab7658155bf824607588ab72985946a1182e4"
+    },
+    {
+      "id": "K06",
+      "arm": "wiki_direct6",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K06-B-wiki_direct6.json",
+      "answer": "该声明四项均需限定，且\"相乘得任何GPU上精确吞吐倍数\"不成立。\n\n（1）GQA\"头数减少八倍\"：GQA让H_q/H_kv个query头共享一个KV头，缓存字节在其他条件相同时与H_kv成正比，H_kv=H_q退化为MHA、H_kv=1为MQA[E2]。因此\"减少八倍\"只在H_q/H_kv=8且其他维度与精度不变时成立，且它降低的是逻辑KV元素数量与加载量，属容量/算术量层面；缓存容量下降比例不是端到端提速比例，重复展开KV张量还会削弱工程收益[E2][E3]。已有权重改GQA需训练或uptraining，不保证质量不变[E2]。\n\n（2）分页\"消除所有碎片\"：分页按需分配、非连续物理块可消除外部碎片并缓解内部碎片，但最后一个块仍可能未填满[E5][E3]。所以\"所有碎片\"是反例：内部碎片残留。分页改善的是物理存储利用率与共享，不减少每个独有token的K/V元素，也不改变KV头数[E5][E3]。batch很小时管理开销可能抵消收益[E3]。\n\n（3）FlashAttention\"把精确全注意力降到线性\"：它是精确注意力的IO优化，用分块与在线softmax避免物化T×T概率矩阵，不是稀疏化或近似[E1]。二次注意力算术并未因省去物化而自动变成线性；收益依序列长度、硬件与内核限制而变[E1]。故这是IO/显存层面的改善，算术复杂度仍为二次，声明属错误推广。浮点累加顺序不同还会带来容差内数值差异，精确不等于逐bit相同[E1]。\n\n（4）Pre-LN\"保证所有训练无需warmup\"：Pre-LN为y=x+F(LN(x))，残差支路保留恒等项[E6]。相关论文只在其初始化设置中分析梯度规模并考察warmup需求，不能推出任何训练都不会梯度消失/爆炸，也不能把实验结论说成普遍无需warmup[E6][E4]。原Transformer的warmup_steps=4000等是原论文配置，非所有模型最优[E4]。这属优化稳定性条件结论。\n\n综上，四项分属逻辑容量（GQA）、物理利用率（分页）、算术量与IO（FlashAttention）、优化稳定性（Pre-LN），量纲与作用对象不同，且各自带条件与反例，不能相乘。库中未给出任何GPU上的实测端到端吞吐倍数，该数值必须保留为未知，需在目标硬件上实测。",
+      "citations": {
+        "E1": "wiki-article:flash-attention",
+        "E2": "wiki-article:gqa",
+        "E3": "wiki-article:kv-cache",
+        "E4": "wiki-article:training",
+        "E5": "wiki-article:paged-kv",
+        "E6": "wiki-article:pre-ln"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "头数比例限定同条件逻辑KV，不是总显存/吞吐倍率",
+          "passed": true,
+          "answer_excerpt": "不是端到端提速比例",
+          "reasoning": "conditional logical KV proportion",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "分页减少浪费但最后块可有内部碎片，不消除所有碎片",
+          "passed": true,
+          "answer_excerpt": "最后一个块仍可能未填满",
+          "reasoning": "remaining internal fragmentation",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "精确稠密FlashAttention的IO优化不意味着算术量变线性",
+          "passed": true,
+          "answer_excerpt": "算术复杂度仍为二次",
+          "reasoning": "separates dense arithmetic and IO",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "免warmup有设置范围，缺设备/负载/配置实测不能造倍率或相乘",
+          "passed": true,
+          "answer_excerpt": "必须保留为未知",
+          "reasoning": "scopes warmup and refuses invented device multiplier",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "complete_items": 4,
+      "flagged_claims": [],
+      "request_sha256": "b5335e89feb1b670338561c1b3f31a09ace06efbbf10cc4310f0aa10fd7fb2ce"
+    },
+    {
+      "id": "K06",
+      "arm": "wiki_three_hop",
+      "raw_path": "results/live/complex_graph/06b89a2f-dad9-47d3-935f-2015fc52c20f/K06-B-wiki_three_hop.json",
+      "answer": "该声明四项均需修正，且\"相乘得任何GPU上精确吞吐倍数\"不成立。\n\n**1. GQA\"头数减少八倍\"**：GQA让H_q/H_kv个query头共享一个KV头，缓存字节在其他条件相同时与H_kv成正比，H_kv=H_q退化为MHA，H_kv=1为MQA[E2]。因此\"减少八倍\"只在H_q/H_kv=8且其他维度、精度不变时成立，且它降低的是逻辑KV元素数量与加载量，不是端到端提速比例；重复展开KV张量会削弱工程收益，已有权重改GQA还需训练或uptraining，不保证质量不变[E2][E3]。缓存公式为\\(2LBT H_{kv} d_{head} s\\)，GQA只改H_kv[E3]。\n\n**2. 分页\"消除所有碎片\"**：分页按需分配、非连续物理块可消除外部碎片并缓解内部碎片，但最后一个块仍可能未填满[E5][E3]。它优化分配、利用率与共享，不减少每个独有token的K/V元素，也不改变KV头数[E5][E3]。故\"所有碎片\"为假，属物理利用率层面。\n\n**3. FlashAttention\"降到线性\"**：FlashAttention是精确注意力的IO优化，用分块与在线softmax避免物化T×T概率矩阵，不是稀疏化或近似[E1]。二次注意力的算术量未因省去物化而自动变线性，收益依序列长度、硬件与内核限制而变[E1]。它降低的是HBM读写与中间矩阵占用（IO/显存），算术复杂度仍为\\(O(T^2 d)\\)量级；浮点累加顺序不同可产生容差内差异，精确不等于逐bit相同[E1]。\n\n**4. Pre-LN\"保证无需warmup\"**：原论文用Adam与含warmup_steps=4000的学习率调度，这是原论文配置而非所有Transformer最优[E4]。Pre-LN论文对初始化梯度与warmup的分析不保证任意大模型、优化器和学习率下可无条件移除warmup[E4]。故属优化稳定性层面的条件性结论，不能推广为普遍保证。\n\n**5. 相乘性**：四项分属逻辑容量（GQA）、物理利用率（分页）、算术量/IO（FlashAttention）、优化稳定性（Pre-LN），机制不同且不可互相替代[E3][E5]。吞吐还受batch、prefill/decode阶段、排队、硬件与后端影响，allocated与reserved是不同指标[E6]。库中旧mygpt JSON非当前硬件新测量，缺失硬件/重复次数/后端应写未知[E6]。因此任何GPU上的精确吞吐倍数无法由库确定，须保留为未知，只能在与测量任务、硬件、配置绑定的条件下实测[E6]。",
+      "citations": {
+        "E1": "wiki-article:flash-attention",
+        "E2": "wiki-article:gqa",
+        "E3": "wiki-article:kv-cache",
+        "E4": "wiki-article:training",
+        "E5": "wiki-article:paged-kv",
+        "E6": "wiki-article:measurement"
+      },
+      "items": [
+        {
+          "index": 1,
+          "criterion": "头数比例限定同条件逻辑KV，不是总显存/吞吐倍率",
+          "passed": true,
+          "answer_excerpt": "不是端到端提速比例",
+          "reasoning": "conditional logical KV proportion",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "分页减少浪费但最后块可有内部碎片，不消除所有碎片",
+          "passed": true,
+          "answer_excerpt": "最后一个块仍可能未填满",
+          "reasoning": "remaining internal fragmentation",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "精确稠密FlashAttention的IO优化不意味着算术量变线性",
+          "passed": true,
+          "answer_excerpt": "算术复杂度仍为",
+          "reasoning": "separates dense arithmetic and IO",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "免warmup有设置范围，缺设备/负载/配置实测不能造倍率或相乘",
+          "passed": true,
+          "answer_excerpt": "无法由库确定",
+          "reasoning": "scopes warmup and refuses invented device multiplier",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "complete_items": 4,
+      "flagged_claims": [],
+      "request_sha256": "2aaf1761b49048e038d99537ea6e1d112158719507a1f8ac18eb54a57f2dcd54"
+    }
+  ],
+  "ablations": [
+    {
+      "id": "K01",
+      "removed_edges": [
+        [
+          "kv-cache",
+          "paged-kv"
+        ],
+        [
+          "continuous-batching",
+          "paged-kv"
+        ]
+      ],
+      "target_already_seed": true,
+      "evidence_changed": false,
+      "request_sha256": "70d5d916c8d682bbd9f1c47e905e4a367397707647be543eb88b73f9b1da03d1"
+    },
+    {
+      "id": "K06",
+      "removed_edges": [],
+      "target_already_seed": false,
+      "evidence_changed": false,
+      "request_sha256": "2aaf1761b49048e038d99537ea6e1d112158719507a1f8ac18eb54a57f2dcd54"
+    }
+  ],
+  "paired_token_slots": [
+    {
+      "arm": "wiki_direct6",
+      "input_tokens": 33762,
+      "output_tokens": 4626,
+      "paired_slot_totals_not_billed_twice": true
+    },
+    {
+      "arm": "wiki_three_hop",
+      "input_tokens": 34388,
+      "output_tokens": 4704,
+      "paired_slot_totals_not_billed_twice": true
+    }
+  ],
+  "actual_input_tokens": 52021,
+  "actual_output_tokens": 6970,
+  "actual_statuses": [
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    },
+    {
+      "status": "completed",
+      "http_status": 200
+    }
+  ],
+  "cost_usd": null,
+  "new_unsupported_graph_claim": true,
+  "overall_superiority_established": false,
+  "sensitivity": {
+    "description": "accept A K02 boundary as special-case acknowledgement, and both K04 generic-reset explanation despite the overly strong only-if",
+    "totals": {
+      "wiki_direct6": 18,
+      "wiki_three_hop": 20
+    },
+    "delta_pp": 8.333333333333334
+  },
+  "limitations": [
+    "six deliberately complex exposed development questions, not held-out or statistical evidence",
+    "deterministic Chinese retrieval, not product LLM planning or final source/whole verification",
+    "3 identical-request controls reused, not independent model replications",
+    "nonblinded local AI review, conditional derivations and strict partial-coverage scoring",
+    "flagged-claim audit is not exhaustive atomic fact precision",
+    "both fixed deletions leave requests unchanged; no bridge-edge causal evidence",
+    "changed context and a single generation do not isolate graph topology from model variation"
+  ]
+}

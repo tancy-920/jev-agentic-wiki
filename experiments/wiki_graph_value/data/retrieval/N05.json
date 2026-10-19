@@ -1,0 +1,1144 @@
+{
+  "status": "complete",
+  "provider_calls": 0,
+  "plan_queries": [
+    "FlashAttention tiling why per-block softmax cannot be averaged merging blocks running max running sum rescaling online softmax"
+  ],
+  "runtime_original_query": "In FlashAttention tiled attention computation, why can per-block softmax results not be directly averaged? Explain which quantities must be maintained when merging new and old blocks, how rescaling is done when the maximum changes, and why avoiding the full attention matrix does not mean attention arithmetic becomes linear complexity.",
+  "contexts": {
+    "source": {
+      "evidence": [
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 2,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c5396-7564",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "This requires (i) computing the softmax reduction without access to the whole input (ii) not storing the large\nintermediate attention matrix for the backward pass. We apply two well-established techniques to address\nthese challenges. (i) We restructure the attention computation to split the input into blocks and make several\npasses over input blocks, thus incrementally performing the softmax reduction (also known astiling). (ii) We\nstore the softmax normalization factor from the forward pass to quicklyrecompute attention on-chip in the\nbackward pass, which is faster than the standard approach of reading the intermediate attention matrix from\nHBM. We implementFlashAttentionin CUDA to achieve ﬁne-grained control over memory access and\nfuse all the attention operations into one GPU kernel. Even with the increased FLOPs due to recomputation,\nour algorithm bothruns faster(up to 7.6x on GPT-2 [67], Figure 1 right) anduses less memory—linear\nin sequence length—than standard attention, thanks to the massively reduced amount of HBM access.\nWe analyze the IO complexity [1] of FlashAttention, proving that it requires𝑂„𝑁 2𝑑2𝑀\u00001”HBM\naccesses where𝑑 is the head dimension and𝑀 is the size of SRAM, as compared toΩ„𝑁𝑑‚𝑁 2”of standard\nattention. For typical values of𝑑 and 𝑀, FlashAttention requires many times fewer HBM accesses\ncompared to standard attention (up to 9\u0002 fewer, as shown in Fig. 2). Moreover, we provide a lower bound,\nshowing that no exact attention algorithm can asymptotically improve on the number of HBM accesses over\nall SRAM sizes.\nWe also show that FlashAttention can serve as a useful primitive for realizing the potential of\napproximate attention algorithms by overcoming their issues with memory access overhead. As a proof of\nconcept, we implement block-sparseFlashAttention, a sparse attention algorithm that is 2-4\u0002 faster than\neven FlashAttention, scaling up to sequence length of 64k. We prove that block-sparseFlashAttention\nhas better IO complexity thanFlashAttention by a factor proportional to the sparsity ratio. We discuss\nfurther extensions to other operations (attention on multi-GPU, kernel regression, block-sparse matrix\n2\n",
+          "token_count": 505,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 2",
+          "start_char": 5396,
+          "end_char": 7564
+        },
+        {
+          "paper_id": "2307.08691v1",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [],
+          "year": 2023,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 3,
+          "chunk_id": "depth-2307.08691:f917fc544aae:c8888-10540",
+          "source_url": "https://arxiv.org/pdf/2307.08691v1",
+          "text": "memory accesses translates to slow wall-clock time. Moreover, the required memory is𝑂(𝑁 2) due to having\nto materialize S and P. Moreover, one has to saveP∈ R𝑁×𝑁 for the backward pass to compute the gradients.\n2.3 FlashA ttention\nTo speed up attention on hardware accelerators such as GPU, [5] proposes an algorithm to reduce the memory\nreads/writes while maintaining the same output (without approximation).\n2.3.1 F orward pass\nFlashAttentionapplies the classical technique of tiling to reduce memory IOs, by (1) loading blocks of\ninputs from HBM to SRAM, (2) computing attention with respect to that block, and then (3) updating the\noutput without writing the large intermediate matricesS and P to HBM. As the softmax couples entire rows\nor blocks of row, online softmax [11, 13] can split the attention computation into blocks, and rescale the\noutput of each block to finally get the right result (with no approximation). By significantly reducing the\namount of memory reads/writes,FlashAttentionyields 2-4× wall-clock speedup over optimized baseline\nattention implementations.\nWe describe the online softmax technique [11] and how it is used in attention [13]. For simplicity, consider\njust one row block of the attention matrixS, of the form\n\u0002\nS(1) S(2)\u0003\nfor some matricesS(1), S(2)∈ R𝐵𝑟×𝐵𝑐,\nwhere 𝐵𝑟 and 𝐵𝑐 are the row and column block sizes. We want to compute softmax of this row block and\nmultiply with the value, of the form\n\u0014V(1)\nV(2)\n\u0015\nfor some matricesV(1), V(2)∈ R𝐵𝑐×𝑑. Standard softmax would\n2For clarity of exposition, we omit the scaling of QK⊤ (typically by 1/d), and optionally elementwise masking on S and/or\ndropout applied to P\n3\n",
+          "token_count": 457,
+          "source_id": "depth-2307.08691",
+          "source_kind": "pdf",
+          "source_version": "2307.08691v1",
+          "source_sha256": "f917fc544aaea881528fa3934a8930c125641f5eadcf924877e2a442bf80a818",
+          "locator": "PDF file p. 3",
+          "start_char": 8888,
+          "end_char": 10540
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 4,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "matrices for the backward pass. This yields an attention algorithm that is both memory eﬃcient and faster in\nwall-clock time. We analyze its IO complexity, showing that our method requires much fewer HBM accesses\ncompared to standard attention. We further show thatFlashAttention can serve as a useful primitive by\nextending it to handle block-sparse attention.\nWe focus here on the forward pass for ease of exposition; Appendix B contains details for the backward.\n3.1 An Eﬃcient Attention Algorithm With Tiling and Recomputation\nGiven the inputsQ K V2 R𝑁\u0002𝑑 in HBM, we aim to compute the attention outputO2 R𝑁\u0002𝑑 and write it to\nHBM. Our goal is to reduce the amount of HBM accesses (to sub-quadratic in𝑁).\nWe apply two established techniques (tiling, recomputation) to overcome the technical challenge of\ncomputing exact attention in sub-quadratic HBM accesses. We describe this in Algorithm 1. The main idea\nis that we split the inputsQ K V into blocks, load them from slow HBM to fast SRAM, then compute the\nattention output with respect to those blocks. By scaling the output of each block by the right normalization\nfactor before adding them up, we get the correct result at the end.\nTiling. We compute attention by blocks. Softmax couples columns ofK, so we decompose the large\nsoftmax with scaling [51, 60, 66]. For numerical stability, the softmax of vector𝑥2 R𝐵 is computed as:\n𝑚„𝑥”:= max\n𝑖\n𝑥𝑖 𝑓 „𝑥”:=\n\u0002\n𝑒𝑥1\u0000𝑚„𝑥” 𝑒 𝑥𝐵\u0000𝑚„𝑥”\u0003\n ℓ „𝑥”:=\n∑︁\n𝑖\n𝑓„𝑥”𝑖 softmax„𝑥”:= 𝑓„𝑥”\nℓ„𝑥”\n4\n",
+          "token_count": 485,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 4",
+          "start_char": 13633,
+          "end_char": 15122
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 22,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c71910-74461",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "B.5 Comparison with Rabe and Staats [66]\nWe describe here some similarities and diﬀerences between ourFlashAttentionalgorithm and the algorithm\nof Rabe and Staats [66].\nConceptually, bothFlashAttentionand Rabe and Staats[66] operate on blocks of the attention matrix\nusing the well-established technique of tiling (or softmax scaling) [51, 60]. To reduce the memory footprint,\nboth methods avoid storing the large attention matrix in the forward pass and recompute it in the backward\npass.\nThe ﬁrst major diﬀerence is that Rabe and Staats[66] focuses on the reducing the total memory footprint\n(maximum amount of GPU memory required) whileFlashAttention focuses on reducing memory accesses\n(the number of memory reads/writes). As mentioned in Section 2, the amount of memory access is the\nprimary determining factor of runtime. Reducing memory accesses also necessarily reduces the total amount\nof memory required (e.g., if an operation incurs𝐴 memory accesses, then its total memory requirement is at\nmost 𝐴). As a result,FlashAttention is faster than standard attention (2-4\u0002) while Rabe and Staats[66]\nis around the same speed or slightly slower than standard attention. In terms of total memory required, both\nmethods oﬀer substantial memory saving.\nThe second diﬀerence between the two methods is the way information is summarized from each block\nto pass to the next block. Rabe and Staats[66] summarizes each block with its temporary output along\nwith the softmax normalization statistics. At the end of the forward pass, the temporary outputs of all the\nblocks are combined using the statistics to produce the ﬁnal output.FlashAttentioninstead incrementally\nupdates the output (Algorithm 1 line 12) after processing each block, so only one copy of the output is needed\n(instead of𝐾 copies for𝐾 blocks). This means thatFlashAttentionhas smaller total memory requirement\ncompared to Rabe and Staats [66].\nThe ﬁnal major diﬀerence is the way the backward pass is computed. Rabe and Staats[66] uses gradient\ncheckpointing to recompute the attention matrix and the temporary output of each block.FlashAttention\ninstead simpliﬁes the backward pass analytically (Appendices B.2 and B.4). It only recomputes the attention\nmatrix and does not recompute the temporary output of each block. This reduces the memory requirement\nfor the backward pass and yields speedup.\nC Proofs\nProof of Theorem 1.We ﬁrst count the number of FLOPs and extra memory required.\nThe dominating FLOPs are from matrix multiplication. In the inner loop, (Algorithm 1 line 9), we\n",
+          "token_count": 596,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 22",
+          "start_char": 71910,
+          "end_char": 74461
+        },
+        {
+          "paper_id": "2307.08691v1",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [],
+          "year": 2023,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 2,
+          "chunk_id": "depth-2307.08691:f917fc544aae:c3449-6144",
+          "source_url": "https://arxiv.org/pdf/2307.08691v1",
+          "text": "with no approximation, and as a resultFlashAttention has seen wide adoption in large-scale training and\ninference of Transformers.\nHowever, context length increases even more,FlashAttentionis still not nearly as efficient as other\nprimitives such as matrix-multiply (GEMM). In particular, whileFlashAttentionis already 2-4× faster\nthan a standard attention implementation, the forward pass only reaches 30-50% of the theoretical maximum\nFLOPs/s of the device (Fig. 5), while the backward pass is even more challenging, reaching only 25-35%\nof maximum throughput on A100 GPU (Fig. 6). In contrast, optimized GEMM can reach up to 80-90% of\nthe theoretical maximum device throughput. Through careful profiling, we observe thatFlashAttention\nstill has suboptimal work partitioning between different thread blocks and warps on the GPU, causing either\nlow-occupancy or unnecessary shared memory reads/writes.\nBuilding on FlashAttention, we propose FlashAttention-2 with better parallelism and work\npartitioning to address these challenges.\n1. In Section 3.1, we tweak the algorithms to reduce the number of non-matmul FLOPs while not changing\nthe output. While the non-matmul FLOPs only account for a small fraction of the total FLOPs, they\ntake longer to perform as GPUs have specialized units for matrix multiply, and as a result the matmul\nthroughput can be up to 16× higher than non-matmul throughput. It is thus important to reduce\nnon-matmul FLOPs and spend as much time as possible doing matmul FLOPs.\n2. We propose to parallelize both the forward pass and backward pass along the sequence length dimension,\nin addition to the batch and number of heads dimension. This increases occupancy (utilization of GPU\nresources) in the case where the sequences are long (and hence batch size is often small).\n3. Even within one block of attention computation, we partition the work between different warps of a\nthread block to reduce communication and shared memory reads/writes.\nIn Section 4, we empirically validate thatFlashAttention-2yields significant speedup compared to\neven FlashAttention. Benchmarks on different settings (with or without causal mask, different head\ndimensions) show thatFlashAttention-2 achieves around 2× speedup over FlashAttention, reaching\nup to 73% of the theoretical max throughput in the forward pass, and up to 63% of the theoretical max\nthroughput in the backward pass. When used end-to-end to train GPT-style models, we reach training speed\nof up to 225 TFLOPs/s per A100 GPU.\n2 Background\nWe provide some background on the performance characteristics and execution model of GPUs. We also\ndescribe the standard implementation of attention, as well asFlashAttention.\n",
+          "token_count": 600,
+          "source_id": "depth-2307.08691",
+          "source_kind": "pdf",
+          "source_version": "2307.08691v1",
+          "source_sha256": "f917fc544aaea881528fa3934a8930c125641f5eadcf924877e2a442bf80a818",
+          "locator": "PDF file p. 2",
+          "start_char": 3449,
+          "end_char": 6144
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 2,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "FlashAttention\nMemory Hierarchy with\nBandwidth & Memory Size\nAttention on GPT-2\nFlashAttentionPyTorch\nTime (ms)\nMatmul\nMask\nSoftmax\nDropout\nMatmul\nFused\nKernel\nQ: N x d V: N X d\nKT: d x N\nQKT: N x N\nsm(QKT)V: N x d\nOuter Loop\nCopy Block to SRAM\nCopy\nOuter Loop\nCopy\nInner Loop\nCompute Block\non SRAM\nOutput to HBM\nInner Loop\nInner Loop\nOuter Loop\nGPU\nSRAM\nGPU\nHBM\nMain Memory\n(CPU DRAM)\nSRAM: 19 TB/s (20 MB)\nHBM: 1.5 TB/s (40 GB)\nDRAM: 12.8 GB/s\n                (>1 TB)\n0\n5\n10\n15\nFigure 1: Left: FlashAttention uses tiling to prevent materialization of the large𝑁\u0002𝑁 attention matrix\n(dotted box) on (relatively) slow GPU HBM. In the outer loop (red arrows),FlashAttentionloops through\nblocks of theK and V matrices and loads them to fast on-chip SRAM. In each block,FlashAttention\nloops over blocks ofQ matrix (blue arrows), loading them to SRAM, and writing the output of the attention\ncomputation back to HBM.Right: Speedup over the PyTorch implementation of attention on GPT-2.\nFlashAttentiondoes not read and write the large𝑁\u0002𝑁 attention matrix to HBM, resulting in an 7.6\u0002\nspeedup on the attention computation.\nGPUs, compute speed has out-paced memory speed [61, 62, 63], and most operations in Transformers are\nbottlenecked by memory accesses [43]. IO-aware algorithms have been critical for similar memory-bound\noperations, when reading and writing data can account for a large portion of the runtime—such as database\njoins [71], image processing [70], numerical linear algebra [4], and more [40, 85]. However, common Python\ninterfaces to deep learning such as PyTorch and Tensorﬂow do not allow ﬁne-grained control of memory\naccess.\nWe propose FlashAttention, a new attention algorithm that computes exact attention with far fewer\nmemory accesses. Our main goal is to avoid reading and writing the attention matrix to and from HBM.\nThis requires (i) computing the softmax reduction without access to the whole input (ii) not storing the large\nintermediate attention matrix for the backward pass. We apply two well-established techniques to address\nthese challenges. (i) We restructure the attention computation to split the input into blocks and make several\n",
+          "token_count": 580,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 2",
+          "start_char": 3556,
+          "end_char": 5723
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 4,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c11869-13995",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "However, in the context of model training, the intermediate values still need to be written to HBM to save\nfor the backward pass, reducing the eﬀectiveness of naive kernel fusion.\n2.2 Standard Attention Implementation\nGiven input sequencesQ K V2 R𝑁\u0002𝑑 where 𝑁 is the sequence length and𝑑 is the head dimension, we want\nto compute the attention outputO2 R𝑁\u0002𝑑:\nS= QK>2 R𝑁\u0002𝑁 P= softmax„S”2R𝑁\u0002𝑁 O= PV2 R𝑁\u0002𝑑\nwhere softmax is applied row-wise.\nStandard attention implementations materialize the matricesS and P to HBM, which takes𝑂„𝑁 2”memory.\nOften 𝑁\u001d 𝑑 (e.g., for GPT2,𝑁 = 1024 and 𝑑 = 64). We describe the standard attention implementation\nin Algorithm 0. As some or most of the operations are memory-bound (e.g., softmax), the large number of\nmemory accesses translates to slow wall-clock time.\nThis problem is exacerbated by other elementwise operations applied to the attention matrix, such as\nmasking applied toS or dropout applied toP. As a result, there have been many attempts to fuse several\nelementwise operations, such as fusing masking with softmax [77].\nIn Section 3.2, we will show that the standard attention implementation performs HBM accesses quadratic\nin the sequence length𝑁. We also compare the number of FLOPs and number of HBM accesses of standard\nattention and of our method (FlashAttention).\nAlgorithm 0Standard Attention Implementation\nRequire: Matrices Q K V2 R𝑁\u0002𝑑 in HBM.\n1: Load Q K by blocks from HBM, computeS= QK>, write S to HBM.\n2: Read S from HBM, computeP= softmax„S”, write P to HBM.\n3: Load P and V by blocks from HBM, computeO= PV, write O to HBM.\n4: Return O.\n3 FlashA ttention: Algorithm, Analysis, and Extensions\nWe show how to compute exact attention with fewer HBM reads/writes and without storing large intermediate\nmatrices for the backward pass. This yields an attention algorithm that is both memory eﬃcient and faster in\nwall-clock time. We analyze its IO complexity, showing that our method requires much fewer HBM accesses\ncompared to standard attention. We further show thatFlashAttention can serve as a useful primitive by\nextending it to handle block-sparse attention.\n",
+          "token_count": 586,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 4",
+          "start_char": 11869,
+          "end_char": 13995
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 6,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c21449-22492",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "faster runtime. In Fig. 2 (middle), we vary the block size𝐵𝑐 of FlashAttention, which results in diﬀerent\namounts of HBM accesses, and measure the runtime of the forward pass. As block size increases, the number\nof HBM accesses decreases (as we make fewer passes over the input), and runtime decreases. For large enough\nblock size (beyond 256), the runtime is then bottlenecked by other factors (e.g., arithmetic operations).\nMoreover, larger block size will not ﬁt into the small SRAM size.\n3.3 Extension: Block-Sparse FlashA ttention\nWe extendFlashAttention to approximate attention: we propose block-sparseFlashAttention, whose\nIO complexity is smaller thanFlashAttention by a factor proportional to the sparsity.\nGiven inputs Q K V2 R𝑁\u0002𝑑 and a mask matrix~M2f 0 1g𝑁\u0002𝑁, we want to compute:\nS= QK>2 R𝑁\u0002𝑁 P= softmax„S\f 𝟙 ~M”2R𝑁\u0002𝑁 O= PV2 R𝑁\u0002𝑑\nwhere„S\f 𝟙 ~M”𝑘𝑙 = S𝑘𝑙 if ~M𝑘𝑙 = 1 and\u00001 if M𝑘𝑙 = 0. We require ~M to have block form: for some block sizes\n𝐵𝑟𝐵𝑐, for all𝑘𝑙 , ~M𝑘𝑙 = M𝑖𝑗 with𝑖=b𝑘𝐵𝑟c𝑗 =b𝑙𝐵𝑐c for some M2f 0 1g𝑁𝐵𝑟\u0002𝑁𝐵𝑐.\n6\n",
+          "token_count": 453,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 6",
+          "start_char": 21449,
+          "end_char": 22492
+        },
+        {
+          "paper_id": "2307.08691v1",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [],
+          "year": 2023,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 5,
+          "chunk_id": "depth-2307.08691:f917fc544aae:c11834-14080",
+          "source_url": "https://arxiv.org/pdf/2307.08691v1",
+          "text": "2.3.2 Backward pass\nIn the backward pass, by re-computing the values of the attention matricesS and P once blocks of inputs\nQ, K, V are already loaded to SRAM,FlashAttention avoids having to store large intermediate values. By\nnot having to save the large matricesS and P of size𝑁×𝑁, FlashAttention yields 10-20× memory saving\ndepending on sequence length (memory required in linear in sequence length𝑁 instead of quadratic). The\nbackward pass also achieves 2-4× wall-clock speedup due to reduce memory reads/writes.\nThe backward pass applies tiling to the equations in Section 2.2. Though the backward pass is simpler\nthan the forward pass conceptually (there is no softmax rescaling), the implementation is significantly more\ninvolved. This is because there are more values to be kept in SRAM to perform 5 matrix multiples in the\nbackward pass, compared to just 2 matrix multiples in the forward pass.\n3 FlashA ttention-2: Algorithm, Parallelism, and Work Partition-\ning\nWe describe theFlashAttention-2algorithm, which includes several tweaks toFlashAttentionto reduce\nthe number of non-matmul FLOPs. We then describe how to parallelize the computation on different thread\nblocks to make full use the GPU resources. Finally we describe we partition the work between different warps\nwithin one thread block to reduce the amount of shared memory access. These improvements lead to 2-3×\nspeedup as validated in Section 4.\n3.1 Algorithm\nWe tweak the algorithm fromFlashAttention to reduce the number of non-matmul FLOPs. This is\nbecause modern GPUs have specialized compute units (e.g., Tensor Cores on Nvidia GPUs) that makes\nmatmul much faster. As an example, the A100 GPU has a max theoretical throughput of 312 TFLOPs/s of\nFP16/BF16 matmul, but only 19.5 TFLOPs/s of non-matmul FP32. Another way to think about this is that\neach non-matmul FLOP is 16× more expensive than a matmul FLOP. To maintain high throughput (e.g.,\nmore than 50% of the maximum theoretical TFLOPs/s), we want to spend as much time on matmul FLOPs\nas possible.\n3.1.1 F orward pass\nWe revisit the online softmax trick as shown in Section 2.3 and make two minor tweaks to reduce non-matmul\nFLOPs:\n1. We do not have to rescale both terms of the output update bydiag(ℓ(2))−1:\n",
+          "token_count": 566,
+          "source_id": "depth-2307.08691",
+          "source_kind": "pdf",
+          "source_version": "2307.08691v1",
+          "source_sha256": "f917fc544aaea881528fa3934a8930c125641f5eadcf924877e2a442bf80a818",
+          "locator": "PDF file p. 5",
+          "start_char": 11834,
+          "end_char": 14080
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 6,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c19938-21661",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "The main idea of the proof is that given the SRAM size of𝑀, we can load blocks ofK V of sizeΘ„𝑀”each\n(Algorithm 1 line 6). For each block ofK and V, we iterate over all blocks ofQ (Algorithm 1 line 8) to compute\nthe intermediate values, resulting inΘ„𝑁𝑑𝑀\u00001”passes over Q. Each pass loads Θ„𝑁𝑑”elements, which\namounts toΘ„𝑁 2𝑑2𝑀\u00001”HBM accesses. We similarly prove that the backward pass of standard attention\nrequires Θ„𝑁𝑑‚𝑁 2”HBM accesses while the backward pass ofFlashAttention requires Θ„𝑁 2𝑑2𝑀\u00001”\nHBM accesses (Appendix B).\nWe prove a lower-bound: one cannot asymptotically improve on the number of HBM accesses for all\nvalues of𝑀 (the SRAM size) when computing exact attention.\nProposition 3. Let 𝑁 be the sequence length,𝑑 be the head dimension, and𝑀 be size of SRAM with\n𝑑\u0014 𝑀\u0014 𝑁𝑑. There does not exist an algorithm to compute exact attention with𝑜„𝑁 2𝑑2𝑀\u00001”HBM accesses\nfor all𝑀 in the range»𝑑𝑁𝑑….\nThe proof relies on the fact that for𝑀 = Θ„𝑁𝑑”any algorithm must performΩ„𝑁 2𝑑2𝑀\u00001”= Ω„𝑁𝑑”\nHBM accesses. This type of lower bound over a subrange of𝑀 is common in the streaming algorithms\nliterature [88]. We leave proving parameterized complexity [27] lower bounds in terms of𝑀 as exciting future\nwork.\nWe validate that the number of HBM accesses is the main determining factor of attention run-time.\nIn Fig. 2 (left), we see that even thoughFlashAttentionhas higher FLOP count compared to standard\nattention (due to recomputation in the backward pass), it has much fewer HBM accesses, resulting in much\nfaster runtime. In Fig. 2 (middle), we vary the block size𝐵𝑐 of FlashAttention, which results in diﬀerent\namounts of HBM accesses, and measure the runtime of the forward pass. As block size increases, the number\n",
+          "token_count": 578,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 6",
+          "start_char": 19938,
+          "end_char": 21661
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 5,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c17886-18495",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "13: Writeℓ𝑖 ℓnew\n𝑖 , 𝑚𝑖 𝑚new\n𝑖 to HBM.\n14: end for\n15: end for\n16: Return O.\nWe showFlashAttention’s correctness, runtime, and memory requirement (proof in Appendix C).\nTheorem 1. Algorithm 1 returnsO= softmax„QK>”V with 𝑂„𝑁 2𝑑”FLOPs and requires𝑂„𝑁”additional\nmemory beyond inputs and output.\n3.2 Analysis: IO Complexity of FlashA ttention\nWe analyze the IO complexity ofFlashAttention, showing signiﬁcant reduction in HBM accesses compared\nto standard attention. We also provide a lower bound, proving that no exact attention algorithm can\n2This style of aggregation is called algebraic aggregation [33].\n5\n",
+          "token_count": 189,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 5",
+          "start_char": 17886,
+          "end_char": 18495
+        },
+        {
+          "paper_id": "2307.08691v1",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [],
+          "year": 2023,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 1,
+          "chunk_id": "depth-2307.08691:f917fc544aae:c0-2698",
+          "source_url": "https://arxiv.org/pdf/2307.08691v1",
+          "text": "FlashAttention-2:\nFaster Attention with Better Parallelism and Work Partitioning\nTri Dao1,2\n1Department of Computer Science, Princeton University\n2Department of Computer Science, Stanford University\ntrid@cs.stanford.edu\nJuly 18, 2023\nAbstract\nScaling Transformers to longer sequence lengths has been a major problem in the last several years,\npromising to improve performance in language modeling and high-resolution image understanding, as\nwell as to unlock new applications in code, audio, and video generation. The attention layer is the\nmain bottleneck in scaling to longer sequences, as its runtime and memory increase quadratically in\nthe sequence length. FlashAttention [5] exploits the asymmetric GPU memory hierarchy to bring\nsignificant memory saving (linear instead of quadratic) and runtime speedup (2-4× compared to optimized\nbaselines), with no approximation. However,FlashAttentionis still not nearly as fast as optimized\nmatrix-multiply (GEMM) operations, reaching only 25-40% of the theoretical maximum FLOPs/s. We\nobserve that the inefficiency is due to suboptimal work partitioning between different thread blocks and\nwarps on the GPU, causing either low-occupancy or unnecessary shared memory reads/writes. We propose\nFlashAttention-2, with better work partitioning to address these issues. In particular, we (1) tweak\nthe algorithm to reduce the number of non-matmul FLOPs (2) parallelize the attention computation, even\nfor a single head, across different thread blocks to increase occupancy, and (3) within each thread block,\ndistribute the work between warps to reduce communication through shared memory. These yield around\n2× speedup compared toFlashAttention, reaching 50-73% of the theoretical maximum FLOPs/s on\nA100 and getting close to the efficiency of GEMM operations. We empirically validate that when used\nend-to-end to train GPT-style models,FlashAttention-2reaches training speed of up to 225 TFLOPs/s\nper A100 GPU (72% model FLOPs utilization).1\n1 Introduction\nScaling up the context length of Transformers [18] is a challenge, since the attention layer at their heart\nhas runtime and memory requirements quadratic in the input sequence length. Ideally, we would like to go\nbeyond the standard 2k sequence length limit to train models to understand books, high resolution images,\nand long-form videos. Just within the last year, there have been several language models with much longer\ncontext than before: GPT-4 [12] with context length 32k, MosaicML’s MPT with context length 65k, and\nAnthropic’s Claude with context length 100k. Emerging use cases such as long document querying and story\nwriting have demonstrated a need for models with such long context.\n",
+          "token_count": 595,
+          "source_id": "depth-2307.08691",
+          "source_kind": "pdf",
+          "source_version": "2307.08691v1",
+          "source_sha256": "f917fc544aaea881528fa3934a8930c125641f5eadcf924877e2a442bf80a818",
+          "locator": "PDF file p. 1",
+          "start_char": 0,
+          "end_char": 2698
+        }
+      ],
+      "omitted_whole": [
+        "paper-2205.14135:b86de4ee5c52:c22492-24426",
+        "paper-2205.14135:b86de4ee5c52:c15122-16331",
+        "paper-2205.14135:b86de4ee5c52:c33318-36119",
+        "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+        "paper-2205.14135:b86de4ee5c52:c0-2471",
+        "paper-2205.14135:b86de4ee5c52:c26364-28203",
+        "depth-2307.08691:f917fc544aae:c16936-18151",
+        "paper-2205.14135:b86de4ee5c52:c24161-26364"
+      ],
+      "characters": 23167
+    },
+    "llm_wiki": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "FlashAttention 与 IO 优化（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:flash-attention",
+          "source_url": "",
+          "text": "# FlashAttention 与 IO 优化\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nFlashAttention针对精确注意力的数据搬运开销进行优化，利用分块和片上存储减少HBM读写及中间矩阵物化。\n\n## 工作机制\n\n普通实现可能将T×T分数和概率写入显存。FlashAttention按Q/K/V块计算，结合在线softmax更新中间统计与输出，避免保存完整概率矩阵。原算法是精确注意力的IO优化，不是通过稀疏化或近似softmax省略任意关系。\n\n## 适用条件与易混淆点\n\n浮点累加顺序不同可产生容差内数值差异，精确算法不等于逐bit相同。二次注意力算术未因省去矩阵物化而自动变成线性；收益依序列长度、硬件与内核限制而变。\n\n## 关联知识\n\nPyTorch SDPA 与后端选择、分块注意力与在线 Softmax、性能测量、正确性与适用条件\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-2205.14135:b86de4ee5c52:c0-2471` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 1]\n- `paper-2205.14135:b86de4ee5c52:c3556-5723` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 2]\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `depth-2307.08691:f917fc544aae:c3449-6144` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 2]\n- `depth-2307.08691:f917fc544aae:c21985-24558` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 9]\n- `pytorch-sdpa-2.11:42a07d742f7e:c1869-3693` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3167–L3207; snapshot L34–L74]\n- `mygpt-readme.md:2d20f1a5d663:c6983-8692` — [mygpt / README.md, mygpt-readme.md.md, L128–L149]\n- `mygpt-readme.md:2d20f1a5d663:c8442-10433` — [mygpt / README.md, mygpt-readme.md.md, L149–L175]\n",
+          "token_count": 2268,
+          "source_id": "wiki-article:flash-attention",
+          "source_kind": "wiki_article",
+          "source_version": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "source_sha256": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "locator": "flash-attention.md"
+        },
+        {
+          "paper_id": null,
+          "title": "分块注意力与在线 Softmax（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:online-softmax",
+          "source_url": "",
+          "text": "# 分块注意力与在线 Softmax\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n在线softmax用运行中的最大值和归一化量合并分块结果，使注意力不必保存完整分数矩阵。它不是逐块独立softmax后直接平均。\n\n## 工作机制\n\n已处理分块保留最大值m、指数和l、未归一化加权和o。新块最大值m_b、指数和l_b、加权和o_b到来时，m'=max(m,m_b)，l'=exp(m−m')l+exp(m_b−m')l_b，o'=exp(m−m')o+exp(m_b−m')o_b，最终输出o'/l'。旧块必须按新最大值重缩放。\n\n## 适用条件与易混淆点\n\n掩码和空块需专门处理，不能对全−∞行机械使用上述式子。Python教学分块代码不等同于融合GPU内核；减少峰值中间存储也不保证端到端更快。\n\n## 关联知识\n\nFlashAttention 与 IO 优化、PyTorch SDPA 与后端选择\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-2205.14135:b86de4ee5c52:c13633-15122` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 4]\n- `paper-2205.14135:b86de4ee5c52:c15122-16331` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 5]\n- `paper-2205.14135:b86de4ee5c52:c11869-13995` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 4]\n- `mygpt-model.py:e05006957de4:c10000-11173` — [mygpt / model.py, mygpt-model.py.py, L263–L289]\n- `mygpt-model.py:e05006957de4:c3941-5197` — [mygpt / model.py, mygpt-model.py.py, L119–L153]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c1321-2882` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L67–L154]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L1–L78]\n",
+          "token_count": 2057,
+          "source_id": "wiki-article:online-softmax",
+          "source_kind": "wiki_article",
+          "source_version": "9b5f22fae0b68a8b63fca00268bdb88ec79157c13274a0ecf85ffdea47dc6e53",
+          "source_sha256": "9b5f22fae0b68a8b63fca00268bdb88ec79157c13274a0ecf85ffdea47dc6e53",
+          "locator": "online-softmax.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 3112
+    },
+    "llm_wiki_graph": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "FlashAttention 与 IO 优化（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:flash-attention",
+          "source_url": "",
+          "text": "# FlashAttention 与 IO 优化\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nFlashAttention针对精确注意力的数据搬运开销进行优化，利用分块和片上存储减少HBM读写及中间矩阵物化。\n\n## 工作机制\n\n普通实现可能将T×T分数和概率写入显存。FlashAttention按Q/K/V块计算，结合在线softmax更新中间统计与输出，避免保存完整概率矩阵。原算法是精确注意力的IO优化，不是通过稀疏化或近似softmax省略任意关系。\n\n## 适用条件与易混淆点\n\n浮点累加顺序不同可产生容差内数值差异，精确算法不等于逐bit相同。二次注意力算术未因省去矩阵物化而自动变成线性；收益依序列长度、硬件与内核限制而变。\n\n## 关联知识\n\nPyTorch SDPA 与后端选择、分块注意力与在线 Softmax、性能测量、正确性与适用条件\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-2205.14135:b86de4ee5c52:c0-2471` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 1]\n- `paper-2205.14135:b86de4ee5c52:c3556-5723` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 2]\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `depth-2307.08691:f917fc544aae:c3449-6144` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 2]\n- `depth-2307.08691:f917fc544aae:c21985-24558` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 9]\n- `pytorch-sdpa-2.11:42a07d742f7e:c1869-3693` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3167–L3207; snapshot L34–L74]\n- `mygpt-readme.md:2d20f1a5d663:c6983-8692` — [mygpt / README.md, mygpt-readme.md.md, L128–L149]\n- `mygpt-readme.md:2d20f1a5d663:c8442-10433` — [mygpt / README.md, mygpt-readme.md.md, L149–L175]\n",
+          "token_count": 2268,
+          "source_id": "wiki-article:flash-attention",
+          "source_kind": "wiki_article",
+          "source_version": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "source_sha256": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "locator": "flash-attention.md"
+        },
+        {
+          "paper_id": null,
+          "title": "分块注意力与在线 Softmax（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:online-softmax",
+          "source_url": "",
+          "text": "# 分块注意力与在线 Softmax\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n在线softmax用运行中的最大值和归一化量合并分块结果，使注意力不必保存完整分数矩阵。它不是逐块独立softmax后直接平均。\n\n## 工作机制\n\n已处理分块保留最大值m、指数和l、未归一化加权和o。新块最大值m_b、指数和l_b、加权和o_b到来时，m'=max(m,m_b)，l'=exp(m−m')l+exp(m_b−m')l_b，o'=exp(m−m')o+exp(m_b−m')o_b，最终输出o'/l'。旧块必须按新最大值重缩放。\n\n## 适用条件与易混淆点\n\n掩码和空块需专门处理，不能对全−∞行机械使用上述式子。Python教学分块代码不等同于融合GPU内核；减少峰值中间存储也不保证端到端更快。\n\n## 关联知识\n\nFlashAttention 与 IO 优化、PyTorch SDPA 与后端选择\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-2205.14135:b86de4ee5c52:c13633-15122` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 4]\n- `paper-2205.14135:b86de4ee5c52:c15122-16331` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 5]\n- `paper-2205.14135:b86de4ee5c52:c11869-13995` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 4]\n- `mygpt-model.py:e05006957de4:c10000-11173` — [mygpt / model.py, mygpt-model.py.py, L263–L289]\n- `mygpt-model.py:e05006957de4:c3941-5197` — [mygpt / model.py, mygpt-model.py.py, L119–L153]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c1321-2882` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L67–L154]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L1–L78]\n",
+          "token_count": 2057,
+          "source_id": "wiki-article:online-softmax",
+          "source_kind": "wiki_article",
+          "source_version": "9b5f22fae0b68a8b63fca00268bdb88ec79157c13274a0ecf85ffdea47dc6e53",
+          "source_sha256": "9b5f22fae0b68a8b63fca00268bdb88ec79157c13274a0ecf85ffdea47dc6e53",
+          "locator": "online-softmax.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 3112
+    }
+  },
+  "timing_rows": [
+    {
+      "mode": "source",
+      "repeat": 0,
+      "seconds": 0.5339720000047237
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 0,
+      "seconds": 0.0015289000002667308
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 0,
+      "seconds": 0.0015472000231966376
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 1,
+      "seconds": 0.00165940000442788
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 1,
+      "seconds": 0.0015367000014521182
+    },
+    {
+      "mode": "source",
+      "repeat": 1,
+      "seconds": 0.5228635999956168
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 2,
+      "seconds": 0.001526000036392361
+    },
+    {
+      "mode": "source",
+      "repeat": 2,
+      "seconds": 0.5209497999749146
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 2,
+      "seconds": 0.0015388000174425542
+    },
+    {
+      "mode": "source",
+      "repeat": 3,
+      "seconds": 0.5269434999790974
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 3,
+      "seconds": 0.0014881999813951552
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 3,
+      "seconds": 0.0014025999698787928
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 4,
+      "seconds": 0.0013575000339187682
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 4,
+      "seconds": 0.0013609000016003847
+    },
+    {
+      "mode": "source",
+      "repeat": 4,
+      "seconds": 0.5338331999955699
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 5,
+      "seconds": 0.0017099999822676182
+    },
+    {
+      "mode": "source",
+      "repeat": 5,
+      "seconds": 0.5383389000198804
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 5,
+      "seconds": 0.001572699984535575
+    },
+    {
+      "mode": "source",
+      "repeat": 6,
+      "seconds": 0.5298164000269026
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 6,
+      "seconds": 0.0015940000303089619
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 6,
+      "seconds": 0.001476600009482354
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 7,
+      "seconds": 0.0013993000029586256
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 7,
+      "seconds": 0.0014254999696277082
+    },
+    {
+      "mode": "source",
+      "repeat": 7,
+      "seconds": 0.5392541000037454
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 8,
+      "seconds": 0.001579499978106469
+    },
+    {
+      "mode": "source",
+      "repeat": 8,
+      "seconds": 0.5393965000403114
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 8,
+      "seconds": 0.0014752999995835125
+    },
+    {
+      "mode": "source",
+      "repeat": 9,
+      "seconds": 0.5496902000159025
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 9,
+      "seconds": 0.0015349999885074794
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 9,
+      "seconds": 0.0013636000221595168
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 10,
+      "seconds": 0.0013673999928869307
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 10,
+      "seconds": 0.001520399993751198
+    },
+    {
+      "mode": "source",
+      "repeat": 10,
+      "seconds": 0.5677375000086613
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 11,
+      "seconds": 0.001641899987589568
+    },
+    {
+      "mode": "source",
+      "repeat": 11,
+      "seconds": 0.5714917000150308
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 11,
+      "seconds": 0.0015448000049218535
+    },
+    {
+      "mode": "source",
+      "repeat": 12,
+      "seconds": 0.5566490999772213
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 12,
+      "seconds": 0.0015069000073708594
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 12,
+      "seconds": 0.0015440999995917082
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 13,
+      "seconds": 0.001491700008045882
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 13,
+      "seconds": 0.0013716999674215913
+    },
+    {
+      "mode": "source",
+      "repeat": 13,
+      "seconds": 0.5704067999613471
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 14,
+      "seconds": 0.001487900037318468
+    },
+    {
+      "mode": "source",
+      "repeat": 14,
+      "seconds": 0.5275823000119999
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 14,
+      "seconds": 0.0013981999945826828
+    },
+    {
+      "mode": "source",
+      "repeat": 15,
+      "seconds": 0.5330791000160389
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 15,
+      "seconds": 0.001679199980571866
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 15,
+      "seconds": 0.0017134000081568956
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 16,
+      "seconds": 0.0013682999997399747
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 16,
+      "seconds": 0.0013805999769829214
+    },
+    {
+      "mode": "source",
+      "repeat": 16,
+      "seconds": 0.5313790999935009
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 17,
+      "seconds": 0.0015445000026375055
+    },
+    {
+      "mode": "source",
+      "repeat": 17,
+      "seconds": 0.5337776999804191
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 17,
+      "seconds": 0.001922300027217716
+    },
+    {
+      "mode": "source",
+      "repeat": 18,
+      "seconds": 0.5411624999833293
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 18,
+      "seconds": 0.002099800040014088
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 18,
+      "seconds": 0.001507400011178106
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 19,
+      "seconds": 0.0014031999744474888
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 19,
+      "seconds": 0.0014807000407017767
+    },
+    {
+      "mode": "source",
+      "repeat": 19,
+      "seconds": 0.53248390002409
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 20,
+      "seconds": 0.0016200999962165952
+    },
+    {
+      "mode": "source",
+      "repeat": 20,
+      "seconds": 0.5407545000198297
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 20,
+      "seconds": 0.0015175000298768282
+    },
+    {
+      "mode": "source",
+      "repeat": 21,
+      "seconds": 0.5467408000258729
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 21,
+      "seconds": 0.0017691999673843384
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 21,
+      "seconds": 0.0014358999906107783
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 22,
+      "seconds": 0.0013783000176772475
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 22,
+      "seconds": 0.001359199988655746
+    },
+    {
+      "mode": "source",
+      "repeat": 22,
+      "seconds": 0.5391999999992549
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 23,
+      "seconds": 0.0015146000077947974
+    },
+    {
+      "mode": "source",
+      "repeat": 23,
+      "seconds": 0.5420850000227802
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 23,
+      "seconds": 0.0015024999738670886
+    },
+    {
+      "mode": "source",
+      "repeat": 24,
+      "seconds": 0.5453987999935634
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 24,
+      "seconds": 0.0014948999742045999
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 24,
+      "seconds": 0.0014199999859556556
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 25,
+      "seconds": 0.0014288999955169857
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 25,
+      "seconds": 0.0015687000122852623
+    },
+    {
+      "mode": "source",
+      "repeat": 25,
+      "seconds": 0.5389416000107303
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 26,
+      "seconds": 0.0014735999866388738
+    },
+    {
+      "mode": "source",
+      "repeat": 26,
+      "seconds": 0.5501971000339836
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 26,
+      "seconds": 0.0017343999934382737
+    },
+    {
+      "mode": "source",
+      "repeat": 27,
+      "seconds": 0.5325975000159815
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 27,
+      "seconds": 0.001476000004913658
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 27,
+      "seconds": 0.0013589999871328473
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 28,
+      "seconds": 0.0012638000189326704
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 28,
+      "seconds": 0.0013425000361166894
+    },
+    {
+      "mode": "source",
+      "repeat": 28,
+      "seconds": 0.5412926000426523
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 29,
+      "seconds": 0.0017826000112108886
+    },
+    {
+      "mode": "source",
+      "repeat": 29,
+      "seconds": 0.5762455000076443
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 29,
+      "seconds": 0.0015421999851241708
+    }
+  ],
+  "median_seconds": {
+    "source": 0.5392270500015002,
+    "llm_wiki": 0.001504699990618974,
+    "llm_wiki_graph": 0.001497650024248287
+  },
+  "actual_routing_traces": {
+    "source": [
+      {
+        "stage": "wiki_source_navigation",
+        "mode": "source",
+        "rerank_original_query": "In FlashAttention tiled attention computation, why can per-block softmax results not be directly averaged? Explain which quantities must be maintained when merging new and old blocks, how rescaling is done when the maximum changes, and why avoiding the full attention matrix does not mean attention arithmetic becomes linear complexity.",
+        "effective_search_queries": [
+          "FlashAttention tiling why per-block softmax cannot be averaged merging blocks running max running sum rescaling online softmax",
+          "In FlashAttention tiled attention computation, why can per-block softmax results not be directly averaged? Explain which quantities must be maintained when merging new and old blocks, how rescaling is done when the maximum changes, and why avoiding the full attention matrix does not mean attention arithmetic becomes linear complexity.",
+          "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。"
+        ],
+        "effective_rerank_query": "In FlashAttention tiled attention computation, why can per-block softmax results not be directly averaged? Explain which quantities must be maintained when merging new and old blocks, how rescaling is done when the maximum changes, and why avoiding the full attention matrix does not mean attention arithmetic becomes linear complexity.",
+        "term_corrections": [],
+        "query_terminology": {
+          "original_query": "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。",
+          "expanded_query": "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。",
+          "corrections": [],
+          "rejected_choices": [],
+          "suggestions": [
+            {
+              "original": "FlashAttention",
+              "candidates": [
+                {
+                  "canonical": "FlashAttention",
+                  "wiki_pages": [
+                    "flash-attention"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-2205.14135:b86de4ee5c52:c0-2471",
+                    "paper-2205.14135:b86de4ee5c52:c3556-5723"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            }
+          ],
+          "policy": "source-vocabulary-one-edit-v1",
+          "new_provider_calls": 0
+        },
+        "rerank_search_context_used": false,
+        "rerank_context_rankings": [],
+        "authoritative_original_reranker_ids": [
+          "paper-2205.14135:b86de4ee5c52:c5396-7564",
+          "depth-2307.08691:f917fc544aae:c8888-10540",
+          "paper-2205.14135:b86de4ee5c52:c13633-15122",
+          "paper-2205.14135:b86de4ee5c52:c71910-74461",
+          "depth-2307.08691:f917fc544aae:c3449-6144",
+          "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "paper-2205.14135:b86de4ee5c52:c11869-13995",
+          "paper-2205.14135:b86de4ee5c52:c21449-22492",
+          "depth-2307.08691:f917fc544aae:c11834-14080",
+          "paper-2205.14135:b86de4ee5c52:c19938-21661",
+          "paper-2205.14135:b86de4ee5c52:c17886-18495",
+          "depth-2307.08691:f917fc544aae:c0-2698",
+          "paper-2205.14135:b86de4ee5c52:c22492-24426",
+          "paper-2205.14135:b86de4ee5c52:c15122-16331",
+          "paper-2205.14135:b86de4ee5c52:c33318-36119",
+          "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+          "paper-2205.14135:b86de4ee5c52:c0-2471",
+          "paper-2205.14135:b86de4ee5c52:c26364-28203",
+          "depth-2307.08691:f917fc544aae:c16936-18151",
+          "paper-2205.14135:b86de4ee5c52:c24161-26364",
+          "paper-2205.14135:b86de4ee5c52:c7564-10050",
+          "depth-2307.08691:f917fc544aae:c14537-15283",
+          "paper-2205.14135:b86de4ee5c52:c80400-81227",
+          "paper-2205.14135:b86de4ee5c52:c18495-20151",
+          "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+          "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+          "paper-2205.14135:b86de4ee5c52:c28090-29524",
+          "depth-2307.08691:f917fc544aae:c31921-33440",
+          "depth-2307.08691:f917fc544aae:c33440-35178",
+          "depth-2307.08691:f917fc544aae:c29079-30756",
+          "paper-2205.14135:b86de4ee5c52:c16014-17379",
+          "depth-2307.08691:f917fc544aae:c24165-24839",
+          "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+          "depth-2307.08691:f917fc544aae:c13856-14537",
+          "depth-2307.08691:f917fc544aae:c11114-11834",
+          "depth-2307.08691:f917fc544aae:c21985-24558",
+          "paper-2205.14135:b86de4ee5c52:c9855-11869",
+          "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+          "paper-2205.14135:b86de4ee5c52:c94371-95647",
+          "mygpt-model.py:e05006957de4:c10000-11173",
+          "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+          "depth-2307.08691:f917fc544aae:c10540-11185",
+          "depth-2307.08691:f917fc544aae:c36080-37982",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c39846-42485",
+          "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "paper-2205.14135:b86de4ee5c52:c57365-59975",
+          "mygpt-bench.py:4ab37b20b5e7:c24747-26427",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-paged_kv.py:4453b1b84e0f:c6418-8055",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-paged_kv.py:4453b1b84e0f:c3587-5101",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "mygpt-model.py:e05006957de4:c2583-4229",
+          "mygpt-train.py:52262ac90caa:c0-1445",
+          "mygpt-model.py:e05006957de4:c6488-7889"
+        ],
+        "wiki_pages": [],
+        "graph_neighbors": [],
+        "source_pointer_ids": [],
+        "final_ids": [
+          "paper-2205.14135:b86de4ee5c52:c5396-7564",
+          "depth-2307.08691:f917fc544aae:c8888-10540",
+          "paper-2205.14135:b86de4ee5c52:c13633-15122",
+          "paper-2205.14135:b86de4ee5c52:c71910-74461",
+          "depth-2307.08691:f917fc544aae:c3449-6144",
+          "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "paper-2205.14135:b86de4ee5c52:c11869-13995",
+          "paper-2205.14135:b86de4ee5c52:c21449-22492",
+          "depth-2307.08691:f917fc544aae:c11834-14080",
+          "paper-2205.14135:b86de4ee5c52:c19938-21661",
+          "paper-2205.14135:b86de4ee5c52:c17886-18495",
+          "depth-2307.08691:f917fc544aae:c0-2698",
+          "paper-2205.14135:b86de4ee5c52:c22492-24426",
+          "paper-2205.14135:b86de4ee5c52:c15122-16331",
+          "paper-2205.14135:b86de4ee5c52:c33318-36119",
+          "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+          "paper-2205.14135:b86de4ee5c52:c0-2471",
+          "paper-2205.14135:b86de4ee5c52:c26364-28203",
+          "depth-2307.08691:f917fc544aae:c16936-18151",
+          "paper-2205.14135:b86de4ee5c52:c24161-26364"
+        ],
+        "overview_anchor_ids": [],
+        "overview_anchor_policy": "protected-reranker-head8;bounded-tail-topic-coverage-v2;no-forced-neighbors",
+        "navigation_selection": {
+          "protected_reranker_ids": [
+            "paper-2205.14135:b86de4ee5c52:c5396-7564",
+            "depth-2307.08691:f917fc544aae:c8888-10540",
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "paper-2205.14135:b86de4ee5c52:c71910-74461",
+            "depth-2307.08691:f917fc544aae:c3449-6144",
+            "paper-2205.14135:b86de4ee5c52:c3556-5723",
+            "paper-2205.14135:b86de4ee5c52:c11869-13995",
+            "paper-2205.14135:b86de4ee5c52:c21449-22492"
+          ],
+          "admitted_anchor_ids": [],
+          "omitted_anchor_ids": [],
+          "displaced_reranker_ids": [],
+          "semantic_support_certified": false,
+          "additional_provider_calls": 0
+        },
+        "topic_entry_ids": {},
+        "original_reranker_ids": [
+          "paper-2205.14135:b86de4ee5c52:c5396-7564",
+          "depth-2307.08691:f917fc544aae:c8888-10540",
+          "paper-2205.14135:b86de4ee5c52:c13633-15122",
+          "paper-2205.14135:b86de4ee5c52:c71910-74461",
+          "depth-2307.08691:f917fc544aae:c3449-6144",
+          "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "paper-2205.14135:b86de4ee5c52:c11869-13995",
+          "paper-2205.14135:b86de4ee5c52:c21449-22492",
+          "depth-2307.08691:f917fc544aae:c11834-14080",
+          "paper-2205.14135:b86de4ee5c52:c19938-21661",
+          "paper-2205.14135:b86de4ee5c52:c17886-18495",
+          "depth-2307.08691:f917fc544aae:c0-2698",
+          "paper-2205.14135:b86de4ee5c52:c22492-24426",
+          "paper-2205.14135:b86de4ee5c52:c15122-16331",
+          "paper-2205.14135:b86de4ee5c52:c33318-36119",
+          "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+          "paper-2205.14135:b86de4ee5c52:c0-2471",
+          "paper-2205.14135:b86de4ee5c52:c26364-28203",
+          "depth-2307.08691:f917fc544aae:c16936-18151",
+          "paper-2205.14135:b86de4ee5c52:c24161-26364",
+          "paper-2205.14135:b86de4ee5c52:c7564-10050",
+          "depth-2307.08691:f917fc544aae:c14537-15283",
+          "paper-2205.14135:b86de4ee5c52:c80400-81227",
+          "paper-2205.14135:b86de4ee5c52:c18495-20151",
+          "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+          "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+          "paper-2205.14135:b86de4ee5c52:c28090-29524",
+          "depth-2307.08691:f917fc544aae:c31921-33440",
+          "depth-2307.08691:f917fc544aae:c33440-35178",
+          "depth-2307.08691:f917fc544aae:c29079-30756",
+          "paper-2205.14135:b86de4ee5c52:c16014-17379",
+          "depth-2307.08691:f917fc544aae:c24165-24839",
+          "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+          "depth-2307.08691:f917fc544aae:c13856-14537",
+          "depth-2307.08691:f917fc544aae:c11114-11834",
+          "depth-2307.08691:f917fc544aae:c21985-24558",
+          "paper-2205.14135:b86de4ee5c52:c9855-11869",
+          "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+          "paper-2205.14135:b86de4ee5c52:c94371-95647",
+          "mygpt-model.py:e05006957de4:c10000-11173",
+          "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+          "depth-2307.08691:f917fc544aae:c10540-11185",
+          "depth-2307.08691:f917fc544aae:c36080-37982",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c39846-42485",
+          "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "paper-2205.14135:b86de4ee5c52:c57365-59975",
+          "mygpt-bench.py:4ab37b20b5e7:c24747-26427",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-paged_kv.py:4453b1b84e0f:c6418-8055",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-paged_kv.py:4453b1b84e0f:c3587-5101",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "mygpt-model.py:e05006957de4:c2583-4229",
+          "mygpt-train.py:52262ac90caa:c0-1445",
+          "mygpt-model.py:e05006957de4:c6488-7889"
+        ],
+        "latency_ms": 582.3950000340119,
+        "editorial_content_used_as_evidence": false,
+        "new_provider_calls": 0
+      }
+    ],
+    "llm_wiki": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki",
+        "seeds": [
+          "flash-attention",
+          "online-softmax"
+        ],
+        "graph_neighbors": [],
+        "selected": [
+          "flash-attention",
+          "online-softmax"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [],
+        "complete_articles": true,
+        "article_characters": 3112,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 1.7016000347211957,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ],
+    "llm_wiki_graph": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki_graph",
+        "seeds": [
+          "flash-attention",
+          "online-softmax"
+        ],
+        "graph_neighbors": [],
+        "selected": [
+          "flash-attention",
+          "online-softmax"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [
+          {
+            "article_id": "sdpa",
+            "score": 34.759924823771485,
+            "parents": [
+              "flash-attention",
+              "online-softmax"
+            ],
+            "matched_facets": [],
+            "eligible": false,
+            "reason": "no_new_query_facet"
+          },
+          {
+            "article_id": "measurement",
+            "score": 0,
+            "parents": [
+              "flash-attention"
+            ],
+            "matched_facets": [],
+            "eligible": false,
+            "reason": "no_new_query_facet"
+          }
+        ],
+        "complete_articles": true,
+        "article_characters": 3112,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 1.7673999536782503,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ]
+  }
+}

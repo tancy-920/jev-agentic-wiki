@@ -1,0 +1,1587 @@
+{
+  "setup": {
+    "kind": "FRESH_OFFLINE_NAVIGATION",
+    "slots": 6,
+    "preserved_direct": 3,
+    "max_hops": 3,
+    "placebo_seed": 19,
+    "provider_calls": 0,
+    "human_attested": false,
+    "independent_user_trials": false
+  },
+  "structure": {
+    "nodes": 35,
+    "directed_edges": 137,
+    "possible_ordered_pairs": 1190,
+    "reachable_pairs": 1156,
+    "unreachable_pairs": 34,
+    "distance_histogram": {
+      "1": 137,
+      "2": 277,
+      "3": 352,
+      "4": 277,
+      "5": 97,
+      "6": 14,
+      "7": 2
+    },
+    "reachable_within": {
+      "1": 0.11512605042016806,
+      "2": 0.34789915966386553,
+      "3": 0.6436974789915967
+    },
+    "no_outgoing": []
+  },
+  "conditions": {
+    "entry_only": {
+      "rows": [
+        {
+          "id": "M01",
+          "group": "integration",
+          "start": "gqa",
+          "query": "GQA 分组查询注意力 GQA grouped-query attention 分组查询注意力",
+          "targets": [
+            "continuous-batching",
+            "kv-cache",
+            "paged-kv"
+          ],
+          "direct": [
+            "mqa",
+            "mha",
+            "attention-scoring",
+            "cross-attention",
+            "self-attention",
+            "causal-mask"
+          ],
+          "graph": [
+            "mqa",
+            "mha",
+            "attention-scoring",
+            "kv-cache",
+            "self-attention",
+            "measurement"
+          ],
+          "permuted": [
+            "mqa",
+            "mha",
+            "attention-scoring",
+            "bert-mlm",
+            "position",
+            "normalization"
+          ],
+          "graph_added": [
+            "kv-cache",
+            "measurement"
+          ],
+          "graph_removed": [
+            "causal-mask",
+            "cross-attention"
+          ],
+          "target_paths": {
+            "continuous-batching": [
+              "gqa",
+              "kv-cache",
+              "paged-kv",
+              "continuous-batching"
+            ],
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "paged-kv": [
+              "gqa",
+              "kv-cache",
+              "paged-kv"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "mqa": [
+              "gqa",
+              "mqa"
+            ],
+            "mha": [
+              "gqa",
+              "mha"
+            ],
+            "attention-scoring": [
+              "gqa",
+              "mha",
+              "self-attention",
+              "attention-scoring"
+            ],
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "self-attention": [
+              "gqa",
+              "mha",
+              "self-attention"
+            ],
+            "measurement": [
+              "gqa",
+              "kv-cache",
+              "measurement"
+            ]
+          },
+          "hit_delta": 1
+        },
+        {
+          "id": "M02",
+          "group": "integration",
+          "start": "flash-attention",
+          "query": "FlashAttention 与 IO 优化 FlashAttention Flash Attention 闪存注意力",
+          "targets": [
+            "measurement",
+            "online-softmax",
+            "prefill-decode",
+            "sdpa"
+          ],
+          "direct": [
+            "attention-scoring",
+            "mha",
+            "sdpa",
+            "causal-mask",
+            "cross-attention",
+            "gqa"
+          ],
+          "graph": [
+            "attention-scoring",
+            "mha",
+            "sdpa",
+            "online-softmax",
+            "measurement",
+            "training"
+          ],
+          "permuted": [
+            "attention-scoring",
+            "mha",
+            "sdpa",
+            "activations",
+            "layernorm",
+            "padding-mask"
+          ],
+          "graph_added": [
+            "measurement",
+            "online-softmax",
+            "training"
+          ],
+          "graph_removed": [
+            "causal-mask",
+            "cross-attention",
+            "gqa"
+          ],
+          "target_paths": {
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "online-softmax": [
+              "flash-attention",
+              "online-softmax"
+            ],
+            "prefill-decode": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "prefill-decode"
+            ],
+            "sdpa": [
+              "flash-attention",
+              "sdpa"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "attention-scoring": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa",
+              "mha",
+              "self-attention",
+              "attention-scoring"
+            ],
+            "mha": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa",
+              "mha"
+            ],
+            "sdpa": [
+              "flash-attention",
+              "sdpa"
+            ],
+            "online-softmax": [
+              "flash-attention",
+              "online-softmax"
+            ],
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "training": [
+              "flash-attention",
+              "measurement",
+              "training"
+            ]
+          },
+          "hit_delta": 2
+        },
+        {
+          "id": "M03",
+          "group": "integration",
+          "start": "residual",
+          "query": "残差连接：恒等路径、梯度与维度 residual 残差 残差连接 shortcut",
+          "targets": [
+            "measurement",
+            "pre-ln",
+            "training"
+          ],
+          "direct": [
+            "training",
+            "dropout",
+            "pre-ln",
+            "transformer",
+            "attention-scoring",
+            "gqa"
+          ],
+          "graph": [
+            "training",
+            "dropout",
+            "pre-ln",
+            "mlp",
+            "forward-flow",
+            "layernorm"
+          ],
+          "permuted": [
+            "training",
+            "dropout",
+            "pre-ln",
+            "gqa",
+            "bert-mlm",
+            "embedding"
+          ],
+          "graph_added": [
+            "forward-flow",
+            "layernorm",
+            "mlp"
+          ],
+          "graph_removed": [
+            "attention-scoring",
+            "gqa",
+            "transformer"
+          ],
+          "target_paths": {
+            "measurement": [
+              "residual",
+              "layernorm",
+              "normalization",
+              "measurement"
+            ],
+            "pre-ln": [
+              "residual",
+              "pre-ln"
+            ],
+            "training": [
+              "residual",
+              "pre-ln",
+              "training"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "training": [
+              "residual",
+              "pre-ln",
+              "training"
+            ],
+            "dropout": [
+              "residual",
+              "pre-ln",
+              "training",
+              "dropout"
+            ],
+            "pre-ln": [
+              "residual",
+              "pre-ln"
+            ],
+            "mlp": [
+              "residual",
+              "mlp"
+            ],
+            "forward-flow": [
+              "residual",
+              "forward-flow"
+            ],
+            "layernorm": [
+              "residual",
+              "layernorm"
+            ]
+          },
+          "hit_delta": 0
+        },
+        {
+          "id": "M04",
+          "group": "integration",
+          "start": "bert-mlm",
+          "query": "BERT MLM：输入遮盖与注意力可见性 BERT MLM MLM masked language model 输入mask BERT mask",
+          "targets": [
+            "causal-mask",
+            "gqa",
+            "kv-cache"
+          ],
+          "direct": [
+            "causal-mask",
+            "sdpa",
+            "padding-mask",
+            "self-attention",
+            "cross-attention",
+            "dropout"
+          ],
+          "graph": [
+            "causal-mask",
+            "sdpa",
+            "padding-mask",
+            "transformer",
+            "tokenizer",
+            "self-attention"
+          ],
+          "permuted": [
+            "causal-mask",
+            "sdpa",
+            "padding-mask",
+            "attention-scoring",
+            "gqa",
+            "training"
+          ],
+          "graph_added": [
+            "tokenizer",
+            "transformer"
+          ],
+          "graph_removed": [
+            "cross-attention",
+            "dropout"
+          ],
+          "target_paths": {
+            "causal-mask": [
+              "bert-mlm",
+              "causal-mask"
+            ],
+            "gqa": [
+              "bert-mlm",
+              "causal-mask",
+              "kv-cache",
+              "gqa"
+            ],
+            "kv-cache": [
+              "bert-mlm",
+              "causal-mask",
+              "kv-cache"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "causal-mask": [
+              "bert-mlm",
+              "causal-mask"
+            ],
+            "sdpa": [
+              "bert-mlm",
+              "padding-mask",
+              "sdpa"
+            ],
+            "padding-mask": [
+              "bert-mlm",
+              "padding-mask"
+            ],
+            "transformer": [
+              "bert-mlm",
+              "transformer"
+            ],
+            "tokenizer": [
+              "bert-mlm",
+              "tokenizer"
+            ],
+            "self-attention": [
+              "bert-mlm",
+              "causal-mask",
+              "self-attention"
+            ]
+          },
+          "hit_delta": 0
+        },
+        {
+          "id": "M05",
+          "group": "direct_control",
+          "start": "gqa",
+          "query": "GQA 分组查询注意力 GQA grouped-query attention 分组查询注意力",
+          "targets": [
+            "continuous-batching",
+            "kv-cache",
+            "paged-kv"
+          ],
+          "direct": [
+            "mqa",
+            "mha",
+            "attention-scoring",
+            "cross-attention",
+            "self-attention",
+            "causal-mask"
+          ],
+          "graph": [
+            "mqa",
+            "mha",
+            "attention-scoring",
+            "kv-cache",
+            "self-attention",
+            "measurement"
+          ],
+          "permuted": [
+            "mqa",
+            "mha",
+            "attention-scoring",
+            "bert-mlm",
+            "position",
+            "normalization"
+          ],
+          "graph_added": [
+            "kv-cache",
+            "measurement"
+          ],
+          "graph_removed": [
+            "causal-mask",
+            "cross-attention"
+          ],
+          "target_paths": {
+            "continuous-batching": [
+              "gqa",
+              "kv-cache",
+              "paged-kv",
+              "continuous-batching"
+            ],
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "paged-kv": [
+              "gqa",
+              "kv-cache",
+              "paged-kv"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "mqa": [
+              "gqa",
+              "mqa"
+            ],
+            "mha": [
+              "gqa",
+              "mha"
+            ],
+            "attention-scoring": [
+              "gqa",
+              "mha",
+              "self-attention",
+              "attention-scoring"
+            ],
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "self-attention": [
+              "gqa",
+              "mha",
+              "self-attention"
+            ],
+            "measurement": [
+              "gqa",
+              "kv-cache",
+              "measurement"
+            ]
+          },
+          "hit_delta": 1
+        },
+        {
+          "id": "M06",
+          "group": "direct_control",
+          "start": "online-softmax",
+          "query": "分块注意力与在线 Softmax online softmax chunked attention 在线softmax 分块注意力",
+          "targets": [
+            "flash-attention",
+            "measurement",
+            "sdpa"
+          ],
+          "direct": [
+            "self-attention",
+            "cross-attention",
+            "flash-attention",
+            "attention-scoring",
+            "mha",
+            "causal-mask"
+          ],
+          "graph": [
+            "self-attention",
+            "cross-attention",
+            "flash-attention",
+            "sdpa",
+            "measurement",
+            "kv-cache"
+          ],
+          "permuted": [
+            "self-attention",
+            "cross-attention",
+            "flash-attention",
+            "gqa",
+            "transformer",
+            "embedding"
+          ],
+          "graph_added": [
+            "kv-cache",
+            "measurement",
+            "sdpa"
+          ],
+          "graph_removed": [
+            "attention-scoring",
+            "causal-mask",
+            "mha"
+          ],
+          "target_paths": {
+            "flash-attention": [
+              "online-softmax",
+              "flash-attention"
+            ],
+            "measurement": [
+              "online-softmax",
+              "flash-attention",
+              "measurement"
+            ],
+            "sdpa": [
+              "online-softmax",
+              "sdpa"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "self-attention": [
+              "online-softmax",
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa",
+              "mha",
+              "self-attention"
+            ],
+            "cross-attention": [
+              "online-softmax",
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa",
+              "mha",
+              "self-attention",
+              "cross-attention"
+            ],
+            "flash-attention": [
+              "online-softmax",
+              "flash-attention"
+            ],
+            "sdpa": [
+              "online-softmax",
+              "sdpa"
+            ],
+            "measurement": [
+              "online-softmax",
+              "flash-attention",
+              "measurement"
+            ],
+            "kv-cache": [
+              "online-softmax",
+              "flash-attention",
+              "measurement",
+              "kv-cache"
+            ]
+          },
+          "hit_delta": 2
+        },
+        {
+          "id": "M07",
+          "group": "negative_control",
+          "start": "rope",
+          "query": "RoPE旋转位置编码 RoPE rotary position embedding 旋转位置编码",
+          "targets": [
+            "gqa",
+            "kv-cache"
+          ],
+          "direct": [
+            "position",
+            "embedding",
+            "alibi",
+            "causal-mask",
+            "transformer",
+            "forward-flow"
+          ],
+          "graph": [
+            "position",
+            "embedding",
+            "alibi",
+            "kv-cache",
+            "self-attention",
+            "causal-mask"
+          ],
+          "permuted": [
+            "position",
+            "embedding",
+            "alibi",
+            "forward-flow",
+            "mha",
+            "training"
+          ],
+          "graph_added": [
+            "kv-cache",
+            "self-attention"
+          ],
+          "graph_removed": [
+            "forward-flow",
+            "transformer"
+          ],
+          "target_paths": {
+            "gqa": [
+              "rope",
+              "kv-cache",
+              "gqa"
+            ],
+            "kv-cache": [
+              "rope",
+              "kv-cache"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "position": [
+              "rope",
+              "position"
+            ],
+            "embedding": [
+              "rope",
+              "position",
+              "embedding"
+            ],
+            "alibi": [
+              "rope",
+              "position",
+              "alibi"
+            ],
+            "kv-cache": [
+              "rope",
+              "kv-cache"
+            ],
+            "self-attention": [
+              "rope",
+              "self-attention"
+            ],
+            "causal-mask": [
+              "rope",
+              "self-attention",
+              "causal-mask"
+            ]
+          },
+          "hit_delta": 1
+        },
+        {
+          "id": "M08",
+          "group": "insufficient_evidence",
+          "start": "flash-attention",
+          "query": "FlashAttention 与 IO 优化 FlashAttention Flash Attention 闪存注意力",
+          "targets": [
+            "gqa",
+            "measurement",
+            "paged-kv",
+            "pre-ln"
+          ],
+          "direct": [
+            "attention-scoring",
+            "mha",
+            "sdpa",
+            "causal-mask",
+            "cross-attention",
+            "gqa"
+          ],
+          "graph": [
+            "attention-scoring",
+            "mha",
+            "sdpa",
+            "online-softmax",
+            "measurement",
+            "training"
+          ],
+          "permuted": [
+            "attention-scoring",
+            "mha",
+            "sdpa",
+            "activations",
+            "layernorm",
+            "padding-mask"
+          ],
+          "graph_added": [
+            "measurement",
+            "online-softmax",
+            "training"
+          ],
+          "graph_removed": [
+            "causal-mask",
+            "cross-attention",
+            "gqa"
+          ],
+          "target_paths": {
+            "gqa": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa"
+            ],
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "paged-kv": [
+              "flash-attention",
+              "measurement",
+              "paged-kv"
+            ],
+            "pre-ln": [
+              "flash-attention",
+              "measurement",
+              "training",
+              "normalization",
+              "pre-ln"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "attention-scoring": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa",
+              "mha",
+              "self-attention",
+              "attention-scoring"
+            ],
+            "mha": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa",
+              "mha"
+            ],
+            "sdpa": [
+              "flash-attention",
+              "sdpa"
+            ],
+            "online-softmax": [
+              "flash-attention",
+              "online-softmax"
+            ],
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "training": [
+              "flash-attention",
+              "measurement",
+              "training"
+            ]
+          },
+          "hit_delta": 0
+        }
+      ],
+      "statistics": {
+        "direct": {
+          "hits": 6,
+          "targets": 25,
+          "micro_recall": 0.24,
+          "macro_recall": 0.22916666666666666,
+          "target_density": 0.125
+        },
+        "graph": {
+          "hits": 13,
+          "targets": 25,
+          "micro_recall": 0.52,
+          "macro_recall": 0.5208333333333334,
+          "target_density": 0.2708333333333333
+        },
+        "permuted": {
+          "hits": 6,
+          "targets": 25,
+          "micro_recall": 0.24,
+          "macro_recall": 0.23958333333333331,
+          "target_density": 0.125
+        },
+        "graph_vs_direct": {
+          "wins": 5,
+          "ties": 3,
+          "losses": 0,
+          "macro_recall_delta_pp": 29.166666666666675
+        }
+      }
+    },
+    "full_intent": {
+      "rows": [
+        {
+          "id": "M01",
+          "group": "integration",
+          "start": "gqa",
+          "query": "GQA把32个KV头减为4个后，服务大量共享提示前缀、输出长度不同的请求。为什么不能据此宣称总显存减少八倍、吞吐提高八倍？解释头数量、前缀物理存储、共享块写入和请求完成后接纳新请求分别受什么机制控制，并明确条件。",
+          "targets": [
+            "continuous-batching",
+            "kv-cache",
+            "paged-kv"
+          ],
+          "direct": [
+            "kv-cache",
+            "paged-kv",
+            "prefill-decode",
+            "measurement",
+            "continuous-batching",
+            "embedding"
+          ],
+          "graph": [
+            "kv-cache",
+            "paged-kv",
+            "prefill-decode",
+            "mha",
+            "mqa",
+            "measurement"
+          ],
+          "permuted": [
+            "kv-cache",
+            "paged-kv",
+            "prefill-decode",
+            "normalization",
+            "position",
+            "residual"
+          ],
+          "graph_added": [
+            "mha",
+            "mqa"
+          ],
+          "graph_removed": [
+            "continuous-batching",
+            "embedding"
+          ],
+          "target_paths": {
+            "continuous-batching": [
+              "gqa",
+              "kv-cache",
+              "paged-kv",
+              "continuous-batching"
+            ],
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "paged-kv": [
+              "gqa",
+              "kv-cache",
+              "paged-kv"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "paged-kv": [
+              "gqa",
+              "kv-cache",
+              "paged-kv"
+            ],
+            "prefill-decode": [
+              "gqa",
+              "kv-cache",
+              "prefill-decode"
+            ],
+            "mha": [
+              "gqa",
+              "mha"
+            ],
+            "mqa": [
+              "gqa",
+              "mqa"
+            ],
+            "measurement": [
+              "gqa",
+              "kv-cache",
+              "measurement"
+            ]
+          },
+          "hit_delta": -1
+        },
+        {
+          "id": "M02",
+          "group": "integration",
+          "start": "flash-attention",
+          "query": "把注意力分块后维护运行最大值和指数和，数学上能合并出精确结果。为什么这还不能证明PyTorch实际选中了FlashAttention，也不能证明训练、提示处理和逐token生成都会更快？请连贯说明合并公式、IO机制、后端约束以及应补充的测量证据。",
+          "targets": [
+            "measurement",
+            "online-softmax",
+            "prefill-decode",
+            "sdpa"
+          ],
+          "direct": [
+            "online-softmax",
+            "sdpa",
+            "measurement",
+            "kv-cache",
+            "activations",
+            "forward-flow"
+          ],
+          "graph": [
+            "online-softmax",
+            "sdpa",
+            "measurement",
+            "kv-cache",
+            "training",
+            "paged-kv"
+          ],
+          "permuted": [
+            "online-softmax",
+            "sdpa",
+            "measurement",
+            "activations",
+            "padding-mask",
+            "layernorm"
+          ],
+          "graph_added": [
+            "paged-kv",
+            "training"
+          ],
+          "graph_removed": [
+            "activations",
+            "forward-flow"
+          ],
+          "target_paths": {
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "online-softmax": [
+              "flash-attention",
+              "online-softmax"
+            ],
+            "prefill-decode": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "prefill-decode"
+            ],
+            "sdpa": [
+              "flash-attention",
+              "sdpa"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "online-softmax": [
+              "flash-attention",
+              "online-softmax"
+            ],
+            "sdpa": [
+              "flash-attention",
+              "sdpa"
+            ],
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "kv-cache": [
+              "flash-attention",
+              "measurement",
+              "kv-cache"
+            ],
+            "training": [
+              "flash-attention",
+              "measurement",
+              "training"
+            ],
+            "paged-kv": [
+              "flash-attention",
+              "measurement",
+              "paged-kv"
+            ]
+          },
+          "hit_delta": 0
+        },
+        {
+          "id": "M03",
+          "group": "integration",
+          "start": "residual",
+          "query": "残差网络提供恒等路径，为什么Transformer仍会受到归一化位置和warmup影响？请把局部Jacobian、Pre-LN与Post-LN的初始化梯度分析、训练设置与性能测量的边界连起来解释，判断能否据此保证所有任务无需warmup且训练更快。",
+          "targets": [
+            "measurement",
+            "pre-ln",
+            "training"
+          ],
+          "direct": [
+            "pre-ln",
+            "layernorm",
+            "training",
+            "measurement",
+            "dropout",
+            "normalization"
+          ],
+          "graph": [
+            "pre-ln",
+            "layernorm",
+            "training",
+            "mlp",
+            "forward-flow",
+            "normalization"
+          ],
+          "permuted": [
+            "pre-ln",
+            "layernorm",
+            "training",
+            "embedding",
+            "gqa",
+            "bert-mlm"
+          ],
+          "graph_added": [
+            "forward-flow",
+            "mlp"
+          ],
+          "graph_removed": [
+            "dropout",
+            "measurement"
+          ],
+          "target_paths": {
+            "measurement": [
+              "residual",
+              "layernorm",
+              "normalization",
+              "measurement"
+            ],
+            "pre-ln": [
+              "residual",
+              "pre-ln"
+            ],
+            "training": [
+              "residual",
+              "pre-ln",
+              "training"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "pre-ln": [
+              "residual",
+              "pre-ln"
+            ],
+            "layernorm": [
+              "residual",
+              "layernorm"
+            ],
+            "training": [
+              "residual",
+              "pre-ln",
+              "training"
+            ],
+            "mlp": [
+              "residual",
+              "mlp"
+            ],
+            "forward-flow": [
+              "residual",
+              "forward-flow"
+            ],
+            "normalization": [
+              "residual",
+              "layernorm",
+              "normalization"
+            ]
+          },
+          "hit_delta": -1
+        },
+        {
+          "id": "M04",
+          "group": "integration",
+          "start": "bert-mlm",
+          "query": "BERT的MLM模型若改用单向注意力，再采用增量KV缓存并让多个query头共享KV头，能否直接成为等价且更快的自回归生成器？请区分目标函数、可见性、历史状态复用条件、头共享和训练并行性，说明哪些还需训练或验证。",
+          "targets": [
+            "causal-mask",
+            "gqa",
+            "kv-cache"
+          ],
+          "direct": [
+            "kv-cache",
+            "gqa",
+            "prefill-decode",
+            "mqa",
+            "causal-mask",
+            "paged-kv"
+          ],
+          "graph": [
+            "kv-cache",
+            "gqa",
+            "prefill-decode",
+            "causal-mask",
+            "transformer",
+            "tokenizer"
+          ],
+          "permuted": [
+            "kv-cache",
+            "gqa",
+            "prefill-decode",
+            "attention-scoring",
+            "training",
+            "speculative"
+          ],
+          "graph_added": [
+            "tokenizer",
+            "transformer"
+          ],
+          "graph_removed": [
+            "mqa",
+            "paged-kv"
+          ],
+          "target_paths": {
+            "causal-mask": [
+              "bert-mlm",
+              "causal-mask"
+            ],
+            "gqa": [
+              "bert-mlm",
+              "causal-mask",
+              "kv-cache",
+              "gqa"
+            ],
+            "kv-cache": [
+              "bert-mlm",
+              "causal-mask",
+              "kv-cache"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "kv-cache": [
+              "bert-mlm",
+              "causal-mask",
+              "kv-cache"
+            ],
+            "gqa": [
+              "bert-mlm",
+              "causal-mask",
+              "kv-cache",
+              "gqa"
+            ],
+            "prefill-decode": [
+              "bert-mlm",
+              "causal-mask",
+              "kv-cache",
+              "prefill-decode"
+            ],
+            "causal-mask": [
+              "bert-mlm",
+              "causal-mask"
+            ],
+            "transformer": [
+              "bert-mlm",
+              "transformer"
+            ],
+            "tokenizer": [
+              "bert-mlm",
+              "tokenizer"
+            ]
+          },
+          "hit_delta": 0
+        },
+        {
+          "id": "M05",
+          "group": "direct_control",
+          "start": "gqa",
+          "query": "明确比较GQA、KV Cache、PagedAttention与continuous batching：分别改变头数量、历史复用、物理块管理和迭代调度中的什么？为什么不能把这些机制的收益简单相乘？",
+          "targets": [
+            "continuous-batching",
+            "kv-cache",
+            "paged-kv"
+          ],
+          "direct": [
+            "continuous-batching",
+            "kv-cache",
+            "paged-kv",
+            "prefill-decode",
+            "measurement",
+            "normalization"
+          ],
+          "graph": [
+            "continuous-batching",
+            "kv-cache",
+            "paged-kv",
+            "mha",
+            "mqa",
+            "prefill-decode"
+          ],
+          "permuted": [
+            "continuous-batching",
+            "kv-cache",
+            "paged-kv",
+            "normalization",
+            "pre-ln",
+            "bert-mlm"
+          ],
+          "graph_added": [
+            "mha",
+            "mqa"
+          ],
+          "graph_removed": [
+            "measurement",
+            "normalization"
+          ],
+          "target_paths": {
+            "continuous-batching": [
+              "gqa",
+              "kv-cache",
+              "paged-kv",
+              "continuous-batching"
+            ],
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "paged-kv": [
+              "gqa",
+              "kv-cache",
+              "paged-kv"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "continuous-batching": [
+              "gqa",
+              "kv-cache",
+              "paged-kv",
+              "continuous-batching"
+            ],
+            "kv-cache": [
+              "gqa",
+              "kv-cache"
+            ],
+            "paged-kv": [
+              "gqa",
+              "kv-cache",
+              "paged-kv"
+            ],
+            "mha": [
+              "gqa",
+              "mha"
+            ],
+            "mqa": [
+              "gqa",
+              "mqa"
+            ],
+            "prefill-decode": [
+              "gqa",
+              "kv-cache",
+              "prefill-decode"
+            ]
+          },
+          "hit_delta": 0
+        },
+        {
+          "id": "M06",
+          "group": "direct_control",
+          "start": "online-softmax",
+          "query": "明确比较online softmax、FlashAttention、SDPA与性能测量：写出分块合并式，说明数学正确、IO优化、实际后端和实测加速为什么是四个不同结论。",
+          "targets": [
+            "flash-attention",
+            "measurement",
+            "sdpa"
+          ],
+          "direct": [
+            "measurement",
+            "flash-attention",
+            "sdpa",
+            "activations",
+            "padding-mask",
+            "training"
+          ],
+          "graph": [
+            "measurement",
+            "flash-attention",
+            "sdpa",
+            "training",
+            "kv-cache",
+            "paged-kv"
+          ],
+          "permuted": [
+            "measurement",
+            "flash-attention",
+            "sdpa",
+            "embedding",
+            "transformer",
+            "gqa"
+          ],
+          "graph_added": [
+            "kv-cache",
+            "paged-kv"
+          ],
+          "graph_removed": [
+            "activations",
+            "padding-mask"
+          ],
+          "target_paths": {
+            "flash-attention": [
+              "online-softmax",
+              "flash-attention"
+            ],
+            "measurement": [
+              "online-softmax",
+              "flash-attention",
+              "measurement"
+            ],
+            "sdpa": [
+              "online-softmax",
+              "sdpa"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "measurement": [
+              "online-softmax",
+              "flash-attention",
+              "measurement"
+            ],
+            "flash-attention": [
+              "online-softmax",
+              "flash-attention"
+            ],
+            "sdpa": [
+              "online-softmax",
+              "sdpa"
+            ],
+            "training": [
+              "online-softmax",
+              "flash-attention",
+              "measurement",
+              "training"
+            ],
+            "kv-cache": [
+              "online-softmax",
+              "flash-attention",
+              "measurement",
+              "kv-cache"
+            ],
+            "paged-kv": [
+              "online-softmax",
+              "flash-attention",
+              "measurement",
+              "paged-kv"
+            ]
+          },
+          "hit_delta": 0
+        },
+        {
+          "id": "M07",
+          "group": "negative_control",
+          "start": "rope",
+          "query": "RoPE与KV Cache有关联，是否足以推出GQA能保证任意长度外推且保持准确率？仅根据资料说明这些机制能支持和不能支持哪些结论。",
+          "targets": [
+            "gqa",
+            "kv-cache"
+          ],
+          "direct": [
+            "kv-cache",
+            "position",
+            "gqa",
+            "paged-kv",
+            "pre-ln",
+            "continuous-batching"
+          ],
+          "graph": [
+            "kv-cache",
+            "position",
+            "gqa",
+            "self-attention",
+            "paged-kv",
+            "alibi"
+          ],
+          "permuted": [
+            "kv-cache",
+            "position",
+            "gqa",
+            "training",
+            "mha",
+            "forward-flow"
+          ],
+          "graph_added": [
+            "alibi",
+            "self-attention"
+          ],
+          "graph_removed": [
+            "continuous-batching",
+            "pre-ln"
+          ],
+          "target_paths": {
+            "gqa": [
+              "rope",
+              "kv-cache",
+              "gqa"
+            ],
+            "kv-cache": [
+              "rope",
+              "kv-cache"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "kv-cache": [
+              "rope",
+              "kv-cache"
+            ],
+            "position": [
+              "rope",
+              "position"
+            ],
+            "gqa": [
+              "rope",
+              "kv-cache",
+              "gqa"
+            ],
+            "self-attention": [
+              "rope",
+              "self-attention"
+            ],
+            "paged-kv": [
+              "rope",
+              "kv-cache",
+              "paged-kv"
+            ],
+            "alibi": [
+              "rope",
+              "position",
+              "alibi"
+            ]
+          },
+          "hit_delta": 0
+        },
+        {
+          "id": "M08",
+          "group": "insufficient_evidence",
+          "start": "flash-attention",
+          "query": "只凭本知识库，给出GQA加分页缓存和FlashAttention在一张尚未指定型号的显卡上相对基线的精确吞吐倍数，并判断是否一定无需warmup；若无法确定，请逐项说明缺少什么证据。",
+          "targets": [
+            "gqa",
+            "measurement",
+            "paged-kv",
+            "pre-ln"
+          ],
+          "direct": [
+            "paged-kv",
+            "gqa",
+            "kv-cache",
+            "alibi",
+            "measurement",
+            "pre-ln"
+          ],
+          "graph": [
+            "paged-kv",
+            "gqa",
+            "kv-cache",
+            "measurement",
+            "sdpa",
+            "online-softmax"
+          ],
+          "permuted": [
+            "paged-kv",
+            "gqa",
+            "kv-cache",
+            "activations",
+            "layernorm",
+            "padding-mask"
+          ],
+          "graph_added": [
+            "online-softmax",
+            "sdpa"
+          ],
+          "graph_removed": [
+            "alibi",
+            "pre-ln"
+          ],
+          "target_paths": {
+            "gqa": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa"
+            ],
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "paged-kv": [
+              "flash-attention",
+              "measurement",
+              "paged-kv"
+            ],
+            "pre-ln": [
+              "flash-attention",
+              "measurement",
+              "training",
+              "normalization",
+              "pre-ln"
+            ]
+          },
+          "actual_graph_recommendation_paths": {
+            "paged-kv": [
+              "flash-attention",
+              "measurement",
+              "paged-kv"
+            ],
+            "gqa": [
+              "flash-attention",
+              "measurement",
+              "kv-cache",
+              "gqa"
+            ],
+            "kv-cache": [
+              "flash-attention",
+              "measurement",
+              "kv-cache"
+            ],
+            "measurement": [
+              "flash-attention",
+              "measurement"
+            ],
+            "sdpa": [
+              "flash-attention",
+              "sdpa"
+            ],
+            "online-softmax": [
+              "flash-attention",
+              "online-softmax"
+            ]
+          },
+          "hit_delta": -1
+        }
+      ],
+      "statistics": {
+        "direct": {
+          "hits": 24,
+          "targets": 25,
+          "micro_recall": 0.96,
+          "macro_recall": 0.96875,
+          "target_density": 0.5
+        },
+        "graph": {
+          "hits": 21,
+          "targets": 25,
+          "micro_recall": 0.84,
+          "macro_recall": 0.8541666666666666,
+          "target_density": 0.4375
+        },
+        "permuted": {
+          "hits": 19,
+          "targets": 25,
+          "micro_recall": 0.76,
+          "macro_recall": 0.78125,
+          "target_density": 0.3958333333333333
+        },
+        "graph_vs_direct": {
+          "wins": 0,
+          "ties": 5,
+          "losses": 3,
+          "macro_recall_delta_pp": -11.458333333333337
+        }
+      }
+    }
+  }
+}

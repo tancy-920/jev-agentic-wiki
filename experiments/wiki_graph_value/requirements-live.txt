@@ -1,0 +1,9 @@
+pydantic==2.13.5
+PyYAML==6.0.3
+httpx==0.28.1
+pypdf==6.19.0
+fonttools==4.66.1
+tiktoken==0.14.0
+rank-bm25==0.2.2
+qdrant-client==1.19.1
+numpy==2.5.3

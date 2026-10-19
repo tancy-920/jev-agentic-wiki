@@ -1,0 +1,1012 @@
+{
+  "status": "complete",
+  "provider_calls": 0,
+  "plan_queries": [
+    "Transformer normalization decomposition statistical axis mean subtraction position in residual LayerNorm RMSNorm BatchNorm Pre-LN Post-LN comparison",
+    "Pre-LN Post-LN normalization placement residual connection warmup learning rate stability why Pre-LN does not remove need for warmup"
+  ],
+  "runtime_original_query": "Decompose Transformer normalization into three independent questions: statistical axis, whether mean is subtracted, and position in the residual. Compare LayerNorm, RMSNorm, BatchNorm and Pre-LN/Post-LN, and explain why switching to Pre-LN cannot imply that any model can remove warmup.",
+  "contexts": {
+    "source": {
+      "evidence": [
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 6,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c27876-30276",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "∂x .\nThe proof of Lemma 1, Lemma 2, Lemma 3, and Theorem\n1 can be found in the supplementary material. The main\nidea is that the layer normalization will normalize the gra-\ndients. In the Post-LN Transformer, the scale of the inputs\nto the layer normalization is independent ofL, and thus the\ngradients of parameters in the last layer are independent of\nL. While in the Pre-LN Transformer, the scale of the input\nto the ﬁnal layer normalization is linear inL, and thus the\ngradients of all parameters will be normalized by\n√\nL.\nExtended theory to other layers/parameters We have\nprovided a formal proof on the gradients of the last FFN sub-\nlayer as above. In order to fully understand the optimization,\nwe also make some preliminary analysis for other layers\nand other parameters. Our main result is that the gradient\nnorm in the Post-LN Transformer is large for the parameters\nnear the output and will be likely to decay as the layer index\nl decreases. On the contrary, the gradient norm in the Pre-\nTransformer will be likely to stay the same for any layerl.\nAll the preliminary theoretical results are provided in the\nsupplementary material.\n3.4. Empirical veriﬁcation of the theory and discussion\nAs our theory is derived based on several simpliﬁcations of\nthe problem, we conduct experiments to study whether our\ntheoretical insights are consistent with what we observe in\nreal scenarios. The general model and training conﬁguration\nexactly follow Section 3.2. The experiments are repeated\nten times using different random seeds.\nOn the concentration property Given an initialized\nmodel, we record the hidden states in the Post-LN/Pre-LN\nTransformer across batches and ﬁnd that the norm of the\nhidden states satisﬁes the property ((0.1,0.125)-bounded).\nOn Theorem 1 Theorem 1 suggests that for any sizes of\nthe Post-LN Transformer, the scale of the gradient norm in\nthe last FFN sub-layer remains the same. On the contrary,\nthat of the Pre-LN Transformer decreases as the size of the\nmodel grows. We calculate and record the gradient norm in\nthe last FFN sub-layer in 6-6/8-8/10-10/12-12/14-14 Post-\nLN/Pre-LN Transformer models at initialization. The results\nare plotted in Figure 3(c) and 3(d). The x-axis is the size of\nthe model, and the y-axis is the value of the gradient norm\nofW 2 in the ﬁnal FFN sub-layer. The ﬁgures show when\nthe number of layers grows, the gradient norm remains in\n",
+          "token_count": 590,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 6",
+          "start_char": 27876,
+          "end_char": 30276
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 3,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "Multi-head(xi, [x1,...,x n], [x1,...,x n]).\nPosition-wise FFN sub-layer In addition to the self-\nattention sub-layer, each Transformer layer contains a fully\nconnected network, which is applied to each position sep-\narately and identically. This sub-layer is a two-layer feed-\nforward network with a ReLU activation function. Given\na sequence of vectors h1,...,h n, the computation of a\nposition-wise FFN sub-layer on anyhi is deﬁned as:\nFFN(hi) = ReLU(hiW 1 +b1)W 2 +b2,\nwhereW 1,W 2,b1 andb2 are parameters.\nResidual connection and layer normalization Besides\nthe two sub-layers described above, the residual connection\nand layer normalization are also key components to the\nTransformer. For any vector v, the layer normalization is\ncomputed as LayerNorm(v) = γv−µ\nσ +β, in which µ,σ\nare the mean and standard deviation of the elements in v,\ni.e.,µ = 1\nd\n∑d\nk=1vk andσ2 = 1\nd\n∑d\nk=1(vk−µ)2. Scaleγ\nand bias vectorβ are parameters.\nDifferent orders of the sub-layers, residual connection and\nlayer normalization in a Transformer layer lead to variants\nof Transformer architectures. One of the original and most\npopularly used architecture for the Transformer and BERT\n(Vaswani et al., 2017; Devlin et al., 2018) follows “self-\nattention (FFN) sub-layer→ residual connection→ layer\nnormalization”, which we call the Transformer with Post-\nLayer normalization (Post-LN Transformer), as illustrated\nin Figure 1.\nPost-LN Transformer Denotexl,i as the input of thel-th\nTransformer layer at positioni, wherexl,i is a real-valued\nvector of dimensiond,i = 1, 2,...,n ,l = 1, 2,...,L . n is\nthe length of the sequence and L is the number of layers.\nFor completeness, we deﬁnex0,i as the input embedding at\npositioni which is usually a combination of word embed-\nding and positional embedding. The computations inside\nthe l-th layer are composed of several steps, and we use\nsuper-scripts onx to present the input(output) of different\nsteps as in Table 1 (left), whereW 1,l,W 2,l,b1,l andb2,l are\nparameters of the FFN sub-layer in thel-th layer.\n3.2. The learning rate warm-up stage\nWe are interested in the learning rate warm-up stage in the\n",
+          "token_count": 589,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 3",
+          "start_char": 11413,
+          "end_char": 13548
+        },
+        {
+          "paper_id": "1910.07467v1",
+          "title": "Root Mean Square Layer Normalization",
+          "authors": [],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 7,
+          "chunk_id": "depth-1910.07467:14a6a097250f:c23757-25859",
+          "source_url": "https://arxiv.org/pdf/1910.07467v1",
+          "text": "Model 1 2 3 4 ALL\nBaseline M -2.60 -1.19 -1.43 -1.53 -1.60\nS 7.35 2.33 2.61 2.73 3.04\nLayerNorm M -0.43 -0.48 -0.50 -0.50 -0.51\nS 1.19 1.51 1.51 1.51 1.51\nRMSNorm M -0.40 -0.60 -0.69 -0.74 -0.73\nS 1.27 1.51 1.50 1.49 1.50\nTable 5: Mean ( M) and standard deviation (S) statistics esti-\nmated on the hidden-to-hidden mapping of decoder-part GRU\ncell in RNNSearch model. We use the newstest2013 dataset.\nALL: the statistics averaged across all token positions. Num-\nbers 1,2,3,4 indicate the statistic estimated for speciﬁc token\npositions.\nnormalization is lower because there are signiﬁcantly fewer sequential normalization operations in\nTransformer.\nEffect of Normalization on Mean and Standard DeviationTable 5 shows the distribution of mean\nand standard deviation of hidden representations across token positions for an RNNSearch model.\nMean and standard deviation are unstable in the baseline, as observed by Ba et al. [3]. Due to their\nnormalization properties, both RMSNorm and LayerNorm stabilize standard deviation. Although the\nmean in RMSNorm is not normalized, in practice it is more stable than the mean of the baseline. This\nsupports our hypothesis that RMSNorm stabilizes recurrent activations without the need to explicitly\nnormalize the mean.\n0 5 10 15 20 25 30\nTraining steps (x30k)\n0\n5\n10\n15\n20\n25Valid BLEU score\nLayerNorm\nRMSNorm\nFigure 4: SacreBLEU score curve of Layer-\nNorm and RMSNorm on newstest2013 (de-\nvset) when the initialization center is 0.2.\nOn the Robustness of RMSNorm One remaining ques-\ntion is whether the re-centering operation in LayerNorm\n(which RMSNorm abandons) makes models more robust\ntowards arbitrary weight/bias initializations. We perform\nan experiment on RNNSearch with Nematus in Tensor-\nﬂow, and change the center of weight initialization to 0.2.\nResults in Figure 4 show that LayerNorm becomes very\nunstable with abnormal initialization, but RMSNorm is\nmore robust (both underperform the original initialization).\nOur empirical evidence so far suggests that RMSNorm is\nsimilarly robust as LayerNorm, or more.\n6.2 CNN/Daily Mail Reading Comprehension\n",
+          "token_count": 600,
+          "source_id": "depth-1910.07467",
+          "source_kind": "pdf",
+          "source_version": "1910.07467v1",
+          "source_sha256": "14a6a097250f0e30c5598725fcec5f6a401ce9db63de6ac2ef7722d7c3ff4650",
+          "locator": "PDF file p. 7",
+          "start_char": 23757,
+          "end_char": 25859
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 5,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "layerWQ,l andWK,l to be zero matrices. In this setting,\nthe attention is a uniform distribution at initialization and\nMultiHeadAtt(x1\nl,i, [x1\nl,1,x 1\nl,2,··· ,x 1\nl,n]) can be simpliﬁed\nas 1\nn\n∑n\nj=1xl,jWV,l. Third, we assume the input vectors\nare also sampled from the same Gaussian distribution. This\nis reasonable since the inputs are linear combinations of\nword embeddings and learnable positional embeddings, both\nof which are initialized by Gaussian distributions.\nPost-LN Transformer v.s. Pre-LN Transformer We\ncompare the Post-LN Transformer with another variant\nof the Transformer architecture, the Transformer with Pre-\nLayer Normalization (Pre-LN). The Pre-LN Transformer\nwas implemented in several systems (Vaswani et al., 2018;\nKlein et al., 2018; Liu et al., 2019b). Wang et al. (2019) sug-\ngested that the Pre-LN Transformer outperforms the Post-\nLN Transformer when the number of layers increases. Dif-\nferent from the Post-LN Transformer that puts the layer nor-\nmalization between the residual blocks, the Pre-LN Trans-\nformer puts the layer normalization inside the residual con-\nnection and places it before all other non-linear transforma-\ntions. Additionally, the Pre-LN Transformer uses a ﬁnal\nlayer normalization right before the prediction. We pro-\nvide the mathematical formulations and visualizations of\nthe Post-LN/Pre-LN Transformer in Table 1 and Figure 1.\nFor both architectures, each xL,i passes through a soft-\nmax layer to produce a distribution over the dictionary V .\nThe loss function is deﬁned on the softmax distribution.\nFor example, in sequence prediction, the loss function is\ndeﬁned as L(xpost\nL+1,i) = − log(softmaxyi (Wembxpost\nL+1,i))\nfor the Post-LN Transformer and L(xpre\nFinal,i ) =\n− log(softmaxyi (Wembxpre\nFinal,i )) for the Pre-LN Trans-\nformer, where softmaxyi is the probability of ground truth\ntokenyi outputted by the softmax distribution and Wemb\nis the word embedding matrix. The loss of the whole se-\nquence is an average of the loss on each position. Without\nloss of generality, we assume that all the derivatives are\nbounded. We introduce the following concentration prop-\nerty of random variables which will be further used in the\ntheorem.\nDeﬁnition 1. A random variable Z ≥ 0 is called (ϵ,δ )-\nbounded if with probability at least1−δ, Z−EZ\n",
+          "token_count": 594,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 5",
+          "start_char": 22837,
+          "end_char": 25142
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 6,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c26216-28169",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "On Layer Normalization in the Transformer Architecture\nFrom Theorem 1, we can see that for the Post-LN Trans-\nformer, the scale of the gradients to the last FFN layer is\nof orderO(d\n√\nlnd) which is independent of L. For the\nPre-LN Transformer, the scale of the gradients is much\nsmaller. We ﬁrst study the forward propagation of the Post-\nLN Transformer and the Pre-LN Transformer. Lemma 1\nwill be served as a basic tool to prove the main theorem and\nother lemmas.\nLemma 1. If X ∈ Rd is a Gaussian vector, X ∼\nN (0,σ 2Id), then E(‖ReLU(X)‖2\n2) = 1\n2σ2d.\nBased on Lemma 1, we have the following lemma to esti-\nmate the scale of the hidden states in different layers for the\nPost-LN Transformer and the Pre-LN Transformer.\nLemma 2. At initialization, for the Post-LN Transformer,\nE(‖xpost,5\nl,i ‖2\n2) = 3\n2d for all l > 0 andi. For the Pre-LN\nTransformer,(1 + l\n2 )d≤ E(‖xpre\nl,i‖2\n2)≤ (1 + 3l\n2 )d for all\nl> 0 andi. Expectations are taken over the input and the\nrandomness of initialization.\nLemma 2 studies the expected norm of the hidden states\nin both Post-LN/Pre-LN Transformer. It is obviously that\nin the Post-LN Transformer, the norm of xpost\nl,i is\n√\nd and\nthus we study the norm of xpost,5\nl,i instead. As we can see\nfrom Lemma 2, the scale of the hidden states in the Post-LN\nTransformer keeps to be the same in expectation while the\nscale of the hidden states in the Pre-LN Transformer grows\nlinearly along with the depth. The next lemma shows that\nthe scale of the hidden states highly relates to the scale of\nthe gradient in the architectures using layer normalization.\nLemma 3. Forx∈ Rd, we have‖JLN (x)‖2=O(\n√\nd\n‖x‖2\n) in\nwhich JLN (x) = ∂LN(x)\n∂x .\nThe proof of Lemma 1, Lemma 2, Lemma 3, and Theorem\n1 can be found in the supplementary material. The main\nidea is that the layer normalization will normalize the gra-\ndients. In the Post-LN Transformer, the scale of the inputs\nto the layer normalization is independent ofL, and thus the\n",
+          "token_count": 597,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 6",
+          "start_char": 26216,
+          "end_char": 28169
+        },
+        {
+          "paper_id": "1910.07467v1",
+          "title": "Root Mean Square Layer Normalization",
+          "authors": [],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 3,
+          "chunk_id": "depth-1910.07467:14a6a097250f:c7675-10103",
+          "source_url": "https://arxiv.org/pdf/1910.07467v1",
+          "text": "Different from these related work, the proposed RMSNorm modiﬁes the normalization structure by\nremoving the re-centering operation and regularizing the summed inputs with RMS alone. Our model\nonly maintains the re-scaling invariance property which we ﬁnd can be inherited when the RMS is\nestimated from only subset of the summed inputs, partially inspired by the group normalization [34].\nAs a side effect, our model reduces the computational overhead and increases efﬁciency. Recently,\nZhang et al. [36] show that with careful initialization, residual networks can be trained as stable as\nthose with normalization. However, the approach mainly aims at improving residual networks and\ncan not be freely switched without modifying all initialization layers. Besides, it is not trivial to\nbe adapted to other general neural networks, such as RNNs where model depth expands along the\nvariable sequence length. By contrast, our model is simple, effective and can be used as a drop-in\nreplacement of LayerNorm.\n3 Background\nWe brieﬂy review LayerNorm in this section based on a standard feed-forward neural network. Given\nan input vector x∈ Rm, a feed-forward network projects it into an output vector y∈ Rn through a\nlinear transformation followed by a non-linear activation as follows:\nai =\nm∑\nj=1\nwijxj, y i =f (ai +bi), (1)\nwhere wi is weight vector to thei-th output neuron,bi is bias scalar which is usually initialized by\n0, andf(·) is an element-wise non-linear function. a∈ Rn denotes the weight-summed inputs to\nneurons, which is also the target of normalization.\nThis vanilla network might suffer from internal covariate shift issue [12], where a layer’s input\ndistribution changes as previous layers are updated. This could negatively affect the stability of\nparameters’ gradients, delaying model convergence. To reduce this shift, LayerNorm normalizes the\nsummed inputs so as to ﬁx their mean and variance as follows:\n¯ai = ai−µ\nσ gi, y i =f (¯ai +bi), (2)\nwhere ¯ai is thei-th value of vector ¯ a∈ Rn, which acts as the normalized alternative ofai for layer\nactivation. g∈ Rn is the gain parameter used to re-scale the standardized summed inputs, and is set\nto 1 at the beginning.µ andσ2 are the mean and variance statistic respectively estimated from raw\nsummed inputs a:\nµ = 1\nn\nn∑\ni=1\nai, σ =\nvuu√ 1\nn\nn∑\ni=1\n(ai−µ)2. (3)\nThus, LayerNorm forces the norm of neurons to be decoupled from the inputs and weight matrix.\n",
+          "token_count": 600,
+          "source_id": "depth-1910.07467",
+          "source_kind": "pdf",
+          "source_version": "1910.07467v1",
+          "source_sha256": "14a6a097250f0e30c5598725fcec5f6a401ce9db63de6ac2ef7722d7c3ff4650",
+          "locator": "PDF file p. 3",
+          "start_char": 7675,
+          "end_char": 10103
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 2,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "On Layer Normalization in the Transformer Architecture\nFigure 1. (a) Post-LN Transformer layer; (b) Pre-LN Transformer\nlayer.\nare large. Therefore, without the warm-up stage, directly\nusing a large learning rate to those parameters can make\nthe optimization process unstable. Using a warm-up stage\nand training the model with small learning rates practically\navoid this problem. Extensive experiments are provided to\nsupport our theoretical ﬁndings.\nOur theory also shows that the layer normalization plays a\ncrucial role in controlling the gradient scales. This motivates\nus to investigate whether there are some other ways of po-\nsitioning the layer normalization that lead to well-behaved\ngradients. In particular, we study another variant, the Trans-\nformer with Pre-Layer Normalization (Pre-LN) (Baevski\n& Auli, 2018; Child et al., 2019; Wang et al., 2019). The\nPre-LN Transformer puts the layer normalization inside the\nresidual connection and equips with an additionalﬁnal-layer\nnormalization before prediction (Please see Figure 1 for the\ndifferences between the two variants of the Transformer\narchitectures). We show that at initialization, the gradients\nare well-behaved without any exploding or vanishing for the\nPre-LN Transformer both theoretically and empirically.\nGiven the gradients are well-behaved in the Pre-LN Trans-\nformer, it is natural to consider removing the learning rate\nwarm-up stage during training. We conduct a variety of\nexperiments, including IWSLT14 German-English transla-\ntion, WMT14 English-German translation, and BERT pre-\ntraining tasks. We show that, in all tasks, the learning rate\nwarm-up stage can be safely removed, and thus, the number\nof hyper-parameter is reduced. Furthermore, we observe\nthat the loss decays faster for the Pre-LN Transformer model.\nIt can achieve comparable ﬁnal performances but use much\nless training time. This is particularly important for training\nlarge-scale models on large-scale datasets.\nOur contributions are summarized as follows:\n• We investigate two Transformer variants, the Post-LN\nTransformer and the Pre-LN Transformer, using mean ﬁeld\ntheory. By studying the gradients at initialization, we pro-\nvide evidence to show why the learning rate warm-up stage\nis essential in training the Post-LN Transformer.\n• We are the ﬁrst to show that the learning-rate warm-up\nstage can be removed for the Pre-LN Transformer, which\neases the hyperparameter tuning. We further show that by\nusing proper learning rate schedulers, the training time can\nbe largely reduced on a wide range of applications.\n2. Related work\nGradient descent-based methods (Kingma & Ba, 2014;\n",
+          "token_count": 592,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 2",
+          "start_char": 4702,
+          "end_char": 7341
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 8,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "700k updates, which suggests there is a 40% speed-up rate.\nNote that Twarmup (10k) is far less than the acceleration\n(200k) which suggests the Pre-LN Transformer is easier\nto optimize using larger learning rates. We also evaluate\ndifferent model checkpoints on the downstream task MRPC\nand RTE (more details can be found in the supplementary\nmaterial). The experiments results are plotted in Figure 5(b)\nand 5(c). We can see that the Pre-LN model also converges\nfaster on the downstream tasks.\nAs a summary, all the experiments on different tasks show\nthat training the Pre-LN Transformer does not rely on the\nlearning rate warm-up stage and can be trained much faster\nthan the Post-LN Transformer.\n5. Conclusion and Future Work\nIn this paper, we study why the learning rate warm-up stage\nis important in training the Transformer and show that the\nlocation of layer normalization matters. We show that in the\noriginal Transformer, which locates the layer normalization\noutside the residual blocks, the expected gradients of the\nparameters near the output layer are large at initialization.\nThis leads to an unstable training when using a large learning\nrate. We further show that the Transformer which locates the\nlayer normalization inside the residual blocks, can be trained\nwithout the warm-up stage and converges much faster. In\nthe future, we will investigate other strategies of positioning\nthe layer normalization and understand the optimization of\nTransformer from a theoretical perspective.\n",
+          "token_count": 311,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 8",
+          "start_char": 50803,
+          "end_char": 52303
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 8,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "/uni00000013/uni00000011/uni00000019/uni0000001b\n/uni00000013/uni00000011/uni0000001a/uni00000013\n/uni00000013/uni00000011/uni0000001a/uni00000015\n/uni00000013/uni00000011/uni0000001a/uni00000017/uni00000024/uni00000046/uni00000046/uni00000011\n/uni00000033/uni00000052/uni00000056/uni00000057/uni00000010/uni0000002f/uni00000031\n/uni00000033/uni00000055/uni00000048/uni00000010/uni0000002f/uni00000031 (c) Accuracy on RTE\nFigure 5. Performances of the models on unsupervised pre-training (BERT) and downstream tasks\nBLEU score and validation loss of the Pre-LN Transformer\ncan achieve around 34 and 4, which are comparable with\nthe performance of the Post-LN Transformer.\nSecond, the Pre-LN Transformer converges faster than\nthe Post-LN Transformer using the same lrmax. On the\nIWSLT14 De-En task, the 9-th checkpoint of the Pre-LN\nTransformer achieves nearly the same performance (vali-\ndation loss/BLEU score) as 15-th checkpoint of the Post-\nLN Transformer. Similar observations can be found in the\nWMT14 En-De task.\nThird, compared with RAdam, we ﬁnd that the change of\nthe position of layer normalization “dominates” the change\nof the optimizer. According to our experiments on the\nIWSLT14 De-En task, we can see that although RAdam\ntrains the Post-LN Transformer well without the warm-up\nstage, it has little difference with Adam when training the\nPre-LN Transformer.\nUnsupervised Pre-training (BERT) We record valida-\ntion loss of the model checkpoints and plot them in Figure\n5(a). Similar to the machine translation tasks, the learning\nrate warm-up stage can be removed for the Pre-LN model.\nThe Pre-LN model can be trained faster. For example, the\nPost-LN model achieves 1.69 validation loss at 500k updates\nwhile the Pre-LN model achieves similar validation loss at\n700k updates, which suggests there is a 40% speed-up rate.\nNote that Twarmup (10k) is far less than the acceleration\n(200k) which suggests the Pre-LN Transformer is easier\nto optimize using larger learning rates. We also evaluate\ndifferent model checkpoints on the downstream task MRPC\nand RTE (more details can be found in the supplementary\n",
+          "token_count": 594,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 8",
+          "start_char": 49026,
+          "end_char": 51145
+        },
+        {
+          "paper_id": "1910.07467v1",
+          "title": "Root Mean Square Layer Normalization",
+          "authors": [],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 6,
+          "chunk_id": "depth-1910.07467:14a6a097250f:c19973-22525",
+          "source_url": "https://arxiv.org/pdf/1910.07467v1",
+          "text": "the Baseline by accelerating model convergence: they reduce the number of training steps until con-\nvergence by about 50%, and improve test accuracy, with RMSNorm being comparable to LayerNorm.\nThis supports our hypothesis that re-scaling invariance is the core property of LayerNorm, and that\nRMSNorm is an effective substitute. Our results with L2-Norm show that it fails to improve the\nmodel.2 Results in Table 2 highlight the challenge that RNN with LayerNorm in Tensorﬂow suffers\nfrom serious computational inefﬁciency, where LayerNorm is slower than the Baseline by about 67%.\nIn this respect, RMSNorm performs signiﬁcantly better, improving upon LayerNorm by∼25%.\nTable 3 further lists translation results of different models implemented in Theano and Pytorch.\nOverall, RMSNorm yields comparable translation quality compared with LayerNorm but incurs less\ncomputational overhead, outperforming LayerNorm with speedups ranging from 11%∼34%. In\naddition, we observe that though in theory the amount of computation in pRMSNorm is less than\nthat in RMSNorm,pRMSNorm (p = 6.25%) sometimes tends to be slower. We ascribe this to the\nnon-optimal implementation of tensor slicing operation in these computational frameworks, which\ncan be improved with speciﬁc low-level coding.\nInpRMSNorm, the partial ratiop directly controls the accuracy of estimated RMS, thereby affecting\nthe stability of model training. Figure 7 shows the effect ofp on model performance. Surprisingly, we\nﬁnd that the scale ofp has little inﬂuence on the ﬁnal translation quality in RNNSearch: using a small\nratio does not signiﬁcantly degenerate BLEU score. We setp to 6.25% for all following experiments.\nWe also experiment with Transformer, which is based on self-attention, avoiding recurrent connec-\ntions and allowing a higher degree of parallelization. Still, layer normalization is an important part of\nthe architecture. We use an in-house Tensorﬂow implementation of the Transformer, and employ the\nbase setting as in [31] with all models trained for 300K steps. We treat Transformer with no normal-\nization as our Baseline, and compare RMSNorm-enhanced Transformer with LayerNorm-equipped\nTransformer. Table 4 shows the results, from which we observe the importance of normalization\nfor Transformer, without which training fails. RMSNorm achieves BLEU scores comparable to\nLayerNorm, and yields a speedup of 7%∼9%. Compared with RNNSearch, the relative cost of\n2We note that Nguyen and Chiang [18] only applied L2-Norm to the last layer, and treat the scaling factor as\n",
+          "token_count": 596,
+          "source_id": "depth-1910.07467",
+          "source_kind": "pdf",
+          "source_version": "1910.07467v1",
+          "source_sha256": "14a6a097250f0e30c5598725fcec5f6a401ce9db63de6ac2ef7722d7c3ff4650",
+          "locator": "PDF file p. 6",
+          "start_char": 19973,
+          "end_char": 22525
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 16,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c77157-78063",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "On Layer Normalization in the Transformer Architecture\n∂xpre\nj+1\n∂xpre,3\nj\n=\n\n\nI\n...\nI\n\n +\n\n\nW 2,j\n...\nW 2,j\n\n\n\n\nJ(h′)\n1\n...\nJ(h′)\nn\n\n\n\n\nW 1,j\n...\nW 1,j\n\n\n\n\nJLN (xpre,3\nj,1 )\n...\nJLN (xpre,3\nj,n )\n\n (63)\n∂xpre,3\nj\n∂xpre\nj\n=\n\n\nI\n...\nI\n\n +\n\n\n1\nnWV,j ··· 1\nnWV,j\n... ... ...\n1\nnWV,j ··· 1\nnWV,j\n\n\n\n\nJLN (xpre\nj,1 )\n...\nJLN (xpre\nj,n )\n\n (64)\nIf l is sufﬁciently large, the norm of JLN (xpre\nj,i ) and\nJLN (xpre,3\nj,i ) are very small (of order O( 1√j )) as j is be-\ntweenl + 1 andL, which means the eigenvalues of matrix\n∂xpre\nj+1\n∂xpre,3\nj\nand\n∂xpre,3\nj\n∂xpre\nj\nare close to 1. Then we can see that\nE‖\n∂xpre\nj+1\n∂xpre,3\nj\n‖2 and E‖\n∂xpre,3\nj\n∂xpre\nj\n‖2 are nearly 1, and the norm of\n∂ ˜L\n∂W 2,l for pre-LN transformer is independent ofl whenl is\nlarge.\nG. Examples of (ϵ,δ )-bounded random\nvariables\nIn this section we give an example of (ϵ,δ )-bounded ran-\n",
+          "token_count": 595,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 16",
+          "start_char": 77157,
+          "end_char": 78063
+        }
+      ],
+      "omitted_whole": [
+        "depth-2002.04745:8e1c3e3564f6:c0-2433",
+        "depth-1910.07467:14a6a097250f:c5603-7675",
+        "depth-2002.04745:8e1c3e3564f6:c66139-67207",
+        "depth-2002.04745:8e1c3e3564f6:c30042-31676",
+        "depth-2002.04745:8e1c3e3564f6:c20802-23034",
+        "foundation-1502.03167:ff1b9f13b590:c16449-18435",
+        "depth-2002.04745:8e1c3e3564f6:c74517-75512",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "depth-2002.04745:8e1c3e3564f6:c77853-79496"
+      ],
+      "characters": 23039
+    },
+    "llm_wiki": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "LayerNorm：特征维归一化与BN/RMSNorm区别（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:layernorm",
+          "source_url": "",
+          "text": "# LayerNorm：特征维归一化与BN/RMSNorm区别\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nLayerNorm对每个样本在指定特征维上计算当前输入均值与方差，统计不依赖同batch其他样本。\n\n## 工作机制\n\n常见Transformer输入(B,T,D)，LN(D)对每个(B,T)位置的D个特征计算μ与σ²，再施加逐特征γ、β。训练与推理通常都用当前输入统计，不像默认BN读取running mean/variance。RMSNorm使用均方根缩放但不减均值；Pre-LN/Post-LN描述的是子层摆放。\n\n## 适用条件与易混淆点\n\n归一化轴由normalized_shape决定，不能断言任何LN总只沿最后一维。LN不保证所有训练问题自动解决；位置、epsilon、精度与初始化均可能影响行为。\n\n## 关联知识\n\nBatchNorm：统计轴、训练与推理、归一化总览与RMSNorm、Pre-LN与Post-LN、残差连接：恒等路径、梯度与维度\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `foundation-1607.06450:2e66a69eecc9:c5764-7454` — [Layer Normalization, full page context, PDF file p. 2]\n- `foundation-pytorch-normalization-2.11:fe394c3aea14:c1630-3907` — [PyTorch v2.11.0 normalization, foundation-pytorch-normalization-2.11.py, L59–L126]\n- `foundation-pytorch-normalization-2.11:fe394c3aea14:c3565-6055` — [PyTorch v2.11.0 normalization, foundation-pytorch-normalization-2.11.py, L120–L173]\n- `paper-1706.03762:eee8b5a0bcc2:c7110-8934` — [Attention Is All You Need, full page context, PDF file p. 3]\n- `depth-2002.04745:8e1c3e3564f6:c14586-15771` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 4]\n- `depth-2002.04745:8e1c3e3564f6:c4702-7341` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 2]\n",
+          "token_count": 1903,
+          "source_id": "wiki-article:layernorm",
+          "source_kind": "wiki_article",
+          "source_version": "f2906dabda4a2e103de85b3379dc1857b8ab4048ac692c0e767a9087af904e38",
+          "source_sha256": "f2906dabda4a2e103de85b3379dc1857b8ab4048ac692c0e767a9087af904e38",
+          "locator": "layernorm.md"
+        },
+        {
+          "paper_id": null,
+          "title": "Pre-LN与Post-LN（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:pre-ln",
+          "source_url": "",
+          "text": "# Pre-LN与Post-LN\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nPre-LN与Post-LN区别在子层归一化相对残差的位置，而不是是否存在残差。\n\n## 工作机制\n\n常见Post-LN为y=LN(x+F(x))，Pre-LN为y=x+F(LN(x))，堆叠末端还可能有final norm。Pre-LN的残差支路保留直接恒等项；Post-LN的归一化作用于相加结果。相关论文分析初始化时的梯度规模并在其设置中考察warmup需求。\n\n## 适用条件与易混淆点\n\n不能由这些结构式推出任何训练都不会梯度消失/爆炸，也不能把论文实验结论说成普遍无需warmup。归一化类型LN/RMSNorm与摆放Pre/Post是不同选择。\n\n## 关联知识\n\n归一化总览与RMSNorm、训练：优化器、学习率与数值精度、Transformer 架构\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `depth-2002.04745:8e1c3e3564f6:c14586-15771` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 4]\n- `depth-2002.04745:8e1c3e3564f6:c4702-7341` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 2]\n- `depth-2002.04745:8e1c3e3564f6:c7049-9310` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 2]\n- `mygpt-model.py:e05006957de4:c11035-12913` — [mygpt / model.py, mygpt-model.py.py, L288–L329]\n- `mygpt-model.py:e05006957de4:c12523-14451` — [mygpt / model.py, mygpt-model.py.py, L319–L369]\n",
+          "token_count": 1580,
+          "source_id": "wiki-article:pre-ln",
+          "source_kind": "wiki_article",
+          "source_version": "440d08de389cbda7de04df32dc804f03dd18db64332f9d852e25c31d2629a9d0",
+          "source_sha256": "440d08de389cbda7de04df32dc804f03dd18db64332f9d852e25c31d2629a9d0",
+          "locator": "pre-ln.md"
+        },
+        {
+          "paper_id": null,
+          "title": "归一化总览与RMSNorm（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:normalization",
+          "source_url": "",
+          "text": "# 归一化总览与RMSNorm\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n归一化调节特征尺度；统计轴、是否去均值及结构位置是三个独立选择。LayerNorm、RMSNorm和BatchNorm不能互换概念。\n\n## 工作机制\n\nLayerNorm对指定特征维计算当前样本均值与方差；RMSNorm使用均方根缩放，一般形式为x/√mean(x²+ε)*g，不进行均值中心化；BN按通道聚合批次及指定空间/序列位置。归一化位于子层前还是残差相加后，分别对应常见Pre-LN与Post-LN。\n\n## 适用条件与易混淆点\n\nRMSNorm省去中心化并不自动保证某硬件上更快。归一化参数量取决于是否有可学习bias和gain。mygpt中的峰值显存/时间属于具体实验，不能作为普遍收益。\n\n## 关联知识\n\n训练：优化器、学习率与数值精度、Decoder-only架构与mygpt实现、性能测量、正确性与适用条件、Pre-LN与Post-LN、BatchNorm：统计轴、训练与推理、LayerNorm：特征维归一化与BN/RMSNorm区别\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532` — [PyTorch 2.11 RMSNorm, captured public-source excerpt, captured excerpt L3134–L3160; snapshot L1–L27]\n- `depth-1910.07467:14a6a097250f:c0-2733` — [Root Mean Square Layer Normalization, full page context, PDF file p. 1]\n- `depth-2002.04745:8e1c3e3564f6:c14586-15771` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 4]\n- `depth-2002.04745:8e1c3e3564f6:c4702-7341` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 2]\n- `depth-2002.04745:8e1c3e3564f6:c7049-9310` — [On Layer Normalization in the Transformer Architecture, full page context, PDF file p. 2]\n- `depth-1910.07467:14a6a097250f:c3581-5993` — [Root Mean Square Layer Normalization, full page context, PDF file p. 2]\n- `depth-1910.07467:14a6a097250f:c7675-10103` — [Root Mean Square Layer Normalization, full page context, PDF file p. 3]\n- `pytorch-rmsnorm-2.11:9d22e35bf7b3:c1267-2350` — [PyTorch 2.11 RMSNorm, captured public-source excerpt, captured excerpt L3157–L3175; snapshot L24–L42]\n- `mygpt-model.py:e05006957de4:c2583-4229` — [mygpt / model.py, mygpt-model.py.py, L74–L128]\n- `mygpt-model.py:e05006957de4:c1194-2694` — [mygpt / model.py, mygpt-model.py.py, L37–L76]\n- `mygpt-results-rmsnorm_metrics.json:25396ba25fac:c0-1356` — [mygpt / results/rmsnorm_metrics.json, mygpt-results-rmsnorm_metrics.json.json, L1–L85]\n",
+          "token_count": 2652,
+          "source_id": "wiki-article:normalization",
+          "source_kind": "wiki_article",
+          "source_version": "d10a61ae96daf16e93401551a188b493aa8686dd1354e0f7975db29db058dc20",
+          "source_sha256": "d10a61ae96daf16e93401551a188b493aa8686dd1354e0f7975db29db058dc20",
+          "locator": "normalization.md"
+        },
+        {
+          "paper_id": null,
+          "title": "BatchNorm：统计轴、训练与推理（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:batchnorm",
+          "source_url": "",
+          "text": "# BatchNorm：统计轴、训练与推理\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nBatchNorm按特征/通道使用批次统计进行标准化，再用可学习γ和β缩放平移。它与对每个token特征维独立归一化的LN不同。\n\n## 工作机制\n\ny=γ*(x−μ)/√(σ²+ε)+β。PyTorch BatchNorm1d输入(N,C)或(N,C,L)，后者每通道统计跨N和L，而不是对每token的C维统计。默认训练使用当前批统计并更新running统计，eval使用running统计；track_running_stats=False时训练和eval都使用批统计。训练前向方差估计与running variance更新的估计口径还需区分。\n\n## 适用条件与易混淆点\n\nBN并非不能用于任何序列任务，但变长、padding和小批量会影响统计。原论文用internal covariate shift解释动机，不应把这当成唯一已证实的收益机制。\n\n## 关联知识\n\nLayerNorm：特征维归一化与BN/RMSNorm区别、归一化总览与RMSNorm、训练：优化器、学习率与数值精度\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `foundation-1502.03167:ff1b9f13b590:c12196-14541` — [Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift, full page context, PDF file p. 3]\n- `foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131` — [PyTorch v2.11.0 batchnorm, foundation-pytorch-batchnorm-2.11.py, L265–L316]\n- `foundation-pytorch-batchnorm-2.11:46b3c108a19d:c11899-14252` — [PyTorch v2.11.0 batchnorm, foundation-pytorch-batchnorm-2.11.py, L314–L361]\n- `foundation-1502.03167:ff1b9f13b590:c16449-18435` — [Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift, full page context, PDF file p. 4]\n- `foundation-1607.06450:2e66a69eecc9:c5764-7454` — [Layer Normalization, full page context, PDF file p. 2]\n",
+          "token_count": 1953,
+          "source_id": "wiki-article:batchnorm",
+          "source_kind": "wiki_article",
+          "source_version": "17cd7cb01a4d658dc968ddbac9f950057458376b1bb380053c9256a712e1713f",
+          "source_sha256": "17cd7cb01a4d658dc968ddbac9f950057458376b1bb380053c9256a712e1713f",
+          "locator": "batchnorm.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 5615
+    }
+  },
+  "timing_rows": [
+    {
+      "mode": "llm_wiki",
+      "repeat": 0,
+      "seconds": 0.0017351999995298684
+    },
+    {
+      "mode": "source",
+      "repeat": 0,
+      "seconds": 0.6552224999759346
+    },
+    {
+      "mode": "source",
+      "repeat": 1,
+      "seconds": 0.6537024999852292
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 1,
+      "seconds": 0.001795999996829778
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 2,
+      "seconds": 0.001672400045208633
+    },
+    {
+      "mode": "source",
+      "repeat": 2,
+      "seconds": 0.6581095000146888
+    },
+    {
+      "mode": "source",
+      "repeat": 3,
+      "seconds": 0.6463106999872252
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 3,
+      "seconds": 0.0018129999516531825
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 4,
+      "seconds": 0.0016456000157631934
+    },
+    {
+      "mode": "source",
+      "repeat": 4,
+      "seconds": 0.7098915000096895
+    },
+    {
+      "mode": "source",
+      "repeat": 5,
+      "seconds": 0.650514499982819
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 5,
+      "seconds": 0.001703200046904385
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 6,
+      "seconds": 0.0016745000029914081
+    },
+    {
+      "mode": "source",
+      "repeat": 6,
+      "seconds": 0.6434163000085391
+    },
+    {
+      "mode": "source",
+      "repeat": 7,
+      "seconds": 0.646787800011225
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 7,
+      "seconds": 0.0018453000229783356
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 8,
+      "seconds": 0.0017118999967351556
+    },
+    {
+      "mode": "source",
+      "repeat": 8,
+      "seconds": 0.6514045000076294
+    },
+    {
+      "mode": "source",
+      "repeat": 9,
+      "seconds": 0.6533424999797717
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 9,
+      "seconds": 0.0017370000132359564
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 10,
+      "seconds": 0.0015848000184632838
+    },
+    {
+      "mode": "source",
+      "repeat": 10,
+      "seconds": 0.6577054999652319
+    },
+    {
+      "mode": "source",
+      "repeat": 11,
+      "seconds": 0.652982100029476
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 11,
+      "seconds": 0.002999100019223988
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 12,
+      "seconds": 0.0023156999959610403
+    },
+    {
+      "mode": "source",
+      "repeat": 12,
+      "seconds": 0.6614950000075623
+    },
+    {
+      "mode": "source",
+      "repeat": 13,
+      "seconds": 0.6681868999730796
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 13,
+      "seconds": 0.003163500048685819
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 14,
+      "seconds": 0.0029913000180386007
+    },
+    {
+      "mode": "source",
+      "repeat": 14,
+      "seconds": 0.6567686999915168
+    },
+    {
+      "mode": "source",
+      "repeat": 15,
+      "seconds": 0.6647969000041485
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 15,
+      "seconds": 0.0017722999909892678
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 16,
+      "seconds": 0.0017847000272013247
+    },
+    {
+      "mode": "source",
+      "repeat": 16,
+      "seconds": 0.655768700002227
+    },
+    {
+      "mode": "source",
+      "repeat": 17,
+      "seconds": 0.6463235999690369
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 17,
+      "seconds": 0.0016395999700762331
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 18,
+      "seconds": 0.0015133999986574054
+    },
+    {
+      "mode": "source",
+      "repeat": 18,
+      "seconds": 0.6549048000015318
+    },
+    {
+      "mode": "source",
+      "repeat": 19,
+      "seconds": 0.655353499983903
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 19,
+      "seconds": 0.0017185999895446002
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 20,
+      "seconds": 0.0015885999891906977
+    },
+    {
+      "mode": "source",
+      "repeat": 20,
+      "seconds": 0.645218699995894
+    },
+    {
+      "mode": "source",
+      "repeat": 21,
+      "seconds": 0.6622243000310846
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 21,
+      "seconds": 0.0016904000076465309
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 22,
+      "seconds": 0.0015783000271767378
+    },
+    {
+      "mode": "source",
+      "repeat": 22,
+      "seconds": 0.6789818999823183
+    },
+    {
+      "mode": "source",
+      "repeat": 23,
+      "seconds": 0.6557080999482423
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 23,
+      "seconds": 0.001736000005621463
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 24,
+      "seconds": 0.0015305000124499202
+    },
+    {
+      "mode": "source",
+      "repeat": 24,
+      "seconds": 0.6581393000087701
+    },
+    {
+      "mode": "source",
+      "repeat": 25,
+      "seconds": 0.6539061999646947
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 25,
+      "seconds": 0.001857199997175485
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 26,
+      "seconds": 0.002031699987128377
+    },
+    {
+      "mode": "source",
+      "repeat": 26,
+      "seconds": 0.6551659000106156
+    },
+    {
+      "mode": "source",
+      "repeat": 27,
+      "seconds": 0.6581848999485373
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 27,
+      "seconds": 0.0016621000249870121
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 28,
+      "seconds": 0.0015385000151582062
+    },
+    {
+      "mode": "source",
+      "repeat": 28,
+      "seconds": 0.661433799949009
+    },
+    {
+      "mode": "source",
+      "repeat": 29,
+      "seconds": 0.6724292999715544
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 29,
+      "seconds": 0.002092700044158846
+    }
+  ],
+  "median_seconds": {
+    "source": 0.6555307999660727,
+    "llm_wiki": 0.0017268999945372343
+  },
+  "actual_routing_traces": {
+    "source": [
+      {
+        "stage": "wiki_source_navigation",
+        "mode": "source",
+        "rerank_original_query": "Decompose Transformer normalization into three independent questions: statistical axis, whether mean is subtracted, and position in the residual. Compare LayerNorm, RMSNorm, BatchNorm and Pre-LN/Post-LN, and explain why switching to Pre-LN cannot imply that any model can remove warmup.",
+        "effective_search_queries": [
+          "Transformer normalization decomposition statistical axis mean subtraction position in residual LayerNorm RMSNorm BatchNorm Pre-LN Post-LN comparison",
+          "Pre-LN Post-LN normalization placement residual connection warmup learning rate stability why Pre-LN does not remove need for warmup",
+          "Decompose Transformer normalization into three independent questions: statistical axis, whether mean is subtracted, and position in the residual. Compare LayerNorm, RMSNorm, BatchNorm and Pre-LN/Post-LN, and explain why switching to Pre-LN cannot imply that any model can remove warmup.",
+          "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及Pre-LN/Post-LN，并解释为什么换成Pre-LN不能推出任何模型都可取消warmup。"
+        ],
+        "effective_rerank_query": "Decompose Transformer normalization into three independent questions: statistical axis, whether mean is subtracted, and position in the residual. Compare LayerNorm, RMSNorm, BatchNorm and Pre-LN/Post-LN, and explain why switching to Pre-LN cannot imply that any model can remove warmup.",
+        "term_corrections": [
+          {
+            "original": "Pre-LN",
+            "source_alias": "pre-LN",
+            "role": "retrieval_suggestion_not_ground_truth"
+          },
+          {
+            "original": "Post-LN",
+            "source_alias": "post-LN",
+            "role": "retrieval_suggestion_not_ground_truth"
+          }
+        ],
+        "query_terminology": {
+          "original_query": "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及Pre-LN/Post-LN，并解释为什么换成Pre-LN不能推出任何模型都可取消warmup。",
+          "expanded_query": "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及pre-LN/post-LN，并解释为什么换成pre-LN不能推出任何模型都可取消warmup。",
+          "corrections": [
+            {
+              "original": "Pre-LN",
+              "source_alias": "pre-LN",
+              "role": "retrieval_suggestion_not_ground_truth"
+            },
+            {
+              "original": "Post-LN",
+              "source_alias": "post-LN",
+              "role": "retrieval_suggestion_not_ground_truth"
+            }
+          ],
+          "rejected_choices": [],
+          "suggestions": [
+            {
+              "original": "Transformer",
+              "candidates": [
+                {
+                  "canonical": "Transformer",
+                  "wiki_pages": [
+                    "transformer"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1706.03762:eee8b5a0bcc2:c0-2632",
+                    "paper-1706.03762:eee8b5a0bcc2:c2858-5920"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "归一化",
+              "candidates": [
+                {
+                  "canonical": "归一化",
+                  "wiki_pages": [
+                    "normalization"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c0-1426",
+                    "mygpt-model.py:e05006957de4:c1194-2694"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "残差",
+              "candidates": [
+                {
+                  "canonical": "残差",
+                  "wiki_pages": [
+                    "residual"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c0-1426",
+                    "mygpt-model.py:e05006957de4:c12523-14451"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "LayerNorm",
+              "candidates": [
+                {
+                  "canonical": "LayerNorm",
+                  "wiki_pages": [
+                    "layernorm"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+                    "paper-1910.10683:7aa53b0ecc3b:c12742-15676"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "RMSNorm",
+              "candidates": [
+                {
+                  "canonical": "RMSNorm",
+                  "wiki_pages": [
+                    "normalization"
+                  ],
+                  "attested_chunk_ids": [
+                    "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532",
+                    "pytorch-rmsnorm-2.11:9d22e35bf7b3:c1267-2350"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "BatchNorm",
+              "candidates": [
+                {
+                  "canonical": "BatchNorm",
+                  "wiki_pages": [
+                    "batchnorm"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-2205.14135:b86de4ee5c52:c9855-11869",
+                    "depth-1910.07467:14a6a097250f:c0-2733"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "Pre-LN",
+              "candidates": [
+                {
+                  "canonical": "pre-LN",
+                  "wiki_pages": [
+                    "pre-ln"
+                  ],
+                  "attested_chunk_ids": [
+                    "depth-2002.04745:8e1c3e3564f6:c0-2433",
+                    "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "Post-LN",
+              "candidates": [
+                {
+                  "canonical": "post-LN",
+                  "wiki_pages": [
+                    "pre-ln"
+                  ],
+                  "attested_chunk_ids": [
+                    "depth-2002.04745:8e1c3e3564f6:c0-2433",
+                    "depth-2002.04745:8e1c3e3564f6:c2141-4427"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            }
+          ],
+          "policy": "source-vocabulary-one-edit-v1",
+          "new_provider_calls": 0
+        },
+        "rerank_search_context_used": false,
+        "rerank_context_rankings": [],
+        "authoritative_original_reranker_ids": [
+          "depth-2002.04745:8e1c3e3564f6:c27876-30276",
+          "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+          "depth-1910.07467:14a6a097250f:c23757-25859",
+          "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+          "depth-2002.04745:8e1c3e3564f6:c26216-28169",
+          "depth-1910.07467:14a6a097250f:c7675-10103",
+          "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+          "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+          "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+          "depth-1910.07467:14a6a097250f:c19973-22525",
+          "depth-2002.04745:8e1c3e3564f6:c0-2433",
+          "depth-2002.04745:8e1c3e3564f6:c77157-78063",
+          "depth-1910.07467:14a6a097250f:c5603-7675",
+          "depth-2002.04745:8e1c3e3564f6:c66139-67207",
+          "depth-2002.04745:8e1c3e3564f6:c30042-31676",
+          "depth-2002.04745:8e1c3e3564f6:c20802-23034",
+          "foundation-1502.03167:ff1b9f13b590:c16449-18435",
+          "depth-2002.04745:8e1c3e3564f6:c74517-75512",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "depth-2002.04745:8e1c3e3564f6:c77853-79496",
+          "depth-1910.07467:14a6a097250f:c11054-13244",
+          "depth-2002.04745:8e1c3e3564f6:c2141-4427",
+          "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+          "depth-1910.07467:14a6a097250f:c3581-5993",
+          "foundation-1502.03167:ff1b9f13b590:c36742-39270",
+          "foundation-1502.03167:ff1b9f13b590:c4308-6748",
+          "depth-2002.04745:8e1c3e3564f6:c24858-26216",
+          "foundation-1607.06450:2e66a69eecc9:c3652-6163",
+          "depth-2002.04745:8e1c3e3564f6:c4128-4702",
+          "foundation-1502.03167:ff1b9f13b590:c18085-19589",
+          "depth-1910.07467:14a6a097250f:c0-2733",
+          "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c2305-4848",
+          "depth-1910.07467:14a6a097250f:c31112-33603",
+          "depth-2002.04745:8e1c3e3564f6:c37345-39556",
+          "depth-2002.04745:8e1c3e3564f6:c35325-37576",
+          "foundation-1607.06450:2e66a69eecc9:c42161-43633",
+          "foundation-1607.06450:2e66a69eecc9:c33527-35703",
+          "depth-1910.07467:14a6a097250f:c25555-26673",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "depth-1910.07467:14a6a097250f:c28180-30071",
+          "depth-2002.04745:8e1c3e3564f6:c79204-80123",
+          "depth-2002.04745:8e1c3e3564f6:c13279-14586",
+          "depth-1910.07467:14a6a097250f:c22238-22662",
+          "depth-2002.04745:8e1c3e3564f6:c8960-9529",
+          "mygpt-readme.md:2d20f1a5d663:c3380-5386",
+          "depth-2002.04745:8e1c3e3564f6:c7049-9310",
+          "depth-2002.04745:8e1c3e3564f6:c39210-39613",
+          "depth-2002.04745:8e1c3e3564f6:c34101-35585",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-model.py:e05006957de4:c2583-4229",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c5440-5898",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-train.py:52262ac90caa:c1212-3086",
+          "mygpt-model.py:e05006957de4:c5047-6681",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-train.py:52262ac90caa:c0-1445"
+        ],
+        "wiki_pages": [],
+        "graph_neighbors": [],
+        "source_pointer_ids": [],
+        "final_ids": [
+          "depth-2002.04745:8e1c3e3564f6:c27876-30276",
+          "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+          "depth-1910.07467:14a6a097250f:c23757-25859",
+          "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+          "depth-2002.04745:8e1c3e3564f6:c26216-28169",
+          "depth-1910.07467:14a6a097250f:c7675-10103",
+          "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+          "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+          "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+          "depth-1910.07467:14a6a097250f:c19973-22525",
+          "depth-2002.04745:8e1c3e3564f6:c0-2433",
+          "depth-2002.04745:8e1c3e3564f6:c77157-78063",
+          "depth-1910.07467:14a6a097250f:c5603-7675",
+          "depth-2002.04745:8e1c3e3564f6:c66139-67207",
+          "depth-2002.04745:8e1c3e3564f6:c30042-31676",
+          "depth-2002.04745:8e1c3e3564f6:c20802-23034",
+          "foundation-1502.03167:ff1b9f13b590:c16449-18435",
+          "depth-2002.04745:8e1c3e3564f6:c74517-75512",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "depth-2002.04745:8e1c3e3564f6:c77853-79496"
+        ],
+        "overview_anchor_ids": [],
+        "overview_anchor_policy": "protected-reranker-head8;bounded-tail-topic-coverage-v2;no-forced-neighbors",
+        "navigation_selection": {
+          "protected_reranker_ids": [
+            "depth-2002.04745:8e1c3e3564f6:c27876-30276",
+            "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+            "depth-1910.07467:14a6a097250f:c23757-25859",
+            "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+            "depth-2002.04745:8e1c3e3564f6:c26216-28169",
+            "depth-1910.07467:14a6a097250f:c7675-10103",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+            "depth-2002.04745:8e1c3e3564f6:c50803-52303"
+          ],
+          "admitted_anchor_ids": [],
+          "omitted_anchor_ids": [],
+          "displaced_reranker_ids": [],
+          "semantic_support_certified": false,
+          "additional_provider_calls": 0
+        },
+        "topic_entry_ids": {},
+        "original_reranker_ids": [
+          "depth-2002.04745:8e1c3e3564f6:c27876-30276",
+          "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+          "depth-1910.07467:14a6a097250f:c23757-25859",
+          "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+          "depth-2002.04745:8e1c3e3564f6:c26216-28169",
+          "depth-1910.07467:14a6a097250f:c7675-10103",
+          "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+          "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+          "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+          "depth-1910.07467:14a6a097250f:c19973-22525",
+          "depth-2002.04745:8e1c3e3564f6:c0-2433",
+          "depth-2002.04745:8e1c3e3564f6:c77157-78063",
+          "depth-1910.07467:14a6a097250f:c5603-7675",
+          "depth-2002.04745:8e1c3e3564f6:c66139-67207",
+          "depth-2002.04745:8e1c3e3564f6:c30042-31676",
+          "depth-2002.04745:8e1c3e3564f6:c20802-23034",
+          "foundation-1502.03167:ff1b9f13b590:c16449-18435",
+          "depth-2002.04745:8e1c3e3564f6:c74517-75512",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "depth-2002.04745:8e1c3e3564f6:c77853-79496",
+          "depth-1910.07467:14a6a097250f:c11054-13244",
+          "depth-2002.04745:8e1c3e3564f6:c2141-4427",
+          "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+          "depth-1910.07467:14a6a097250f:c3581-5993",
+          "foundation-1502.03167:ff1b9f13b590:c36742-39270",
+          "foundation-1502.03167:ff1b9f13b590:c4308-6748",
+          "depth-2002.04745:8e1c3e3564f6:c24858-26216",
+          "foundation-1607.06450:2e66a69eecc9:c3652-6163",
+          "depth-2002.04745:8e1c3e3564f6:c4128-4702",
+          "foundation-1502.03167:ff1b9f13b590:c18085-19589",
+          "depth-1910.07467:14a6a097250f:c0-2733",
+          "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c2305-4848",
+          "depth-1910.07467:14a6a097250f:c31112-33603",
+          "depth-2002.04745:8e1c3e3564f6:c37345-39556",
+          "depth-2002.04745:8e1c3e3564f6:c35325-37576",
+          "foundation-1607.06450:2e66a69eecc9:c42161-43633",
+          "foundation-1607.06450:2e66a69eecc9:c33527-35703",
+          "depth-1910.07467:14a6a097250f:c25555-26673",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "depth-1910.07467:14a6a097250f:c28180-30071",
+          "depth-2002.04745:8e1c3e3564f6:c79204-80123",
+          "depth-2002.04745:8e1c3e3564f6:c13279-14586",
+          "depth-1910.07467:14a6a097250f:c22238-22662",
+          "depth-2002.04745:8e1c3e3564f6:c8960-9529",
+          "mygpt-readme.md:2d20f1a5d663:c3380-5386",
+          "depth-2002.04745:8e1c3e3564f6:c7049-9310",
+          "depth-2002.04745:8e1c3e3564f6:c39210-39613",
+          "depth-2002.04745:8e1c3e3564f6:c34101-35585",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-model.py:e05006957de4:c2583-4229",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c5440-5898",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-train.py:52262ac90caa:c1212-3086",
+          "mygpt-model.py:e05006957de4:c5047-6681",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-train.py:52262ac90caa:c0-1445"
+        ],
+        "latency_ms": 874.1343999863602,
+        "editorial_content_used_as_evidence": false,
+        "new_provider_calls": 0
+      }
+    ],
+    "llm_wiki": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki",
+        "seeds": [
+          "layernorm",
+          "pre-ln",
+          "normalization",
+          "batchnorm"
+        ],
+        "graph_neighbors": [],
+        "selected": [
+          "layernorm",
+          "pre-ln",
+          "normalization",
+          "batchnorm"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [],
+        "complete_articles": true,
+        "article_characters": 5615,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 1.8352000042796135,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "python": "3.12.14",
+  "platform": "win32",
+  "installed_versions": {
+    "pydantic": "2.13.5",
+    "PyYAML": "6.0.3",
+    "httpx": "0.28.1",
+    "pypdf": "6.19.0",
+    "fonttools": "4.66.1",
+    "tiktoken": "0.14.0",
+    "rank-bm25": "0.2.2",
+    "qdrant-client": "1.19.1",
+    "numpy": "2.5.3",
+    "sentence-transformers": "5.7.0",
+    "torch": "2.13.0+cu130",
+    "transformers": "5.18.0",
+    "huggingface-hub": "1.33.0"
+  },
+  "offline_requires": "Python >=3.11 standard library only",
+  "timing_is_hardware_dependent": true,
+  "optional_torch_cuda_wheel_is_platform_dependent": true
+}

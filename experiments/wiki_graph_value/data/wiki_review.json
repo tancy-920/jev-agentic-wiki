@@ -1,0 +1,1425 @@
+{
+  "type": "LOCAL_ORIGINAL_SOURCE_AI_RETEST_REVIEW",
+  "human_attested": false,
+  "ground_truth_release": false,
+  "provider_review_calls": 0,
+  "limitations": [
+    "Six exposed development questions, no independent held-out/generalization/significance claim",
+    "Reviewer knows arms, not blinded",
+    "Strict full-item scoring; partial is not false; equivalent textual formulas and scoped initialization argument accepted",
+    "Wiki input contains AI articles, original-source review is separate from article faithfulness",
+    "N06 allocator-definition corpus gap remains",
+    "Supplement is a new contract/ranking version, do not pool old answers"
+  ],
+  "rows": [
+    {
+      "id": "N01",
+      "mode": "source",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 4,
+      "coverage": 1,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "每头64及形状推导前提",
+          "fully_supported": true,
+          "answer_quote": "d_k=d_v=768/12=64",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "768/12=64 assumes standard equal-width MHA with total Q/K/V width768, not GQA head-count inference.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "Q/K/V分头和拼接输出投影",
+          "fully_supported": true,
+          "answer_quote": "12 个头拼接后宽度为 12×64=768",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "Each head Q/K projections d_model by d_k, V by d_v; concatenate h*d_v then W_O to d_model.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "缩放使用每头key维度",
+          "fully_supported": true,
+          "answer_quote": "点积 q·k=Σ",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426"
+          ],
+          "source_fact": "Scale by sqrt(d_k), not sqrt(total model width).",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "头数不是端到端加速倍率",
+          "fully_supported": true,
+          "answer_quote": "h 个头并不等于 h 倍加速",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "Paper says comparable total compute with reduced head width; no head-count latency multiplier follows.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "E2": "paper-2305.13245:3ed3d65bc419:c2100-4367",
+        "E3": "author-t2t-v1.2.0-common-attention:4d7013143123:c26383-29239",
+        "E4": "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+        "E5": "paper-2305.13245:3ed3d65bc419:c13133-15425",
+        "E6": "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+        "E7": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "E8": "depth-2307.08691:f917fc544aae:c18723-19905",
+        "E9": "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+        "E10": "paper-1706.03762:eee8b5a0bcc2:c24539-26145",
+        "E11": "author-t2t-v1.2.0-common-attention:4d7013143123:c37512-38307",
+        "E12": "author-t2t-v1.2.0-common-attention:4d7013143123:c28929-29835"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N01-B-source.json"
+    },
+    {
+      "id": "N01",
+      "mode": "llm_wiki",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 4,
+      "coverage": 1,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "每头64及形状推导前提",
+          "fully_supported": true,
+          "answer_quote": "按标准MHA的写法",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "768/12=64 assumes standard equal-width MHA with total Q/K/V width768, not GQA head-count inference.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "Q/K/V分头和拼接输出投影",
+          "fully_supported": true,
+          "answer_quote": "沿特征维拼接回",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "Each head Q/K projections d_model by d_k, V by d_v; concatenate h*d_v then W_O to d_model.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "缩放使用每头key维度",
+          "fully_supported": true,
+          "answer_quote": "QK^T/√d_k",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426"
+          ],
+          "source_fact": "Scale by sqrt(d_k), not sqrt(total model width).",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "头数不是端到端加速倍率",
+          "fully_supported": true,
+          "answer_quote": "不能把头数直接解释为提速倍数",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "Paper says comparable total compute with reduced head width; no head-count latency multiplier follows.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:mha",
+        "E2": "wiki-article:measurement"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N01-B-llm_wiki.json"
+    },
+    {
+      "id": "N02",
+      "mode": "source",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 4,
+      "coverage": 1,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "LN/RMSNorm/BN统计轴区分",
+          "fully_supported": true,
+          "answer_quote": "BatchNorm 的统计轴是批维",
+          "source_ids": [
+            "foundation-1607.06450:2e66a69eecc9:c5764-7454",
+            "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131",
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532"
+          ],
+          "source_fact": "LN last feature dimensions per token/sample; BN per channel minibatch (and sequence/spatial as applicable); RMS last normalized_shape dimensions.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "RMSNorm不去均值",
+          "fully_supported": true,
+          "answer_quote": "不再减均值",
+          "source_ids": [
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532"
+          ],
+          "source_fact": "RMS scales x by sqrt(epsilon+mean x squared); no mean subtraction.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "Pre/Post结构式及残差路径",
+          "fully_supported": true,
+          "answer_quote": "子层 → 残差 → LayerNorm",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+          ],
+          "source_fact": "Post LN(x+F(x)); pre x+F(LN(x)), pre retains identity branch; possible final LN.",
+          "conclusion": "supported",
+          "note": "Equivalent textual sublayer/residual/LN ordering accepted; exact algebraic notation is not required when the same structure is unambiguous."
+        },
+        {
+          "index": 4,
+          "criterion": "初始化和warmup论文范围而非普遍保证",
+          "fully_supported": true,
+          "answer_quote": "特定架构 + 特定初始化假设 + 特定任务",
+          "source_ids": [
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+          ],
+          "source_fact": "Pre-LN gradient at initialization and tested translation/BERT tasks support scoped warmup removal, not all optimizers/depths/models.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "depth-2002.04745:8e1c3e3564f6:c27876-30276",
+        "E2": "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+        "E3": "depth-1910.07467:14a6a097250f:c23757-25859",
+        "E4": "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+        "E5": "depth-2002.04745:8e1c3e3564f6:c26216-28169",
+        "E6": "depth-1910.07467:14a6a097250f:c7675-10103",
+        "E7": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+        "E8": "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+        "E9": "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+        "E10": "depth-1910.07467:14a6a097250f:c19973-22525",
+        "E11": "depth-2002.04745:8e1c3e3564f6:c77157-78063"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N02-B-source.json"
+    },
+    {
+      "id": "N02",
+      "mode": "llm_wiki",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 4,
+      "coverage": 1,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "LN/RMSNorm/BN统计轴区分",
+          "fully_supported": true,
+          "answer_quote": "每通道统计跨 N 和 L",
+          "source_ids": [
+            "foundation-1607.06450:2e66a69eecc9:c5764-7454",
+            "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131",
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532"
+          ],
+          "source_fact": "LN last feature dimensions per token/sample; BN per channel minibatch (and sequence/spatial as applicable); RMS last normalized_shape dimensions.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "RMSNorm不去均值",
+          "fully_supported": true,
+          "answer_quote": "不进行均值中心化",
+          "source_ids": [
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532"
+          ],
+          "source_fact": "RMS scales x by sqrt(epsilon+mean x squared); no mean subtraction.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "Pre/Post结构式及残差路径",
+          "fully_supported": true,
+          "answer_quote": "y=x+F(\\mathrm{LN}(x))",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+          ],
+          "source_fact": "Post LN(x+F(x)); pre x+F(LN(x)), pre retains identity branch; possible final LN.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "初始化和warmup论文范围而非普遍保证",
+          "fully_supported": true,
+          "answer_quote": "相关论文分析初始化时的梯度规模",
+          "source_ids": [
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+          ],
+          "source_fact": "Pre-LN gradient at initialization and tested translation/BERT tasks support scoped warmup removal, not all optimizers/depths/models.",
+          "conclusion": "supported",
+          "note": "Initialization argument and paper-specific scope are now explicit. Exact task names are useful detail but not mandatory for the predeclared item; old answer lacked initialization argument as well."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:layernorm",
+        "E2": "wiki-article:pre-ln",
+        "E3": "wiki-article:normalization",
+        "E4": "wiki-article:batchnorm"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N02-B-llm_wiki.json"
+    },
+    {
+      "id": "N03",
+      "mode": "source",
+      "status": "parsed",
+      "supported_items": 3,
+      "total_items": 5,
+      "coverage": 0.6,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "原始编码器解码器与Decoder-only差异",
+          "fully_supported": true,
+          "answer_quote": "仅解码器模型即去掉编码器",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "mygpt-model.py:e05006957de4:c12523-14451"
+          ],
+          "source_fact": "Original encoder-decoder cross-attention Q from decoder, K/V encoder; mygpt decoder-only has no encoder cross module.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "目标右移及因果可见性",
+          "fully_supported": true,
+          "answer_quote": "右移保证位置",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "Offset targets plus forbidden future mask prevents target leakage.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "FFN逐位置且参数共享",
+          "fully_supported": false,
+          "answer_quote": "逐位置 FFN 在两种情形下都对每个位置独立作用",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "FFN separately identically each position, distinct layer parameters.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Independent positional application described, but position-shared parameters omitted; partial only."
+        },
+        {
+          "index": 4,
+          "criterion": "训练并行前向与生成循环区别",
+          "fully_supported": true,
+          "answer_quote": "一次前向并行算出全部位置",
+          "source_ids": [
+            "paper-2309.06180:7ba2ff703be1:c3049-5192"
+          ],
+          "source_fact": "Known sequence positions permit parallel masked forward; generated tokens depend sequentially on earlier generations.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 5,
+          "criterion": "缓存复用历史KV但不消除历史注意力读取",
+          "fully_supported": false,
+          "answer_quote": "它保存历史 key/value 以避免重算前缀",
+          "source_ids": [
+            "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394"
+          ],
+          "source_fact": "Cache old KV per layer, current query attends to concatenated history; reuse avoids recomputation not history reads.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Cache reuse present; still reading/attending historical KV absent."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+        "E2": "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+        "E3": "paper-1910.10683:7aa53b0ecc3b:c117215-119641",
+        "E4": "paper-2309.06180:7ba2ff703be1:c7362-9520",
+        "E5": "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+        "E6": "paper-1910.10683:7aa53b0ecc3b:c61496-63183",
+        "E7": "paper-1910.10683:7aa53b0ecc3b:c49392-51825",
+        "E8": "paper-1910.10683:7aa53b0ecc3b:c11430-12742",
+        "E9": "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+        "E10": "paper-1706.03762:eee8b5a0bcc2:c27513-29798"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N03-B-source.json"
+    },
+    {
+      "id": "N03",
+      "mode": "llm_wiki",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 5,
+      "coverage": 0.8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "原始编码器解码器与Decoder-only差异",
+          "fully_supported": true,
+          "answer_quote": "Decoder-only省去编码器与独立交叉注意力",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "mygpt-model.py:e05006957de4:c12523-14451"
+          ],
+          "source_fact": "Original encoder-decoder cross-attention Q from decoder, K/V encoder; mygpt decoder-only has no encoder cross module.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "目标右移及因果可见性",
+          "fully_supported": true,
+          "answer_quote": "目标输入右移",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "Offset targets plus forbidden future mask prevents target leakage.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "FFN逐位置且参数共享",
+          "fully_supported": true,
+          "answer_quote": "独立施加同一组参数",
+          "source_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "source_fact": "FFN separately identically each position, distinct layer parameters.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "训练并行前向与生成循环区别",
+          "fully_supported": true,
+          "answer_quote": "训练序列可并行计算多个位置",
+          "source_ids": [
+            "paper-2309.06180:7ba2ff703be1:c3049-5192"
+          ],
+          "source_fact": "Known sequence positions permit parallel masked forward; generated tokens depend sequentially on earlier generations.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 5,
+          "criterion": "缓存复用历史KV但不消除历史注意力读取",
+          "fully_supported": false,
+          "answer_quote": "它缓存历史K/V以避免重算",
+          "source_ids": [
+            "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394"
+          ],
+          "source_fact": "Cache old KV per layer, current query attends to concatenated history; reuse avoids recomputation not history reads.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Cache reuse present; still reading/attending historical KV absent."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:cross-attention",
+        "E2": "wiki-article:gpt",
+        "E3": "wiki-article:forward-flow",
+        "E4": "wiki-article:causal-mask"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N03-B-llm_wiki.json"
+    },
+    {
+      "id": "N04",
+      "mode": "source",
+      "status": "parsed",
+      "supported_items": 0,
+      "total_items": 4,
+      "coverage": 0,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "baseline在softmax后乘V前应用attn_dropout",
+          "fully_supported": false,
+          "answer_quote": "无法核对这两个函数内部 dropout 与 mask 的具体应用位置",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c7739-9025"
+          ],
+          "source_fact": "masked_fill before softmax, attn_dropout after softmax before att@v.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        },
+        {
+          "index": 2,
+          "criterion": "SDPA显式mask.bool而非is_causal=True",
+          "fully_supported": false,
+          "answer_quote": "无法核对这两个函数内部 dropout 与 mask 的具体应用位置",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-model.py:e05006957de4:c7739-9025"
+          ],
+          "source_fact": "Executable kwargs attn_mask=mask.bool(); no is_causal=True; comment discusses different alignment.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        },
+        {
+          "index": 3,
+          "criterion": "dropout_p训练self.dropout而eval为0",
+          "fully_supported": false,
+          "answer_quote": "无法核对这两个函数内部 dropout 与 mask 的具体应用位置",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "source_fact": "Executable dropout_p=self.dropout if self.training else0.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        },
+        {
+          "index": 4,
+          "criterion": "引用真实代码定位并区分注释观察与新测量",
+          "fully_supported": false,
+          "answer_quote": "无法核对这两个函数内部 dropout 与 mask 的具体应用位置",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c7739-9025",
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "source_fact": "Use code locator; timings and numerical differences in docstrings are historical observations, not this run.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "E2": "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "E3": "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+        "E4": "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+        "E5": "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+        "E6": "foundation-pytorch-transformer-2.11:ebf4e5af7173:c29080-31620",
+        "E7": "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+        "E8": "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+        "E9": "mygpt-model.py:e05006957de4:c0-1426",
+        "E10": "foundation-pytorch-transformer-2.11:ebf4e5af7173:c45349-48093",
+        "E11": "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N04-B-source.json"
+    },
+    {
+      "id": "N04",
+      "mode": "llm_wiki",
+      "status": "parsed",
+      "supported_items": 0,
+      "total_items": 4,
+      "coverage": 0,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "baseline在softmax后乘V前应用attn_dropout",
+          "fully_supported": false,
+          "answer_quote": "没有任何一段直接摘录",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c7739-9025"
+          ],
+          "source_fact": "masked_fill before softmax, attn_dropout after softmax before att@v.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        },
+        {
+          "index": 2,
+          "criterion": "SDPA显式mask.bool而非is_causal=True",
+          "fully_supported": false,
+          "answer_quote": "没有任何一段直接摘录",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-model.py:e05006957de4:c7739-9025"
+          ],
+          "source_fact": "Executable kwargs attn_mask=mask.bool(); no is_causal=True; comment discusses different alignment.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        },
+        {
+          "index": 3,
+          "criterion": "dropout_p训练self.dropout而eval为0",
+          "fully_supported": false,
+          "answer_quote": "没有任何一段直接摘录",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "source_fact": "Executable dropout_p=self.dropout if self.training else0.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        },
+        {
+          "index": 4,
+          "criterion": "引用真实代码定位并区分注释观察与新测量",
+          "fully_supported": false,
+          "answer_quote": "没有任何一段直接摘录",
+          "source_ids": [
+            "mygpt-model.py:e05006957de4:c7739-9025",
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "source_fact": "Use code locator; timings and numerical differences in docstrings are historical observations, not this run.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Both modes defer the actual function-body audit; code-location pointers and generic API statements do not answer the requested implementation audit."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:dropout",
+        "E2": "wiki-article:sdpa",
+        "E3": "wiki-article:gpt",
+        "E4": "wiki-article:training"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N04-B-llm_wiki.json"
+    },
+    {
+      "id": "N05",
+      "mode": "source",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 4,
+      "coverage": 1,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "局部分块softmax平均不等价",
+          "fully_supported": true,
+          "answer_quote": "直接平均相当于给两块各赋 1/2 权重",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "Softmax denominators couple all keys; independent normalized block means lose relative partition mass.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "维护运行最大值/指数和/加权和",
+          "fully_supported": true,
+          "answer_quote": "每行需维护运行最大值 m、运行指数和 ℓ",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "Keep row max m, shifted exponential sum l, weighted numerator u (or normalized output with l).",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "合并最大值与旧新统计重缩放公式及最终归一化",
+          "fully_supported": true,
+          "answer_quote": "m_new=max(m_old,m_blk)",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "m=max(m_old,m_block), alpha=exp(m_old-m), beta=exp(m_block-m); l=alpha*l_old+beta*l_block, u=alpha*u_old+beta*u_block, O=u/l. Algebraic restatement of original scaled block merge.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "IO/物化优化不等于线性算术或逐bit一致",
+          "fully_supported": true,
+          "answer_quote": "计算量仍是 O(N²d) FLOPs",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c11869-13995",
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776"
+          ],
+          "source_fact": "Still dense all-pairs arithmetic; optimize HBM/avoid materialization; exact mathematical attention need not bitwise match due to floating point ordering.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "paper-2205.14135:b86de4ee5c52:c5396-7564",
+        "E2": "depth-2307.08691:f917fc544aae:c8888-10540",
+        "E3": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+        "E4": "paper-2205.14135:b86de4ee5c52:c71910-74461",
+        "E5": "depth-2307.08691:f917fc544aae:c3449-6144",
+        "E6": "paper-2205.14135:b86de4ee5c52:c3556-5723",
+        "E7": "paper-2205.14135:b86de4ee5c52:c11869-13995",
+        "E8": "paper-2205.14135:b86de4ee5c52:c21449-22492",
+        "E9": "depth-2307.08691:f917fc544aae:c11834-14080",
+        "E10": "paper-2205.14135:b86de4ee5c52:c19938-21661",
+        "E11": "paper-2205.14135:b86de4ee5c52:c17886-18495",
+        "E12": "depth-2307.08691:f917fc544aae:c0-2698"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N05-B-source.json"
+    },
+    {
+      "id": "N05",
+      "mode": "llm_wiki",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 4,
+      "coverage": 1,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "局部分块softmax平均不等价",
+          "fully_supported": true,
+          "answer_quote": "只有当各块指数和恰好相等",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "Softmax denominators couple all keys; independent normalized block means lose relative partition mass.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "维护运行最大值/指数和/加权和",
+          "fully_supported": true,
+          "answer_quote": "维护三个量",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "Keep row max m, shifted exponential sum l, weighted numerator u (or normalized output with l).",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "合并最大值与旧新统计重缩放公式及最终归一化",
+          "fully_supported": true,
+          "answer_quote": "l'=e^{m-m'}l+e^{m_b-m'}l_b",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "m=max(m_old,m_block), alpha=exp(m_old-m), beta=exp(m_block-m); l=alpha*l_old+beta*l_block, u=alpha*u_old+beta*u_block, O=u/l. Algebraic restatement of original scaled block merge.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "IO/物化优化不等于线性算术或逐bit一致",
+          "fully_supported": true,
+          "answer_quote": "O(T^2 d)",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c11869-13995",
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776"
+          ],
+          "source_fact": "Still dense all-pairs arithmetic; optimize HBM/avoid materialization; exact mathematical attention need not bitwise match due to floating point ordering.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:flash-attention",
+        "E2": "wiki-article:online-softmax"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N05-B-llm_wiki.json"
+    },
+    {
+      "id": "N05",
+      "mode": "llm_wiki_graph",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 4,
+      "coverage": 1,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "局部分块softmax平均不等价",
+          "fully_supported": true,
+          "answer_quote": "只有当各块指数和恰好相等",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "Softmax denominators couple all keys; independent normalized block means lose relative partition mass.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "维护运行最大值/指数和/加权和",
+          "fully_supported": true,
+          "answer_quote": "维护三个量",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "Keep row max m, shifted exponential sum l, weighted numerator u (or normalized output with l).",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "合并最大值与旧新统计重缩放公式及最终归一化",
+          "fully_supported": true,
+          "answer_quote": "l'=e^{m-m'}l+e^{m_b-m'}l_b",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c15122-16331"
+          ],
+          "source_fact": "m=max(m_old,m_block), alpha=exp(m_old-m), beta=exp(m_block-m); l=alpha*l_old+beta*l_block, u=alpha*u_old+beta*u_block, O=u/l. Algebraic restatement of original scaled block merge.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "IO/物化优化不等于线性算术或逐bit一致",
+          "fully_supported": true,
+          "answer_quote": "O(T^2 d)",
+          "source_ids": [
+            "paper-2205.14135:b86de4ee5c52:c11869-13995",
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776"
+          ],
+          "source_fact": "Still dense all-pairs arithmetic; optimize HBM/avoid materialization; exact mathematical attention need not bitwise match due to floating point ordering.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:flash-attention",
+        "E2": "wiki-article:online-softmax"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N05-B-llm_wiki_graph.json"
+    },
+    {
+      "id": "N06",
+      "mode": "source",
+      "status": "parsed",
+      "supported_items": 2,
+      "total_items": 5,
+      "coverage": 0.4,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "SDPA接口不保证某融合后端或普遍提速",
+          "fully_supported": true,
+          "answer_quote": "不能凭\"调用了 SDPA\"就认定用了 FlashAttention",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607"
+          ],
+          "source_fact": "SDPA chooses backend from inputs; forced backend availability is not proof of automatic actual choice; trace profiler or scoped forcing and report restrictions.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "固定输入配置及容差正确性",
+          "fully_supported": false,
+          "answer_quote": "仓库的做法是逐元素比对",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "source_fact": "Fix weights/input/dtype/mask/dropout then compare with reference using stated tolerance; not universal bitwise equality.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Historical numerical differences alone do not supply controlled identical-input/reference/tolerance measurement protocol; partial only."
+        },
+        {
+          "index": 3,
+          "criterion": "预热同步重复统计和测量边界",
+          "fully_supported": false,
+          "answer_quote": "证据中未给出具体同步方法",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c979-2847"
+          ],
+          "source_fact": "Warmup, GPU synchronize, repeated samples and explicit timing/reset boundary; old code minimum statistic is not mean.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Mentions synchronization but no warmup/repeated timing/statistics protocol; partial only."
+        },
+        {
+          "index": 4,
+          "criterion": "prefill/decode及allocated/reserved区分",
+          "fully_supported": false,
+          "answer_quote": "allocated 与 reserved 也需分开",
+          "source_ids": [
+            "paper-2309.06180:7ba2ff703be1:c3049-5192",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "source_fact": "Prefill whole prompt parallel vs sequential single-token decode; old helper max_memory_allocated only, not reserved. Corpus has no authoritative allocator-definition excerpt; do not certify the reserved definition from Wiki alone.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Prefill/decode shapes distinguished; allocator allocated/reserved meanings not explained; paged-slot reserved conflated with allocator reserved."
+        },
+        {
+          "index": 5,
+          "criterion": "旧JSON不是当前硬件新实验",
+          "fully_supported": true,
+          "answer_quote": "这些数据属于 prefill 型形状，不能外推到 decode",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "source_fact": "Existing JSON and source comments are historical artifacts; no current GPU benchmark executed by this retrieval experiment.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "paper-2205.14135:b86de4ee5c52:c92804-94371",
+        "E2": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+        "E3": "paper-2205.14135:b86de4ee5c52:c33318-36119",
+        "E4": "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+        "E5": "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+        "E6": "mygpt-model.py:e05006957de4:c7739-9025",
+        "E7": "paper-2205.14135:b86de4ee5c52:c3556-5723",
+        "E8": "depth-2307.08691:f917fc544aae:c29079-30756",
+        "E9": "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+        "E10": "depth-2307.08691:f917fc544aae:c31921-33440",
+        "E11": "mygpt-model.py:e05006957de4:c1194-2694",
+        "E12": "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "E13": "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N06-B-source.json"
+    },
+    {
+      "id": "N06",
+      "mode": "llm_wiki",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 5,
+      "coverage": 0.8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "SDPA接口不保证某融合后端或普遍提速",
+          "fully_supported": true,
+          "answer_quote": "SDPA 只是接口",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607"
+          ],
+          "source_fact": "SDPA chooses backend from inputs; forced backend availability is not proof of automatic actual choice; trace profiler or scoped forcing and report restrictions.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "固定输入配置及容差正确性",
+          "fully_supported": true,
+          "answer_quote": "在固定输入、权重、dtype、形状下比较输出容差",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "source_fact": "Fix weights/input/dtype/mask/dropout then compare with reference using stated tolerance; not universal bitwise equality.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "预热同步重复统计和测量边界",
+          "fully_supported": true,
+          "answer_quote": "须预热",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c979-2847"
+          ],
+          "source_fact": "Warmup, GPU synchronize, repeated samples and explicit timing/reset boundary; old code minimum statistic is not mean.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "prefill/decode及allocated/reserved区分",
+          "fully_supported": false,
+          "answer_quote": "allocated 与 reserved 含义不同",
+          "source_ids": [
+            "paper-2309.06180:7ba2ff703be1:c3049-5192",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "source_fact": "Prefill whole prompt parallel vs sequential single-token decode; old helper max_memory_allocated only, not reserved. Corpus has no authoritative allocator-definition excerpt; do not certify the reserved definition from Wiki alone.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Prefill/decode clear but saying memory counters differ does not explain their meanings; retained primary-source gap."
+        },
+        {
+          "index": 5,
+          "criterion": "旧JSON不是当前硬件新实验",
+          "fully_supported": true,
+          "answer_quote": "不是当前硬件的新测量",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "source_fact": "Existing JSON and source comments are historical artifacts; no current GPU benchmark executed by this retrieval experiment.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:sdpa",
+        "E2": "wiki-article:prefill-decode",
+        "E3": "wiki-article:measurement",
+        "E4": "wiki-article:flash-attention"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N06-B-llm_wiki.json"
+    },
+    {
+      "id": "N06",
+      "mode": "llm_wiki_graph",
+      "status": "parsed",
+      "supported_items": 4,
+      "total_items": 5,
+      "coverage": 0.8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "SDPA接口不保证某融合后端或普遍提速",
+          "fully_supported": true,
+          "answer_quote": "SDPA 只是接口",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607"
+          ],
+          "source_fact": "SDPA chooses backend from inputs; forced backend availability is not proof of automatic actual choice; trace profiler or scoped forcing and report restrictions.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 2,
+          "criterion": "固定输入配置及容差正确性",
+          "fully_supported": true,
+          "answer_quote": "在固定输入、权重、dtype 下比较输出容差",
+          "source_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "source_fact": "Fix weights/input/dtype/mask/dropout then compare with reference using stated tolerance; not universal bitwise equality.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 3,
+          "criterion": "预热同步重复统计和测量边界",
+          "fully_supported": true,
+          "answer_quote": "必须预热",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+            "mygpt-bench.py:4ab37b20b5e7:c979-2847"
+          ],
+          "source_fact": "Warmup, GPU synchronize, repeated samples and explicit timing/reset boundary; old code minimum statistic is not mean.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        },
+        {
+          "index": 4,
+          "criterion": "prefill/decode及allocated/reserved区分",
+          "fully_supported": false,
+          "answer_quote": "memory_reserved 含义不同",
+          "source_ids": [
+            "paper-2309.06180:7ba2ff703be1:c3049-5192",
+            "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+          ],
+          "source_fact": "Prefill whole prompt parallel vs sequential single-token decode; old helper max_memory_allocated only, not reserved. Corpus has no authoritative allocator-definition excerpt; do not certify the reserved definition from Wiki alone.",
+          "conclusion": "partial_or_unanswered",
+          "note": "Same missing allocator definitions as Wiki; extra online-softmax does not fill the required fact."
+        },
+        {
+          "index": 5,
+          "criterion": "旧JSON不是当前硬件新实验",
+          "fully_supported": true,
+          "answer_quote": "不是当前硬件的新测量",
+          "source_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+            "mygpt-model.py:e05006957de4:c8927-10267"
+          ],
+          "source_fact": "Existing JSON and source comments are historical artifacts; no current GPU benchmark executed by this retrieval experiment.",
+          "conclusion": "supported",
+          "note": "Original-source support checked; this is a complete-item coverage judgment, not human ground truth."
+        }
+      ],
+      "citation_mapping": {
+        "E1": "wiki-article:sdpa",
+        "E2": "wiki-article:prefill-decode",
+        "E3": "wiki-article:measurement",
+        "E4": "wiki-article:flash-attention",
+        "E5": "wiki-article:online-softmax"
+      },
+      "raw_path": "results/live/llm_wiki_value_retest/79e8fb08-04b0-4be9-bed8-5e66c36dcad7/N06-B-llm_wiki_graph.json"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "N01",
+      "input_tokens": {
+        "source": 7306,
+        "llm_wiki": 1838
+      },
+      "output_tokens": {
+        "source": 818,
+        "llm_wiki": 467
+      },
+      "request_modes": {
+        "source": "LIVE",
+        "llm_wiki": "LIVE"
+      },
+      "token_attribution": "Replay token counts reference original identical physical request for context comparison only; they are not charged again.",
+      "paired_input_reduction": 0.7484259512729263,
+      "retrieval_median_seconds": {
+        "source": 0.5935916999878827,
+        "llm_wiki": 0.0015357499942183495
+      },
+      "characters": {
+        "source": 23602,
+        "llm_wiki": 2551
+      }
+    },
+    {
+      "id": "N02",
+      "input_tokens": {
+        "source": 7232,
+        "llm_wiki": 3260
+      },
+      "output_tokens": {
+        "source": 976,
+        "llm_wiki": 641
+      },
+      "request_modes": {
+        "source": "LIVE",
+        "llm_wiki": "LIVE"
+      },
+      "token_attribution": "Replay token counts reference original identical physical request for context comparison only; they are not charged again.",
+      "paired_input_reduction": 0.5492256637168141,
+      "retrieval_median_seconds": {
+        "source": 0.6555307999660727,
+        "llm_wiki": 0.0017268999945372343
+      },
+      "characters": {
+        "source": 23039,
+        "llm_wiki": 5615
+      }
+    },
+    {
+      "id": "N03",
+      "input_tokens": {
+        "source": 6691,
+        "llm_wiki": 3679
+      },
+      "output_tokens": {
+        "source": 759,
+        "llm_wiki": 590
+      },
+      "request_modes": {
+        "source": "LIVE",
+        "llm_wiki": "LIVE"
+      },
+      "token_attribution": "Replay token counts reference original identical physical request for context comparison only; they are not charged again.",
+      "paired_input_reduction": 0.4501569272156628,
+      "retrieval_median_seconds": {
+        "source": 0.6415339999948628,
+        "llm_wiki": 0.0016563999815844
+      },
+      "characters": {
+        "source": 22959,
+        "llm_wiki": 6606
+      }
+    },
+    {
+      "id": "N04",
+      "input_tokens": {
+        "source": 8071,
+        "llm_wiki": 3467
+      },
+      "output_tokens": {
+        "source": 686,
+        "llm_wiki": 709
+      },
+      "request_modes": {
+        "source": "LIVE",
+        "llm_wiki": "LIVE"
+      },
+      "token_attribution": "Replay token counts reference original identical physical request for context comparison only; they are not charged again.",
+      "paired_input_reduction": 0.5704373683558419,
+      "retrieval_median_seconds": {
+        "source": 0.6886631000379566,
+        "llm_wiki": 0.0014526000013574958
+      },
+      "characters": {
+        "source": 23583,
+        "llm_wiki": 5687
+      }
+    },
+    {
+      "id": "N05",
+      "input_tokens": {
+        "source": 7046,
+        "llm_wiki": 1998,
+        "llm_wiki_graph": 1998
+      },
+      "output_tokens": {
+        "source": 796,
+        "llm_wiki": 606,
+        "llm_wiki_graph": 606
+      },
+      "request_modes": {
+        "source": "LIVE",
+        "llm_wiki": "REPLAY_EXACT_REQUEST",
+        "llm_wiki_graph": "LIVE"
+      },
+      "token_attribution": "Replay token counts reference original identical physical request for context comparison only; they are not charged again.",
+      "paired_input_reduction": 0.7164348566562588,
+      "retrieval_median_seconds": {
+        "source": 0.5392270500015002,
+        "llm_wiki": 0.001504699990618974,
+        "llm_wiki_graph": 0.001497650024248287
+      },
+      "characters": {
+        "source": 23167,
+        "llm_wiki": 3112,
+        "llm_wiki_graph": 3112
+      }
+    },
+    {
+      "id": "N06",
+      "input_tokens": {
+        "source": 8259,
+        "llm_wiki": 3647,
+        "llm_wiki_graph": 4371
+      },
+      "output_tokens": {
+        "source": 1002,
+        "llm_wiki": 676,
+        "llm_wiki_graph": 780
+      },
+      "request_modes": {
+        "source": "LIVE",
+        "llm_wiki": "LIVE",
+        "llm_wiki_graph": "LIVE"
+      },
+      "token_attribution": "Replay token counts reference original identical physical request for context comparison only; they are not charged again.",
+      "paired_input_reduction": 0.5584211163579126,
+      "retrieval_median_seconds": {
+        "source": 0.6862550999794621,
+        "llm_wiki": 0.0018423000001348555,
+        "llm_wiki_graph": 0.0019626000139396638
+      },
+      "characters": {
+        "source": 23424,
+        "llm_wiki": 6406,
+        "llm_wiki_graph": 7887
+      }
+    }
+  ],
+  "graphs": [
+    {
+      "id": "N05",
+      "selected": {
+        "llm_wiki": [
+          "wiki-article:flash-attention",
+          "wiki-article:online-softmax"
+        ],
+        "llm_wiki_graph": [
+          "wiki-article:flash-attention",
+          "wiki-article:online-softmax"
+        ]
+      },
+      "wiki_graph_request_identical": true,
+      "removed_edge": [
+        "flash-attention",
+        "online-softmax"
+      ],
+      "edge_graph_request_identical": true,
+      "edge_calls_modes": [
+        "REPLAY_EXACT_REQUEST"
+      ],
+      "necessary_item_gain": 0,
+      "finding": "Bridge target already a direct seed; edge deletion cannot remove it. No demonstrated required-item gain; no forced exclusion."
+    },
+    {
+      "id": "N06",
+      "selected": {
+        "llm_wiki": [
+          "wiki-article:sdpa",
+          "wiki-article:prefill-decode",
+          "wiki-article:measurement",
+          "wiki-article:flash-attention"
+        ],
+        "llm_wiki_graph": [
+          "wiki-article:sdpa",
+          "wiki-article:prefill-decode",
+          "wiki-article:measurement",
+          "wiki-article:flash-attention",
+          "wiki-article:online-softmax"
+        ]
+      },
+      "wiki_graph_request_identical": false,
+      "removed_edge": [
+        "sdpa",
+        "measurement"
+      ],
+      "edge_graph_request_identical": true,
+      "edge_calls_modes": [
+        "REPLAY_EXACT_REQUEST"
+      ],
+      "necessary_item_gain": 0,
+      "finding": "Bridge target already a direct seed; edge deletion cannot remove it. No demonstrated required-item gain; no forced exclusion."
+    }
+  ],
+  "unsupported_claims": [
+    {
+      "id": "N06",
+      "mode": "llm_wiki",
+      "severity": "substantive_unsupported_generalization",
+      "quote": "显存下降只说明中间矩阵未物化",
+      "source_ids": [
+        "paper-2205.14135:b86de4ee5c52:c11869-13995"
+      ],
+      "reason": "Converse inference unsupported: avoiding materialization reduces intermediate memory, but observing memory reduction does not establish that cause. This blocks a clean no-new-serious-unsupported-claim efficiency acceptance."
+    },
+    {
+      "id": "N06",
+      "mode": "source",
+      "severity": "substantive_unsupported_generalization",
+      "quote": "不可用时只发警告并回退",
+      "source_ids": [
+        "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776"
+      ],
+      "reason": "Warnings depend on forced-kernel context; disabled math does not guarantee fallback, and automatic fallback need not warn."
+    },
+    {
+      "id": "N05",
+      "mode": "source",
+      "severity": "missing_complexity_condition",
+      "quote": "真正把复杂度降到线性或次二次的是近似路线，如 block-sparse FlashAttention",
+      "source_ids": [
+        "paper-2205.14135:b86de4ee5c52:c22492-24426"
+      ],
+      "reason": "Need sparse density scaling with N for changed asymptotic order; fixed fractional sparsity alone retains quadratic term. Core dense-IO-versus-arithmetic requirement remains answered."
+    }
+  ],
+  "product": [
+    {
+      "id": "N05",
+      "mode": "llm_wiki",
+      "status": "answered",
+      "physical_calls": 3,
+      "exact_replays": 0,
+      "whole_predictions": [
+        {
+          "choice": "SUPPORTED",
+          "probability": 0.85,
+          "confidence": 0.85,
+          "source": "LIVE"
+        }
+      ],
+      "source_predictions": [
+        0.82,
+        0.9,
+        0.85
+      ],
+      "source_first_ai_review": {
+        "supported_items": 3,
+        "total_items": 4,
+        "error_quote": "而非按 exp(m_b−m) 加权",
+        "explanation": "First paragraph omits block normalizer l_b from block weight; correct relative mass is exp(m_b-m)*l_b, despite correct full merge equations in second paragraph. Source/whole model passes are not content certification.",
+        "source_ids": [
+          "paper-2205.14135:b86de4ee5c52:c15122-16331"
+        ],
+        "human_attested": false
+      },
+      "elapsed_seconds": 6.347826900018845,
+      "latency_comparable": false
+    },
+    {
+      "id": "N05",
+      "mode": "llm_wiki_graph",
+      "status": "answered",
+      "physical_calls": 0,
+      "exact_replays": 3,
+      "whole_predictions": [
+        {
+          "choice": "SUPPORTED",
+          "probability": 0.85,
+          "confidence": 0.85,
+          "source": "LIVE"
+        }
+      ],
+      "source_predictions": [
+        0.82,
+        0.9,
+        0.85
+      ],
+      "source_first_ai_review": {
+        "supported_items": 3,
+        "total_items": 4,
+        "error_quote": "而非按 exp(m_b−m) 加权",
+        "explanation": "First paragraph omits block normalizer l_b from block weight; correct relative mass is exp(m_b-m)*l_b, despite correct full merge equations in second paragraph. Source/whole model passes are not content certification.",
+        "source_ids": [
+          "paper-2205.14135:b86de4ee5c52:c15122-16331"
+        ],
+        "human_attested": false
+      },
+      "elapsed_seconds": 0.04279490001499653,
+      "latency_comparable": false
+    }
+  ],
+  "primary_macro_coverage": {
+    "source": 0.6666666666666666,
+    "llm_wiki": 0.7666666666666667
+  },
+  "primary_macro_gain": 0.10000000000000009,
+  "integration_macro_coverage": {
+    "source": 0.75,
+    "llm_wiki": 0.9
+  },
+  "integration_macro_gain": 0.15000000000000002,
+  "all6_mean_paired_input_reduction": 0.598850313929236,
+  "integration_mean_paired_input_reduction": 0.5685596409866621,
+  "efficiency_target_complete_acceptance": false,
+  "efficiency_guardrail_reason": "N06 Wiki contains substantive unsupported converse memory inference; token target alone insufficient.",
+  "quality_target_descriptively_met": true,
+  "graph_target_met": false,
+  "accounting": {
+    "cap": 42,
+    "physical_calls": 18,
+    "unused_closed": 24,
+    "planning": 2,
+    "first_generation": 13,
+    "counterfactual": 0,
+    "product": 3,
+    "exact_replays": 6,
+    "jev_calls": 0,
+    "input_tokens": 94126,
+    "output_tokens": 11612,
+    "cost_usd": null,
+    "cumulative_before": 3334,
+    "cumulative_after": 3352,
+    "first_answer_slots": 14,
+    "first_parsed": 14
+  }
+}

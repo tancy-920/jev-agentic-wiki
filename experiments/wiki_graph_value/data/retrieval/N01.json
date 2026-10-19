@@ -1,0 +1,888 @@
+{
+  "status": "complete",
+  "provider_calls": 0,
+  "plan_queries": [
+    "multi-head attention d_model 768 12 heads Q K V projection per-head dimension concatenation output projection scaling factor sqrt d_k"
+  ],
+  "runtime_original_query": "In multi-head attention, if d_model=768, the number of query heads is 12 and all heads are of equal width, how do the Q/K/V projections, per-head dimension, concatenation and output projection connect? Please explain the dimension basis of the scaling factor, and do not directly interpret the number of heads as a speedup multiplier.",
+  "contexts": {
+    "source": {
+      "evidence": [
+        {
+          "paper_id": "1706.03762v7",
+          "title": "Attention Is All You Need",
+          "authors": [
+            "Ashish Vaswani",
+            "Noam Shazeer",
+            "Niki Parmar",
+            "Jakob Uszkoreit",
+            "Llion Jones",
+            "Aidan N. Gomez",
+            "Lukasz Kaiser",
+            "Illia Polosukhin"
+          ],
+          "year": 2017,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 5,
+          "chunk_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+          "source_url": "https://arxiv.org/abs/1706.03762v7",
+          "text": "output values. These are concatenated and once again projected, resulting in the final values, as\ndepicted in Figure 2.\nMulti-head attention allows the model to jointly attend to information from different representation\nsubspaces at different positions. With a single attention head, averaging inhibits this.\nMultiHead(Q,K,V ) = Concat(head 1,..., headh)W O\nwhere headi = Attention(QW Q\ni ,KW K\ni ,VW V\ni )\nWhere the projections are parameter matricesW Q\ni ∈ Rdmodel×dk,W K\ni ∈ Rdmodel×dk,W V\ni ∈ Rdmodel×dv\nandW O∈ Rhdv×dmodel.\nIn this work we employ h = 8 parallel attention layers, or heads. For each of these we use\ndk =dv =dmodel/h = 64. Due to the reduced dimension of each head, the total computational cost\nis similar to that of single-head attention with full dimensionality.\n3.2.3 Applications of Attention in our Model\nThe Transformer uses multi-head attention in three different ways:\n• In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer,\nand the memory keys and values come from the output of the encoder. This allows every\nposition in the decoder to attend over all positions in the input sequence. This mimics the\ntypical encoder-decoder attention mechanisms in sequence-to-sequence models such as\n[38, 2, 9].\n• The encoder contains self-attention layers. In a self-attention layer all of the keys, values\nand queries come from the same place, in this case, the output of the previous layer in the\nencoder. Each position in the encoder can attend to all positions in the previous layer of the\nencoder.\n• Similarly, self-attention layers in the decoder allow each position in the decoder to attend to\nall positions in the decoder up to and including that position. We need to prevent leftward\ninformation flow in the decoder to preserve the auto-regressive property. We implement this\ninside of scaled dot-product attention by masking out (setting to−∞) all values in the input\nof the softmax which correspond to illegal connections. See Figure 2.\n3.3 Position-wise Feed-Forward Networks\nIn addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully\nconnected feed-forward network, which is applied to each position separately and identically. This\nconsists of two linear transformations with a ReLU activation in between.\nFFN(x) = max(0,xW 1 +b1)W2 +b2 (2)\nWhile the linear transformations are the same across different positions, they use different parameters\nfrom layer to layer. Another way of describing this is as two convolutions with kernel size 1.\n",
+          "token_count": 590,
+          "source_id": "paper-1706.03762",
+          "source_kind": "pdf",
+          "source_version": "1706.03762v7:sha256:bdfaa68d8984f0dc",
+          "source_sha256": "eee8b5a0bcc2828a6f69c4dd8e054c8bb3dc2d3ed174fee3871932fda2d450df",
+          "locator": "PDF file p. 5",
+          "start_char": 11426,
+          "end_char": 13973
+        },
+        {
+          "paper_id": "2305.13245",
+          "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+          "authors": [],
+          "year": 2023,
+          "section": "captured public-source excerpt",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "paper-2305.13245:3ed3d65bc419:c2100-4367",
+          "source_url": "https://arxiv.org/html/2305.13245v3",
+          "text": "L50: Second, we propose grouped-query attention (GQA), an interpolation between multi-head and multi-query attention with single key and value heads per subgroup of query heads. We show that uptrained GQA achieves quality close to multi-head attention while being almost as fast as multi-query attention.\nL51: ## 2 Method\nL52: ### 2.1 Uptraining\nL53: Generating a multi-query model from a multi-head model takes place in two steps: first, converting the checkpoint, and second, additional pre-training to allow the model to adapt to its new structure. Figure cite34†1 shows the process for converting a multi-head checkpoint into a multi-query checkpoint.\nL54: The projection matrices for key and value heads are mean pooled into single projection matrices, which we find works better than selecting a single key and value head or randomly initializing new key and value heads from scratch.\nL55: cite35†Image: Refer to caption Figure 1: Overview of conversion from multi-head to multi-query attention. Key and value projection matrices from all heads are mean pooled into a single head.\nL56: \nL57: The converted checkpoint is then pre-trained for a small proportion $\\alpha$ of its original training steps on the same pre-training recipe.\nL58: ### 2.2 Grouped-query attention\nL59: \nL60: cite36†Image: Refer to caption Figure 2: Overview of grouped-query method. Multi-head attention has H query, key, and value heads. Multi-query attention shares single key and value heads across all query heads. Grouped-query attention instead shares single key and value heads for each group of query heads, interpolating between multi-head and multi-query attention.\nL61: Grouped-query attention divides query heads into $G$ groups, each of which shares a single key head and value head. GQA-g refers to grouped-query with $G$ groups. GQA-$1$, with a single group and therefore single key and value head, is equivalent to MQA, while GQA-h, with groups equal to number of heads, is equivalent to MHA. Figure cite37†2 shows a comparison of grouped-query attention and multi-head/multi-query attention.\nL62: When converting a multi-head checkpoint to a GQA checkpoint, we construct each group key and value head by mean-pooling all the original heads within that group.\n",
+          "token_count": 530,
+          "source_id": "paper-2305.13245",
+          "source_kind": "web_excerpt",
+          "source_version": "2305.13245v3:sha256:0e564a221ecb4519",
+          "source_sha256": "3ed3d65bc41907f12e2690f68f6a64c426801c6a743a3c4f64a5d571a8cf8a32",
+          "locator": "L9–L21",
+          "start_char": 2100,
+          "end_char": 4367
+        },
+        {
+          "paper_id": null,
+          "title": "Tensor2Tensor v1.2.0 common_attention.py",
+          "authors": [
+            "TensorFlow/Tensor2Tensor authors"
+          ],
+          "year": 2017,
+          "section": "author-t2t-v1.2.0-common-attention.py: top-level definition",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "author-t2t-v1.2.0-common-attention:4d7013143123:c26383-29239",
+          "source_url": "https://raw.githubusercontent.com/tensorflow/tensor2tensor/9ef25172117f2f550bca08c6c6ce1578786cca59/tensor2tensor/layers/common_attention.py",
+          "text": "def multihead_attention(query_antecedent,\n                        memory_antecedent,\n                        bias,\n                        total_key_depth,\n                        total_value_depth,\n                        output_depth,\n                        num_heads,\n                        dropout_rate,\n                        image_shapes=None,\n                        attention_type=\"dot_product\",\n                        block_length=128,\n                        block_width=128,\n                        q_filter_width=1,\n                        kv_filter_width=1,\n                        q_padding=\"VALID\",\n                        kv_padding=\"VALID\",\n                        name=None):\n  \"\"\"Multihead scaled-dot-product attention with input/output transformations.\n\n  Args:\n    query_antecedent: a Tensor with shape [batch, length_q, channels]\n    memory_antecedent: a Tensor with shape [batch, length_m, channels]\n    bias: bias Tensor (see attention_bias())\n    total_key_depth: an integer\n    total_value_depth: an integer\n    output_depth: an integer\n    num_heads: an integer dividing total_key_depth and total_value_depth\n    dropout_rate: a floating point number\n    image_shapes: optional tuple of integer scalars.\n      see comments for attention_image_summary()\n    attention_type: a string, either \"dot_product\" or \"local_mask_right\" or\n                    \"local_unmasked\"\n    block_length: an integer - relevant for \"local_mask_right\"\n    block_width: an integer - relevant for \"local_unmasked\"\n    q_filter_width: An integer specifying how wide you want the query to be.\n    kv_filter_width: An integer specifying how wide you want the keys and values\n    to be.\n    q_padding: One of \"VALID\", \"SAME\" or \"LEFT\". Default is VALID: No padding.\n    kv_padding: One of \"VALID\", \"SAME\" or \"LEFT\". Default is VALID: No padding.\n\n    name: an optional string\n\n  Returns:\n    A Tensor.\n\n  Raises:\n    ValueError: if the key depth or value depth are not divisible by the\n      number of attention heads.\n  \"\"\"\n  if total_key_depth % num_heads != 0:\n    raise ValueError(\"Key depth (%d) must be divisible by the number of \"\n                     \"attention heads (%d).\" % (total_key_depth, num_heads))\n  if total_value_depth % num_heads != 0:\n    raise ValueError(\"Value depth (%d) must be divisible by the number of \"\n                     \"attention heads (%d).\" % (total_value_depth, num_heads))\n  with tf.variable_scope(\n      name,\n      default_name=\"multihead_attention\",\n      values=[query_antecedent, memory_antecedent]):\n    q, k, v = compute_qkv(query_antecedent, memory_antecedent, total_key_depth,\n                          total_value_depth, q_filter_width, kv_filter_width,\n                          q_padding, kv_padding)\n\n    q = split_heads(q, num_heads)\n    k = split_heads(k, num_heads)\n    v = split_heads(v, num_heads)\n",
+          "token_count": 595,
+          "source_id": "author-t2t-v1.2.0-common-attention",
+          "source_kind": "code",
+          "source_version": "v1.2.0@9ef25172117f2f550bca08c6c6ce1578786cca59",
+          "source_sha256": "4d701314312326afdc98d46b015503258684bc49a8bf02308f4601391c0bdfc7",
+          "locator": "L750–L815",
+          "start_char": 26383,
+          "end_char": 29239
+        },
+        {
+          "paper_id": "2108.12409v1",
+          "title": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation",
+          "authors": [],
+          "year": 2021,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 5,
+          "chunk_id": "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+          "source_url": "https://arxiv.org/pdf/2108.12409v1",
+          "text": "network.\nIn the transformer model of Vaswani et al. (2017), position embeddings are added to the word\nembeddings at the bottom of the network. For an input subsequence of length L, the attention\nsublayer computes the attention scores for the ith query qi∈ R1×d, (1≤ i≤ L), in each head,\ngiven the ﬁrst i keys K∈ Ri×d, where d is the head dimension:\nsoftmax(qiK⊤)\nThese attention scores are then multiplied by the values to return the output of the attention sublayer.7\nWhen using ALiBi we do not add position embeddings at any point in the network. The only\nmodiﬁcation we apply is that after the query-key dot product we add a static, non-learned bias:\nsoftmax(qiK⊤ + m· [0,−1,−2, ...,−(i− 1)])\nWhere scalar m is a head-speciﬁc slope ﬁxed before training. Figure 3 offers a visualization.\nFor our models that have 8 heads the slopes that we used are the geometric sequence that starts at\n1\n2 and multiplies each element by 1\n2 to compute the next element: 1\n21 , 1\n22 , ..., 1\n28 . For models that\nrequire 16 heads we interpolate those 8 slopes by geometrically averaging every consecutive pair,\nresulting in the geometric sequence that starts at 1√\n2 and has the ratio of 1√\n2: 1\n20.5 , 1\n21 , 1\n21.5 , ..., 1\n28 .\nIn general, for n heads, our set of slopes is the geometric sequence that starts at 2−2(−log2 n+3)\nand\nuses that same value as its ratio.\nIn §4, we observe that this set of slopes works on a wide variety of text domains and model sizes, and\nso we do not believe that these slope values should be tuned every time a new model is trained on a\nnew dataset. This makes our method similar to the sinusoidal approach, where the hyperparameters\n(the start and end of the geometric progression of wavelengths) were set once by Vaswani et al.\n(2017) and then reused in different models of different sizes on different datasets.\n7For simplicity, we have omitted the key, query and value matrix multiplication, the ﬁnal output projection\nand the dropout module.\n5\n",
+          "token_count": 530,
+          "source_id": "foundation-2108.12409",
+          "source_kind": "pdf",
+          "source_version": "2108.12409v1",
+          "source_sha256": "cf6a3d07cc4d9c38ca50a946d3a1d0e15f7383a5f620039e2b684a7987206498",
+          "locator": "PDF file p. 5",
+          "start_char": 16996,
+          "end_char": 18966
+        },
+        {
+          "paper_id": "2305.13245",
+          "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+          "authors": [],
+          "year": 2023,
+          "section": "captured public-source excerpt",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "paper-2305.13245:3ed3d65bc419:c13133-15425",
+          "source_url": "https://arxiv.org/html/2305.13245v3",
+          "text": "L117: A number of other methods have been proposed to reduce memory bandwidth overhead from keys and values, as well as parameters. Flash attention (cite58†Dao et al., 2022 ) structures the attention computation to avoid materializing the quadratic attention scores, reducing memory and speeding up training. Quantization (cite59†Dettmers et al., 2022 ; cite60†Frantar et al., 2022 ) reduces the size of weights and activations, including keys and values, by lowering precision.\nL118: Model distillation (cite61†Hinton et al., 2015 ; cite62†Gou et al., 2021 ) instead reduces model size at a given precision, using data generated from the larger model to finetune the smaller model. Layer-sparse cross-attention (cite29†de Jong et al., 2022 ) eliminates most cross-attention layers which make up the primary expense for longer inputs.\nL119: Speculative sampling (cite63†Chen et al., 2023 ; cite64†Leviathan et al., 2022 ) ameliorates the memory bandwidth bottleneck by proposing multiple tokens with a smaller model which are then scored in parallel by a larger model.\nL120: Finally, the uptraining procedure we propose is inspired by cite33†Komatsuzaki et al. (2022) , which uptrains standard T5 checkpoints into sparsely activated Mixture-of-Experts models.\nL121: ## 5 Conclusion\nL122: Language models are expensive for inference primarily due to the memory bandwidth overhead from loading keys and values. Multi-query attention reduces this overhead at the cost of decreased model capacity and quality. We propose to convert multi-head attention models to multi-query models with a small fraction of original pre-training compute.\nL123: Moreover, we introduce grouped-query attention, an interpolation of multi-query and multi-head attention that achieves quality close to multi-head at comparable speed to multi-query attention.\nL124: ## Limitations\nL125: This paper focuses on ameliorating the memory bandwidth overhead from loading keys and values. This overhead is most important when generating longer sequences, for which quality is inherently difficult to evaluate. For summarization we employ Rouge score, which we know is a flawed evaluation that does not tell the whole story; for that reason, it is difficult to be certain our trade-offs are correct.\n",
+          "token_count": 592,
+          "source_id": "paper-2305.13245",
+          "source_kind": "web_excerpt",
+          "source_version": "2305.13245v3:sha256:0e564a221ecb4519",
+          "source_sha256": "3ed3d65bc41907f12e2690f68f6a64c426801c6a743a3c4f64a5d571a8cf8a32",
+          "locator": "L76–L84",
+          "start_char": 13133,
+          "end_char": 15425
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch v2.11.0 activation",
+          "authors": [],
+          "year": 2026,
+          "section": "foundation-pytorch-activation-2.11.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+          "source_url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/nn/modules/activation.py",
+          "text": "            \"cpu\",\n            \"cuda\",\n            torch.utils.backend_registration._privateuse1_backend_name,\n        ]\n    return True\n\n\ndef _arg_requires_grad(x: torch.Tensor | None) -> bool:\n    if x is not None:\n        return x.requires_grad\n    return False\n\n\ndef _is_make_fx_tracing():\n    if not torch.jit.is_scripting():\n        torch_dispatch_mode_stack = (\n            torch.utils._python_dispatch._get_current_dispatch_mode_stack()\n        )\n        # this can be triggered when dynamo inlining the module too.\n        return (\n            any(\n                type(x) is torch.fx.experimental.proxy_tensor.ProxyTorchDispatchMode\n                for x in torch_dispatch_mode_stack\n            )\n            or torch.compiler.is_exporting()\n        )\n    else:\n        return False\n\n\nclass MultiheadAttention(Module):\n    r\"\"\"Allows the model to jointly attend to information from different representation subspaces.\n\n    This MultiheadAttention layer implements the original architecture described\n    in the `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_ paper. The\n    intent of this layer is as a reference implementation for foundational understanding\n    and thus it contains only limited features relative to newer architectures.\n    Given the fast pace of innovation in transformer-like architectures, we recommend\n    exploring this `tutorial <https://pytorch.org/tutorials/intermediate/transformer_building_blocks.html>`_\n    to build efficient layers from building blocks in core or using higher\n    level libraries from the `PyTorch Ecosystem <https://landscape.pytorch.org/>`_.\n\n    Multi-Head Attention is defined as:\n\n    .. math::\n        \\text{MultiHead}(Q, K, V) = \\text{Concat}(\\text{head}_1,\\dots,\\text{head}_h)W^O\n\n    where :math:`\\text{head}_i = \\text{Attention}(QW_i^Q, KW_i^K, VW_i^V)`.\n\n    ``nn.MultiheadAttention`` will use the optimized implementations of\n    ``scaled_dot_product_attention()`` when possible.\n\n    In addition to support for the new ``scaled_dot_product_attention()``\n    function, for speeding up Inference, MHA will use\n    fastpath inference with support for Nested Tensors, iff:\n\n    - self attention is being computed (i.e., ``query``, ``key``, and ``value`` are the same tensor).\n    - inputs are batched (3D) with ``batch_first==True``\n    - Either autograd is disabled (using ``torch.inference_mode`` or ``torch.no_grad``) or no tensor argument ``requires_grad``\n    - training is disabled (using ``.eval()``)\n    - ``add_bias_kv`` is ``False``\n",
+          "token_count": 577,
+          "source_id": "foundation-pytorch-activation-2.11",
+          "source_kind": "code",
+          "source_version": "v2.11.0",
+          "source_sha256": "8b8076c9383f8faea0800e5312e6df32b0829a6fd9a149ae4dc9620d2d6885fd",
+          "locator": "L1059–L1119",
+          "start_char": 28807,
+          "end_char": 31335
+        },
+        {
+          "paper_id": "1706.03762v7",
+          "title": "Attention Is All You Need",
+          "authors": [
+            "Ashish Vaswani",
+            "Noam Shazeer",
+            "Niki Parmar",
+            "Jakob Uszkoreit",
+            "Llion Jones",
+            "Aidan N. Gomez",
+            "Lukasz Kaiser",
+            "Illia Polosukhin"
+          ],
+          "year": 2017,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 4,
+          "chunk_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+          "source_url": "https://arxiv.org/abs/1706.03762v7",
+          "text": "Scaled Dot-Product Attention\n Multi-Head Attention\nFigure 2: (left) Scaled Dot-Product Attention. (right) Multi-Head Attention consists of several\nattention layers running in parallel.\nof the values, where the weight assigned to each value is computed by a compatibility function of the\nquery with the corresponding key.\n3.2.1 Scaled Dot-Product Attention\nWe call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of\nqueries and keys of dimensiondk, and values of dimensiondv. We compute the dot products of the\nquery with all keys, divide each by√dk, and apply a softmax function to obtain the weights on the\nvalues.\nIn practice, we compute the attention function on a set of queries simultaneously, packed together\ninto a matrixQ. The keys and values are also packed together into matricesK andV . We compute\nthe matrix of outputs as:\nAttention(Q,K,V ) = softmax(QK T\n√dk\n)V (1)\nThe two most commonly used attention functions are additive attention [2], and dot-product (multi-\nplicative) attention. Dot-product attention is identical to our algorithm, except for the scaling factor\nof 1√dk\n. Additive attention computes the compatibility function using a feed-forward network with\na single hidden layer. While the two are similar in theoretical complexity, dot-product attention is\nmuch faster and more space-efficient in practice, since it can be implemented using highly optimized\nmatrix multiplication code.\nWhile for small values ofdk the two mechanisms perform similarly, additive attention outperforms\ndot product attention without scaling for larger values ofdk [3]. We suspect that for large values of\ndk, the dot products grow large in magnitude, pushing the softmax function into regions where it has\nextremely small gradients 4. To counteract this effect, we scale the dot products by 1√dk\n.\n3.2.2 Multi-Head Attention\nInstead of performing a single attention function withdmodel-dimensional keys, values and queries,\nwe found it beneficial to linearly project the queries, keys and valuesh times with different, learned\nlinear projections todk,dk anddv dimensions, respectively. On each of these projected versions of\nqueries, keys and values we then perform the attention function in parallel, yieldingdv-dimensional\n4To illustrate why the dot products get large, assume that the components of q and k are independent random\nvariables with mean 0 and variance 1. Then their dot product, q · k = Pdk\ni=1 qiki, has mean 0 and variance dk.\n4\n",
+          "token_count": 546,
+          "source_id": "paper-1706.03762",
+          "source_kind": "pdf",
+          "source_version": "1706.03762v7:sha256:bdfaa68d8984f0dc",
+          "source_sha256": "eee8b5a0bcc2828a6f69c4dd8e054c8bb3dc2d3ed174fee3871932fda2d450df",
+          "locator": "PDF file p. 4",
+          "start_char": 8934,
+          "end_char": 11426
+        },
+        {
+          "paper_id": "2307.08691v1",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [],
+          "year": 2023,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 7,
+          "chunk_id": "depth-2307.08691:f917fc544aae:c18723-19905",
+          "source_url": "https://arxiv.org/pdf/2307.08691v1",
+          "text": "𝑗 ∈ R𝐵𝑟×𝐵𝑐.\n14: On chip, computedS(𝑗)\n𝑖 = P(𝑗)\n𝑖 ◦( dP(𝑗)\n𝑖 −𝐷𝑖)∈ R𝐵𝑟×𝐵𝑐.\n15: Load dQ𝑖 from HBM to SRAM, then on chip, updatedQ𝑖← dQ𝑖+ dS(𝑗)\n𝑖 K𝑗∈ R𝐵𝑟×𝑑, and write back\nto HBM.\n16: On chip, computedK𝑗← dK𝑗+ dS(𝑗)\n𝑖\n⊤\nQ𝑖∈ R𝐵𝑐×𝑑.\n17: end for\n18: Write dK𝑗, dV𝑗 to HBM.\n19: end for\n20: Return dQ, dK, dV.\nMulti-query attention and grouped-query attention. Multi-query attention (MQA) [15] and grouped-\nquery attention (GQA) [1] are variants of attention where multiple heads of query attend to the same head of\nkey and value, in order to reduce the size of KV cache during inference. Instead of having to duplicate the\nkey and value heads for the computation, we implicitly manipulate the indices into the head to perform the\nsame computation. In the backward pass, we need to sum the gradientsdK and dV across different heads\nthat were implicitly duplicated.\n3.2 Parallelism\nThe first version ofFlashAttentionparallelizes over batch size and number of heads. We use 1 thread\nblock to process one attention head, and there are overallbatch size·number of headsthread blocks. Each\nthread block is scheduled to run on a streaming multiprocessor (SM), and there are 108 of these SMs on\n7\n",
+          "token_count": 432,
+          "source_id": "depth-2307.08691",
+          "source_kind": "pdf",
+          "source_version": "2307.08691v1",
+          "source_sha256": "f917fc544aaea881528fa3934a8930c125641f5eadcf924877e2a442bf80a818",
+          "locator": "PDF file p. 7",
+          "start_char": 18723,
+          "end_char": 19905
+        },
+        {
+          "paper_id": "2002.04745v2",
+          "title": "On Layer Normalization in the Transformer Architecture",
+          "authors": [],
+          "year": 2020,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 3,
+          "chunk_id": "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+          "source_url": "https://arxiv.org/pdf/2002.04745v2",
+          "text": "On Layer Normalization in the Transformer Architecture\n3. Optimization for the Transformer\n3.1. Transformer with Post-Layer Normalization\nThe Transformer architecture usually consists of stacked\nTransformer layers (Vaswani et al., 2017; Devlin et al.,\n2018), each of which takes a sequence of vectors as input\nand outputs a new sequence of vectors with the same shape.\nA Transformer layer has two sub-layers: the (multi-head)\nself-attention sub-layer and the position-wise feed-forward\nnetwork sub-layer. Residual connection (He et al., 2016)\nand layer normalization (Lei Ba et al., 2016) are applied\nfor both sub-layers individually. We ﬁrst introduce each\ncomponent of the Transformer layer and then present the\nentire architecture.\nSelf-attention sub-layer An attention function can be\nformulated as querying an entry with key-value pairs\n(Vaswani et al., 2017). The self-attention sub-layer\nuses scaled dot-product attention, which is deﬁned as:\nAttention(Q,K,V ) = softmax(QK T\n√\nd )V , whered is the di-\nmensionality of the hidden representations, andQ (Query),\nK (Key),V (Value) are speciﬁed as the hidden represen-\ntations of the previous layer. The multi-head variant of\nthe self-attention sub-layer is popularly used which allows\nthe model to jointly attend to information from different\nrepresentation sub-spaces, and is deﬁned as\nMulti-head(Q,K,V ) = Concat(head1,··· , headH )WO\nheadk = Attention(QWQ\nk ,KW K\nk ,VW V\nk ),\nwhere WQ\nk ∈ Rd×dK,W K\nk ∈ Rd×dK,W V\nk ∈\nRd×dV, and WO ∈ RHd V×d are project param-\neter matrices, H is the number of heads. dK\nand dV are the dimensionalities of Key and Value.\nWithout any confusion, given a sequence of vectors\n(x1,...,x n), we use MultiHeadAtt(xi, [x1,x 2,··· ,xn])\nas the multi-head self-attention mechanism on position\ni which considers the attention from xi to the en-\ntire sequence, i.e., MultiHeadAtt(xi, [x1,x 2,··· ,xn]) =\nMulti-head(xi, [x1,...,x n], [x1,...,x n]).\nPosition-wise FFN sub-layer In addition to the self-\nattention sub-layer, each Transformer layer contains a fully\nconnected network, which is applied to each position sep-\narately and identically. This sub-layer is a two-layer feed-\n",
+          "token_count": 590,
+          "source_id": "depth-2002.04745",
+          "source_kind": "pdf",
+          "source_version": "2002.04745v2",
+          "source_sha256": "8e1c3e3564f623d7d40bace9d8c72b10047980ecf1d0c24009d5082a4769d8ad",
+          "locator": "PDF file p. 3",
+          "start_char": 9529,
+          "end_char": 11690
+        },
+        {
+          "paper_id": "1706.03762v7",
+          "title": "Attention Is All You Need",
+          "authors": [
+            "Ashish Vaswani",
+            "Noam Shazeer",
+            "Niki Parmar",
+            "Jakob Uszkoreit",
+            "Llion Jones",
+            "Aidan N. Gomez",
+            "Lukasz Kaiser",
+            "Illia Polosukhin"
+          ],
+          "year": 2017,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 9,
+          "chunk_id": "paper-1706.03762:eee8b5a0bcc2:c24539-26145",
+          "source_url": "https://arxiv.org/abs/1706.03762v7",
+          "text": "Table 3: Variations on the Transformer architecture. Unlisted values are identical to those of the base\nmodel. All metrics are on the English-to-German translation development set, newstest2013. Listed\nperplexities are per-wordpiece, according to our byte-pair encoding, and should not be compared to\nper-word perplexities.\nN d model dff h d k dv Pdrop ϵls\ntrain PPL BLEU params\nsteps (dev) (dev) ×106\nbase 6 512 2048 8 64 64 0.1 0.1 100K 4.92 25.8 65\n(A)\n1 512 512 5.29 24.9\n4 128 128 5.00 25.5\n16 32 32 4.91 25.8\n32 16 16 5.01 25.4\n(B) 16 5.16 25.1 58\n32 5.01 25.4 60\n(C)\n2 6.11 23.7 36\n4 5.19 25.3 50\n8 4.88 25.5 80\n256 32 32 5.75 24.5 28\n1024 128 128 4.66 26.0 168\n1024 5.12 25.4 53\n4096 4.75 26.2 90\n(D)\n0.0 5.77 24.6\n0.2 4.95 25.5\n0.0 4.67 25.3\n0.2 5.47 25.7\n(E) positional embedding instead of sinusoids 4.92 25.7\nbig 6 1024 4096 16 0.3 300K 4.33 26.4 213\ndevelopment set, newstest2013. We used beam search as described in the previous section, but no\ncheckpoint averaging. We present these results in Table 3.\nIn Table 3 rows (A), we vary the number of attention heads and the attention key and value dimensions,\nkeeping the amount of computation constant, as described in Section 3.2.2. While single-head\nattention is 0.9 BLEU worse than the best setting, quality also drops off with too many heads.\nIn Table 3 rows (B), we observe that reducing the attention key size dk hurts model quality. This\nsuggests that determining compatibility is not easy and that a more sophisticated compatibility\nfunction than dot product may be beneficial. We further observe in rows (C) and (D) that, as expected,\n",
+          "token_count": 585,
+          "source_id": "paper-1706.03762",
+          "source_kind": "pdf",
+          "source_version": "1706.03762v7:sha256:bdfaa68d8984f0dc",
+          "source_sha256": "eee8b5a0bcc2828a6f69c4dd8e054c8bb3dc2d3ed174fee3871932fda2d450df",
+          "locator": "PDF file p. 9",
+          "start_char": 24539,
+          "end_char": 26145
+        },
+        {
+          "paper_id": null,
+          "title": "Tensor2Tensor v1.2.0 common_attention.py",
+          "authors": [
+            "TensorFlow/Tensor2Tensor authors"
+          ],
+          "year": 2017,
+          "section": "author-t2t-v1.2.0-common-attention.py: top-level definition",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "author-t2t-v1.2.0-common-attention:4d7013143123:c37512-38307",
+          "source_url": "https://raw.githubusercontent.com/tensorflow/tensor2tensor/9ef25172117f2f550bca08c6c6ce1578786cca59/tensor2tensor/layers/common_attention.py",
+          "text": "                              None,\n                              bias,\n                              total_key_depth=attention_kq_size,\n                              total_value_depth=attention_v_size,\n                              output_depth=depth,\n                              num_heads=1,\n                              dropout_rate=0.0)\n    out = tf.squeeze(out, 0)\n\n    return out\n\n  # If the length is empty, just forward an empty tensor (avoid having to\n  # evaluate multihead_attention with tensor having dim equal to zeros)\n  out = tf.cond(\n      tf.equal(length, 0),\n      lambda: tf.zeros(shape=[0, depth], dtype=tf.float32, name=\"empty_out\"),\n      lambda: length_not_null(x, batch_coordinate),\n  )\n  return out\n\n#  functools.partial(self_attention_expert, mask_right=, depth=)\n\n\n",
+          "token_count": 159,
+          "source_id": "author-t2t-v1.2.0-common-attention",
+          "source_kind": "code",
+          "source_version": "v1.2.0@9ef25172117f2f550bca08c6c6ce1578786cca59",
+          "source_sha256": "4d701314312326afdc98d46b015503258684bc49a8bf02308f4601391c0bdfc7",
+          "locator": "L1033–L1055",
+          "start_char": 37512,
+          "end_char": 38307
+        },
+        {
+          "paper_id": null,
+          "title": "Tensor2Tensor v1.2.0 common_attention.py",
+          "authors": [
+            "TensorFlow/Tensor2Tensor authors"
+          ],
+          "year": 2017,
+          "section": "author-t2t-v1.2.0-common-attention.py: top-level definition",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "author-t2t-v1.2.0-common-attention:4d7013143123:c28929-29835",
+          "source_url": "https://raw.githubusercontent.com/tensorflow/tensor2tensor/9ef25172117f2f550bca08c6c6ce1578786cca59/tensor2tensor/layers/common_attention.py",
+          "text": "    q, k, v = compute_qkv(query_antecedent, memory_antecedent, total_key_depth,\n                          total_value_depth, q_filter_width, kv_filter_width,\n                          q_padding, kv_padding)\n\n    q = split_heads(q, num_heads)\n    k = split_heads(k, num_heads)\n    v = split_heads(v, num_heads)\n    key_depth_per_head = total_key_depth // num_heads\n    q *= key_depth_per_head**-0.5\n    if attention_type == \"dot_product\":\n      x = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes)\n    elif attention_type == \"local_mask_right\":\n      x = masked_local_attention_1d(q, k, v, block_length=block_length)\n    else:\n      assert attention_type == \"local_unmasked\"\n      x = local_attention_1d(\n          q, k, v, block_length=block_length, filter_width=block_width)\n    x = combine_heads(x)\n    x = common_layers.conv1d(x, output_depth, 1, name=\"output_transform\")\n    return x\n\n\n",
+          "token_count": 233,
+          "source_id": "author-t2t-v1.2.0-common-attention",
+          "source_kind": "code",
+          "source_version": "v1.2.0@9ef25172117f2f550bca08c6c6ce1578786cca59",
+          "source_sha256": "4d701314312326afdc98d46b015503258684bc49a8bf02308f4601391c0bdfc7",
+          "locator": "L809–L830",
+          "start_char": 28929,
+          "end_char": 29835
+        }
+      ],
+      "omitted_whole": [
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+        "foundation-pytorch-activation-2.11:8b8076c9383f:c33141-35790",
+        "author-t2t-v1.2.0-common-attention:4d7013143123:c32147-34621",
+        "mygpt-readme.md:2d20f1a5d663:c5055-6984",
+        "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+        "depth-2307.08691:f917fc544aae:c7485-9098",
+        "paper-2305.13245:3ed3d65bc419:c4200-6482",
+        "author-t2t-v1.2.0-common-attention:4d7013143123:c13637-15700"
+      ],
+      "characters": 23602
+    },
+    "llm_wiki": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "MHA 多头注意力（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:mha",
+          "source_url": "",
+          "text": "# MHA 多头注意力\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n多头注意力在多个投影子空间中计算注意力，再拼接并投影回模型宽度。各头读取的位置权重可以不同。\n\n## 工作机制\n\nhead_i=Attention(QW_Qi,KW_Ki,VW_Vi)，MultiHead=Concat(head_1,…,head_h)W_O。原论文采用h=8、d_k=d_v=64、d_model=512。固定总宽度时，拆分多个头不等于把每个头都设为完整模型宽度。标准MHA通常query与KV头数相同。\n\n## 适用条件与易混淆点\n\n更多头不必然更准确或更快。与GQA/MQA对比应固定模型宽度并交代query头、KV头、每头维度；不能仅用头数推断完整参数量。\n\n## 关联知识\n\nGQA 分组查询注意力、MQA 多查询注意力、自注意力与 Q/K/V\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-1706.03762:eee8b5a0bcc2:c8934-11426` — [Attention Is All You Need, full page context, PDF file p. 4]\n- `paper-1706.03762:eee8b5a0bcc2:c11426-13973` — [Attention Is All You Need, full page context, PDF file p. 5]\n- `paper-2305.13245:3ed3d65bc419:c2100-4367` — [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints, captured public-source excerpt, captured excerpt L50–L62; snapshot L9–L21]\n- `paper-2305.13245:3ed3d65bc419:c0-2100` — [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints, captured public-source excerpt, captured excerpt L42–L49; snapshot L1–L8]\n- `mygpt-model.py:e05006957de4:c3941-5197` — [mygpt / model.py, mygpt-model.py.py, L119–L153]\n- `mygpt-model.py:e05006957de4:c1194-2694` — [mygpt / model.py, mygpt-model.py.py, L37–L76]\n",
+          "token_count": 1791,
+          "source_id": "wiki-article:mha",
+          "source_kind": "wiki_article",
+          "source_version": "7256326a295290c9583624a7a9a4aa64d34cc0316f698ff07f90a2262b48ab4e",
+          "source_sha256": "7256326a295290c9583624a7a9a4aa64d34cc0316f698ff07f90a2262b48ab4e",
+          "locator": "mha.md"
+        },
+        {
+          "paper_id": null,
+          "title": "性能测量、正确性与适用条件（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:measurement",
+          "source_url": "",
+          "text": "# 性能测量、正确性与适用条件\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n性能结果必须与测量任务、硬件和配置绑定。正确性、延迟、吞吐、已分配显存和预留显存是不同指标。\n\n## 工作机制\n\n比较注意力实现时固定输入、权重、dtype、batch、头数与Tq/Tk，先核对输出容差，再做预热、GPU同步和重复计时，报告统计量及环境。推理需区分prefill/decode，服务需说明排队是否计入。torch.cuda的allocated与reserved含义不同，峰值统计应在明确边界重置。\n\n## 适用条件与易混淆点\n\n本库旧mygpt JSON不是当前硬件新测量。缺失硬件/重复次数/实际后端时应写未知，不能补造。缓存复用缩短实验时间也不能作为算法部署速度。\n\n## 关联知识\n\nKV Cache 增量解码、PyTorch SDPA 与后端选择、分页 KV Cache 与前缀共享、训练：优化器、学习率与数值精度\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `mygpt-bench.py:4ab37b20b5e7:c979-2847` — [mygpt / bench.py, mygpt-bench.py.py, L36–L89]\n- `mygpt-bench.py:4ab37b20b5e7:c7703-9607` — [mygpt / bench.py, mygpt-bench.py.py, L243–L288]\n- `mygpt-readme.md:2d20f1a5d663:c10199-12641` — [mygpt / README.md, mygpt-readme.md.md, L171–L195]\n- `mygpt-readme.md:2d20f1a5d663:c6983-8692` — [mygpt / README.md, mygpt-readme.md.md, L128–L149]\n- `mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376` — [mygpt / results/bench_speedup_vs_batch.json, mygpt-results-bench_speedup_vs_batch.json.json, L1–L23]\n- `mygpt-results-bench_forward_cost.json:f3529c0f7798:c0-284` — [mygpt / results/bench_forward_cost.json, mygpt-results-bench_forward_cost.json.json, L1–L22]\n- `mygpt-requirements.txt:7d5067774196:c0-202` — [mygpt / requirements.txt, mygpt-requirements.txt.txt, L1–L7]\n",
+          "token_count": 1974,
+          "source_id": "wiki-article:measurement",
+          "source_kind": "wiki_article",
+          "source_version": "d26c2bb66a9049138bd937ba3140e7b02919606af0fab317cbaa3b299678df37",
+          "source_sha256": "d26c2bb66a9049138bd937ba3140e7b02919606af0fab317cbaa3b299678df37",
+          "locator": "measurement.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 2551
+    }
+  },
+  "timing_rows": [
+    {
+      "mode": "llm_wiki",
+      "repeat": 0,
+      "seconds": 0.0014361999928951263
+    },
+    {
+      "mode": "source",
+      "repeat": 0,
+      "seconds": 0.5865296000265516
+    },
+    {
+      "mode": "source",
+      "repeat": 1,
+      "seconds": 0.5834551000152715
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 1,
+      "seconds": 0.0016087000258266926
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 2,
+      "seconds": 0.001324899960309267
+    },
+    {
+      "mode": "source",
+      "repeat": 2,
+      "seconds": 0.5925660000066273
+    },
+    {
+      "mode": "source",
+      "repeat": 3,
+      "seconds": 0.5873085999628529
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 3,
+      "seconds": 0.0014724999782629311
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 4,
+      "seconds": 0.0013042999780736864
+    },
+    {
+      "mode": "source",
+      "repeat": 4,
+      "seconds": 0.5839890000061132
+    },
+    {
+      "mode": "source",
+      "repeat": 5,
+      "seconds": 0.5838210000074469
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 5,
+      "seconds": 0.001535199990030378
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 6,
+      "seconds": 0.0014353000442497432
+    },
+    {
+      "mode": "source",
+      "repeat": 6,
+      "seconds": 0.5972940999781713
+    },
+    {
+      "mode": "source",
+      "repeat": 7,
+      "seconds": 0.5758449999848381
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 7,
+      "seconds": 0.001552899950183928
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 8,
+      "seconds": 0.0018832999630831182
+    },
+    {
+      "mode": "source",
+      "repeat": 8,
+      "seconds": 0.5841304000350647
+    },
+    {
+      "mode": "source",
+      "repeat": 9,
+      "seconds": 0.5831521000363864
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 9,
+      "seconds": 0.0015706000267527997
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 10,
+      "seconds": 0.001310100022237748
+    },
+    {
+      "mode": "source",
+      "repeat": 10,
+      "seconds": 0.5864397000405006
+    },
+    {
+      "mode": "source",
+      "repeat": 11,
+      "seconds": 0.585536599974148
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 11,
+      "seconds": 0.001567400002386421
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 12,
+      "seconds": 0.001389399985782802
+    },
+    {
+      "mode": "source",
+      "repeat": 12,
+      "seconds": 0.586506100022234
+    },
+    {
+      "mode": "source",
+      "repeat": 13,
+      "seconds": 0.6180256999796256
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 13,
+      "seconds": 0.0018703999812714756
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 14,
+      "seconds": 0.0015347999869845808
+    },
+    {
+      "mode": "source",
+      "repeat": 14,
+      "seconds": 0.5838140000123531
+    },
+    {
+      "mode": "source",
+      "repeat": 15,
+      "seconds": 0.5922989000100642
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 15,
+      "seconds": 0.0015572999836876988
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 16,
+      "seconds": 0.001387599972076714
+    },
+    {
+      "mode": "source",
+      "repeat": 16,
+      "seconds": 0.5849632999743335
+    },
+    {
+      "mode": "source",
+      "repeat": 17,
+      "seconds": 0.5953432999667712
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 17,
+      "seconds": 0.0016299999551847577
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 18,
+      "seconds": 0.0014248999650590122
+    },
+    {
+      "mode": "source",
+      "repeat": 18,
+      "seconds": 0.5994116999791004
+    },
+    {
+      "mode": "source",
+      "repeat": 19,
+      "seconds": 0.6006404999643564
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 19,
+      "seconds": 0.0016605999553576112
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 20,
+      "seconds": 0.0014173000236041844
+    },
+    {
+      "mode": "source",
+      "repeat": 20,
+      "seconds": 0.5946173999691382
+    },
+    {
+      "mode": "source",
+      "repeat": 21,
+      "seconds": 0.6014644000097178
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 21,
+      "seconds": 0.001630100014153868
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 22,
+      "seconds": 0.0014750999980606139
+    },
+    {
+      "mode": "source",
+      "repeat": 22,
+      "seconds": 0.5950645999982953
+    },
+    {
+      "mode": "source",
+      "repeat": 23,
+      "seconds": 0.6081744999974035
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 23,
+      "seconds": 0.0015362999984063208
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 24,
+      "seconds": 0.0016215000068768859
+    },
+    {
+      "mode": "source",
+      "repeat": 24,
+      "seconds": 0.5982655999832787
+    },
+    {
+      "mode": "source",
+      "repeat": 25,
+      "seconds": 0.5987467999802902
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 25,
+      "seconds": 0.0016948000411503017
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 26,
+      "seconds": 0.0015740999951958656
+    },
+    {
+      "mode": "source",
+      "repeat": 26,
+      "seconds": 0.6075883000157773
+    },
+    {
+      "mode": "source",
+      "repeat": 27,
+      "seconds": 0.5993973999866284
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 27,
+      "seconds": 0.0015631000278517604
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 28,
+      "seconds": 0.0014113999786786735
+    },
+    {
+      "mode": "source",
+      "repeat": 28,
+      "seconds": 0.6081433000508696
+    },
+    {
+      "mode": "source",
+      "repeat": 29,
+      "seconds": 0.60426870000083
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 29,
+      "seconds": 0.0015084999613463879
+    }
+  ],
+  "median_seconds": {
+    "source": 0.5935916999878827,
+    "llm_wiki": 0.0015357499942183495
+  },
+  "actual_routing_traces": {
+    "source": [
+      {
+        "stage": "wiki_source_navigation",
+        "mode": "source",
+        "rerank_original_query": "In multi-head attention, if d_model=768, the number of query heads is 12 and all heads are of equal width, how do the Q/K/V projections, per-head dimension, concatenation and output projection connect? Please explain the dimension basis of the scaling factor, and do not directly interpret the number of heads as a speedup multiplier.",
+        "effective_search_queries": [
+          "multi-head attention d_model 768 12 heads Q K V projection per-head dimension concatenation output projection scaling factor sqrt d_k",
+          "In multi-head attention, if d_model=768, the number of query heads is 12 and all heads are of equal width, how do the Q/K/V projections, per-head dimension, concatenation and output projection connect? Please explain the dimension basis of the scaling factor, and do not directly interpret the number of heads as a speedup multiplier.",
+          "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。"
+        ],
+        "effective_rerank_query": "In multi-head attention, if d_model=768, the number of query heads is 12 and all heads are of equal width, how do the Q/K/V projections, per-head dimension, concatenation and output projection connect? Please explain the dimension basis of the scaling factor, and do not directly interpret the number of heads as a speedup multiplier.",
+        "term_corrections": [],
+        "query_terminology": {
+          "original_query": "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。",
+          "expanded_query": "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。",
+          "corrections": [],
+          "rejected_choices": [],
+          "suggestions": [
+            {
+              "original": "多头注意力",
+              "candidates": [
+                {
+                  "canonical": "多头注意力",
+                  "wiki_pages": [
+                    "mha"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c1194-2694",
+                    "mygpt-train.py:52262ac90caa:c0-1445"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            }
+          ],
+          "policy": "source-vocabulary-one-edit-v1",
+          "new_provider_calls": 0
+        },
+        "rerank_search_context_used": false,
+        "rerank_context_rankings": [],
+        "authoritative_original_reranker_ids": [
+          "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+          "paper-2305.13245:3ed3d65bc419:c2100-4367",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c26383-29239",
+          "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+          "paper-2305.13245:3ed3d65bc419:c13133-15425",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+          "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+          "depth-2307.08691:f917fc544aae:c18723-19905",
+          "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+          "paper-1706.03762:eee8b5a0bcc2:c24539-26145",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c33141-35790",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c32147-34621",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c37512-38307",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c28929-29835",
+          "mygpt-readme.md:2d20f1a5d663:c5055-6984",
+          "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+          "depth-2307.08691:f917fc544aae:c7485-9098",
+          "paper-2305.13245:3ed3d65bc419:c4200-6482",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c13637-15700",
+          "paper-2309.06180:7ba2ff703be1:c0-1628",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+          "depth-2002.04745:8e1c3e3564f6:c20802-23034",
+          "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c237676-240188",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c12367-13637",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c246635-248872",
+          "paper-2205.14135:b86de4ee5c52:c11869-13995",
+          "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+          "mygpt-bench.py:4ab37b20b5e7:c10880-12569",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c244502-246860",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c35454-37976",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c242114-244828",
+          "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c235326-237898",
+          "paper-1910.10683:7aa53b0ecc3b:c93097-95141",
+          "depth-2307.08691:f917fc544aae:c19905-21985",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-bench.py:4ab37b20b5e7:c5261-6745",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "mygpt-bench.py:4ab37b20b5e7:c18404-20234",
+          "mygpt-bench.py:4ab37b20b5e7:c4118-5531",
+          "foundation-2108.12409:cf6a3d07cc4d:c56152-57311",
+          "mygpt-model.py:e05006957de4:c5047-6681",
+          "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+          "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+          "mygpt-bench.py:4ab37b20b5e7:c26352-27532",
+          "depth-2104.09864:abd4e80aae4d:c18345-19569",
+          "mygpt-model.py:e05006957de4:c6488-7889",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "depth-1804.10959:365099810758:c24665-25707",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-bench.py:4ab37b20b5e7:c19958-21805",
+          "mygpt-paged_kv.py:4453b1b84e0f:c3587-5101",
+          "mygpt-train.py:52262ac90caa:c0-1445"
+        ],
+        "wiki_pages": [],
+        "graph_neighbors": [],
+        "source_pointer_ids": [],
+        "final_ids": [
+          "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+          "paper-2305.13245:3ed3d65bc419:c2100-4367",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c26383-29239",
+          "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+          "paper-2305.13245:3ed3d65bc419:c13133-15425",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+          "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+          "depth-2307.08691:f917fc544aae:c18723-19905",
+          "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+          "paper-1706.03762:eee8b5a0bcc2:c24539-26145",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c33141-35790",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c32147-34621",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c37512-38307",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c28929-29835",
+          "mygpt-readme.md:2d20f1a5d663:c5055-6984",
+          "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+          "depth-2307.08691:f917fc544aae:c7485-9098",
+          "paper-2305.13245:3ed3d65bc419:c4200-6482",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c13637-15700"
+        ],
+        "overview_anchor_ids": [],
+        "overview_anchor_policy": "protected-reranker-head8;bounded-tail-topic-coverage-v2;no-forced-neighbors",
+        "navigation_selection": {
+          "protected_reranker_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "paper-2305.13245:3ed3d65bc419:c2100-4367",
+            "author-t2t-v1.2.0-common-attention:4d7013143123:c26383-29239",
+            "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+            "paper-2305.13245:3ed3d65bc419:c13133-15425",
+            "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "depth-2307.08691:f917fc544aae:c18723-19905"
+          ],
+          "admitted_anchor_ids": [],
+          "omitted_anchor_ids": [],
+          "displaced_reranker_ids": [],
+          "semantic_support_certified": false,
+          "additional_provider_calls": 0
+        },
+        "topic_entry_ids": {},
+        "original_reranker_ids": [
+          "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+          "paper-2305.13245:3ed3d65bc419:c2100-4367",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c26383-29239",
+          "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+          "paper-2305.13245:3ed3d65bc419:c13133-15425",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+          "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+          "depth-2307.08691:f917fc544aae:c18723-19905",
+          "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+          "paper-1706.03762:eee8b5a0bcc2:c24539-26145",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c33141-35790",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c32147-34621",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c37512-38307",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c28929-29835",
+          "mygpt-readme.md:2d20f1a5d663:c5055-6984",
+          "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+          "depth-2307.08691:f917fc544aae:c7485-9098",
+          "paper-2305.13245:3ed3d65bc419:c4200-6482",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c13637-15700",
+          "paper-2309.06180:7ba2ff703be1:c0-1628",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+          "depth-2002.04745:8e1c3e3564f6:c20802-23034",
+          "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c237676-240188",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c12367-13637",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c246635-248872",
+          "paper-2205.14135:b86de4ee5c52:c11869-13995",
+          "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+          "mygpt-bench.py:4ab37b20b5e7:c10880-12569",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c244502-246860",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "author-t2t-v1.2.0-common-attention:4d7013143123:c35454-37976",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c242114-244828",
+          "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c235326-237898",
+          "paper-1910.10683:7aa53b0ecc3b:c93097-95141",
+          "depth-2307.08691:f917fc544aae:c19905-21985",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-bench.py:4ab37b20b5e7:c5261-6745",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "mygpt-bench.py:4ab37b20b5e7:c18404-20234",
+          "mygpt-bench.py:4ab37b20b5e7:c4118-5531",
+          "foundation-2108.12409:cf6a3d07cc4d:c56152-57311",
+          "mygpt-model.py:e05006957de4:c5047-6681",
+          "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+          "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+          "mygpt-bench.py:4ab37b20b5e7:c26352-27532",
+          "depth-2104.09864:abd4e80aae4d:c18345-19569",
+          "mygpt-model.py:e05006957de4:c6488-7889",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "depth-1804.10959:365099810758:c24665-25707",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-bench.py:4ab37b20b5e7:c19958-21805",
+          "mygpt-paged_kv.py:4453b1b84e0f:c3587-5101",
+          "mygpt-train.py:52262ac90caa:c0-1445"
+        ],
+        "latency_ms": 1581.0219999984838,
+        "editorial_content_used_as_evidence": false,
+        "new_provider_calls": 0
+      }
+    ],
+    "llm_wiki": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki",
+        "seeds": [
+          "mha",
+          "measurement"
+        ],
+        "graph_neighbors": [],
+        "selected": [
+          "mha",
+          "measurement"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [],
+        "complete_articles": true,
+        "article_characters": 2551,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 8.013699960429221,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ]
+  }
+}

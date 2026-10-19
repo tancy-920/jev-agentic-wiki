@@ -1,0 +1,49 @@
+name: Static demo
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'knowledge/llm_wiki/**'
+      - 'hosted-demo/assets/**'
+      - 'hosted-demo/package*.json'
+      - 'scripts/build_static_demo.py'
+      - '.github/workflows/static-demo.yml'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: hosted-demo/package-lock.json
+      - run: npm --prefix hosted-demo ci --ignore-scripts
+      - run: python scripts/build_static_demo.py
+      - run: python scripts/build_static_demo.py --check
+      - run: node --check hosted-demo/assets/app.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: hosted-demo/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

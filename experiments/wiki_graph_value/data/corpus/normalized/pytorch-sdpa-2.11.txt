@@ -1,0 +1,95 @@
+L3134: # torch.nn.functional.scaled_dot_product_attentioncite2729†#
+L3135: 
+L3136: torch.nn.functional.scaled_dot_product_attention()cite2730†#
+L3137: 
+L3138: 
+L3139: scaled_dot_product_attention(query, key, value, attn_mask=None, dropout_p=0.0,
+L3140: 
+L3141: 
+L3142: is_causal=False, scale=None, enable_gqa=False) -> Tensor:
+L3143: Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed, and applying dropout if a probability greater than 0.0 is specified. The optional scale argument can only be specified as a keyword argument.
+L3144: 
+L3145:     # Efficient implementation equivalent to the following:
+L3146:     def scaled_dot_product_attention(query, key, value, attn_mask=None, dropout_p=0.0,
+L3147:             is_causal=False, scale=None, enable_gqa=False) -> torch.Tensor:
+L3148:         L, S = query.size(-2), key.size(-2)
+L3149:         scale_factor = 1 / math.sqrt(query.size(-1)) if scale is None else scale
+L3150:         attn_bias = torch.zeros(L, S, dtype=query.dtype, device=query.device)
+L3151:         if is_causal:
+L3152:             assert attn_mask is None
+L3153:             temp_mask = torch.ones(L, S, dtype=torch.bool).tril(diagonal=0)
+L3154:             attn_bias.masked_fill_(temp_mask.logical_not(), float("-inf"))
+L3155: 
+L3156:         if attn_mask is not None:
+L3157:             if attn_mask.dtype == torch.bool:
+L3158:                 attn_bias.masked_fill_(attn_mask.logical_not(), float("-inf"))
+L3159:             else:
+L3160:                 attn_bias = attn_mask + attn_bias
+L3161: 
+L3162:         if enable_gqa:
+L3163:             key = key.repeat_interleave(query.size(-3)//key.size(-3), -3)
+L3164:             value = value.repeat_interleave(query.size(-3)//value.size(-3), -3)
+L3165: 
+L3166:         attn_weight = query @ key.transpose(-2, -1) * scale_factor
+L3167:         attn_weight += attn_bias
+L3168:         attn_weight = torch.softmax(attn_weight, dim=-1)
+L3169:         attn_weight = torch.dropout(attn_weight, dropout_p, train=True)
+L3170:         return attn_weight @ value
+L3171: Warning
+L3172: 
+L3173: This function is beta and subject to change.
+L3174: 
+L3175: Warning
+L3176: 
+L3177: This function always applies dropout according to the specified `dropout_p` argument. To disable dropout during evaluation, be sure to pass a value of `0.0` when the module that makes the function call is not in training mode.
+L3178: For example:
+L3179: 
+L3180:     class MyModel(nn.Module):
+L3181:         def __init__(self, p=0.5):
+L3182:             super().__init__()
+L3183:             self.p = p
+L3184: 
+L3185:         def forward(self, ...):
+L3186:             return F.scaled_dot_product_attention(...,
+L3187:                 dropout_p=(self.p if self.training else 0.0))
+L3188: 
+L3189: 
+L3190: Note
+L3191: 
+L3192: The boolean mask semantics for `attn_mask` are the inverse of cite2731†`MultiheadAttention` ’s `key_padding_mask`.
+L3193: In cite2730†`scaled_dot_product_attention()` , `True` indicates values to participate in attention.
+L3194: 
+L3195: In cite2731†`MultiheadAttention` , `True` indicates values to be masked out (padding).
+L3196: 
+L3197: If migrating from MHA, ensure you invert your boolean mask (e.g., using `~mask` or `mask.logical_not()`).
+L3198: 
+L3199: Note
+L3200: 
+L3201: There are currently three supported implementations of scaled dot product attention:
+L3202: >   * cite2732†FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning†arxiv.org
+L3203: >
+L3204: >   * cite2733†Memory-Efficient Attention†github.com
+L3205: >
+L3206: >   * A PyTorch implementation defined in C++ matching the above formulation
+L3207: 
+L3208: The function may call optimized kernels for improved performance when using the CUDA backend. For all other backends, the PyTorch implementation will be used.
+L3209: All implementations are enabled by default. Scaled dot product attention attempts to automatically select the most optimal implementation based on the inputs. In order to provide more fine-grained control over what implementation is used, the following functions are provided for enabling and disabling implementations. The context manager is the preferred mechanism:
+L3210: >   * cite2734†`torch.nn.attention.sdpa_kernel()` : A context manager used to enable or disable any of the implementations.
+L3211: >
+L3212: >   * cite2735†`torch.backends.cuda.enable_flash_sdp()` : Globally enables or disables FlashAttention.
+L3213: >
+L3214: >   * cite2736†`torch.backends.cuda.enable_mem_efficient_sdp()` : Globally enables or disables Memory-Efficient Attention.
+L3215: >
+L3216: >   * cite2737†`torch.backends.cuda.enable_math_sdp()` : Globally enables or disables the PyTorch C++ implementation.
+L3217: Each of the fused kernels has specific input limitations. If the user requires the use of a specific fused implementation, disable the PyTorch C++ implementation using cite2734†`torch.nn.attention.sdpa_kernel()` . In the event that a fused implementation is not available, a warning will be raised with the reasons why the fused implementation cannot run.
+L3218: Due to the nature of fusing floating point operations, the output of this function may be different depending on what backend kernel is chosen. The c++ implementation supports torch.float64 and can be used when higher precision is required. For math backend, all intermediates are kept in torch.float if inputs are in torch.half or torch.bfloat16.
+L3219: 
+L3220: For more information please see cite108†Numerical accuracy
+L3221: > Grouped Query Attention (GQA) is an experimental feature. It currently works only for Flash_attention and math kernel on CUDA tensor, and does not support Nested tensor. Constraints for GQA:
+L3222: >
+L3223: >>   * number_of_heads_query % number_of_heads_key_value == 0 and,
+L3224: >>
+L3225: >>   * number_of_heads_key == number_of_heads_value
+L3226: 
+L3227: Note
+L3228: In some circumstances when given tensors on a CUDA device and using CuDNN, this operator may select a nondeterministic algorithm to increase performance. If this is undesirable, you can try to make the operation deterministic (potentially at a performance cost) by setting `torch.backends.cudnn.deterministic = True`. See cite110†Reproducibility for more information.

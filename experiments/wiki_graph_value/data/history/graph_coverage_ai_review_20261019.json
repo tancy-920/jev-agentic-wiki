@@ -1,0 +1,3801 @@
+{
+  "type": "LOCAL_SOURCE_GROUNDED_AI_REVIEW",
+  "study_id": "7a1a00b2-13e7-45fd-8e71-032557506f8c",
+  "provider_calls": 12,
+  "exact_replays": 7,
+  "primary_totals": {
+    "direct6": 43.0,
+    "coverage6": 43.0,
+    "coverage_graph6": 42.5
+  },
+  "denominator": 48,
+  "rows": [
+    {
+      "id": "M01",
+      "arm": "direct6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "其他维度精度固定，32到4逻辑KV为1/8",
+          "score": 1,
+          "answer_anchor": "32→4",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "逻辑比例不推出总显存/吞吐八倍",
+          "score": 1,
+          "answer_anchor": "总显存",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "头共享改变KV元素，不自动跨请求共享物理块",
+          "score": 1,
+          "answer_anchor": "改变投影",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "分页管理物理块并可复用相同前缀",
+          "score": 1,
+          "answer_anchor": "相同物理块",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "只读共享块不必COW",
+          "score": 0.5,
+          "answer_anchor": "共享块写入",
+          "rationale": "Writes are scoped to shared blocks; immutable read-only/no-COW case not made explicit: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "修改被多方引用块需隔离/COW",
+          "score": 1,
+          "answer_anchor": "copy-on-write",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "完成请求可在迭代边界退出并接纳新请求",
+          "score": 1,
+          "answer_anchor": "迭代边界",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "调度区别分页及模型结构，具体吞吐须测量",
+          "score": 1,
+          "answer_anchor": "调度机制",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [
+        {
+          "category": "false",
+          "answer_anchor": "只作用于",
+          "explanation": "After prefix blocks are physically shared once, changing KV heads still changes bytes in that shared copy. It does not apply only to private tokens.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "category": "condition_missing",
+          "answer_anchor": "无前缀共享",
+          "explanation": "Prefix sharing is not necessary for the same-condition logical head-count ratio; do not mix logical KV with total-device-memory claims.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "category": "unsupported",
+          "answer_anchor": "瓶颈完全在 KV 显存容量与带宽",
+          "explanation": "A capacity/bandwidth bottleneck plus scheduling alone is not a proof of exact eightfold throughput; missing kernel/system model.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "answer": "不能宣称\"总显存减少八倍、吞吐提高八倍\"，因为32→4只改变一个乘数，而显存与吞吐各由多个独立机制决定，且证据本身只是机制归纳，不含该场景的实测。\n\n**头数量**：缓存张量字节约为 \\(2 \\cdot L \\cdot B \\cdot T \\cdot H_{kv} \\cdot d_{head} \\cdot s\\)，GQA 只降低 \\(H_{kv}\\)，其他条件（层数、batch、序列长度、\\(d_{head}\\)、精度）相同时缓存容量才与 \\(H_{kv}\\) 成正比[E1][E3]。32→4 是 8 倍，但这是\"逻辑张量容量\"层面的条件结论，不是端到端显存。总显存还含权重、激活、临时缓冲、分配器预留（allocated 与 reserved 不同）[E5]；且 GQA 是改变投影与缓存结构，不是删除已有缓存的一部分，已有权重转换需训练或 uptraining，质量不保证[E1][E3]。重复展开 KV 张量还会削弱工程收益[E3]。\n\n**前缀物理存储**：大量请求共享同一提示前缀时，若采用分页 KV 与共享前缀，共享部分可引用相同物理块，重复存储被消除[E1][E2]。此时前缀部分的物理占用已与请求数近似无关，再减少 \\(H_{kv}\\) 只作用于\"独有 token\"部分，8 倍不再对应总占用。反之若未做前缀共享，每请求各存一份前缀，头数缩减的绝对收益更大——所以倍数取决于是否共享、共享比例与独有长度分布，不能一概而论。分页本身不改变每独有 token 的 K/V 元素数，也不改变头数[E1][E2]。\n\n**共享块写入**：共享前缀块被多请求引用，写入必须靠引用计数与 copy-on-write，否则会破坏其他请求的缓存[E2]。这带来额外元数据与写时复制的开销，且末块仍可能未填满，内部碎片未完全消除[E1][E2]。因此显存收益是\"减少重复存储\"与\"管理开销/碎片\"的净差，不是纯 8 倍。\n\n**请求完成后接纳新请求**：输出长度不同时，固定整批会留下空闲位置；连续批处理在迭代边界让结束请求退出、等待请求进入，从而利用这些空位[E6]。这属于调度机制，与分页 KV 可配合但相互独立[E2][E6]。吞吐提升来自调度与显存释放后能容纳更多并发，而非头数本身；动态调度不降低单 token 固有计算量，收益受负载与延迟目标影响[E6]。此外 decode 每步仍要读取历史 K/V，缓存不消除注意力计算[E1]；prefill 与 decode 瓶颈不同，必须分阶段比较并计入排队、调度与分配成本[E4][E5]。\n\n**条件总结**：8 倍显存仅在\"无前缀共享、其他维度与精度不变、只计 KV 张量容量\"时成立；8 倍吞吐需要额外假设瓶颈完全在 KV 显存容量与带宽、且调度能无缝填满释放的槽位——证据未提供该场景的实测，故只能作为条件推导，不能作为普遍保证[E1][E3][E5]。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:paged-kv",
+        "E3": "wiki-article:gqa",
+        "E4": "wiki-article:prefill-decode",
+        "E5": "wiki-article:measurement",
+        "E6": "wiki-article:continuous-batching"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M01-B-direct6.json",
+      "raw_sha256": "99f6ee34d30b680c4235ee1190ca57a6f6dbe3b1f22a03aaf4548a8b76ef7877",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M01",
+      "arm": "coverage6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "其他维度精度固定，32到4逻辑KV为1/8",
+          "score": 1,
+          "answer_anchor": "32→4",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "逻辑比例不推出总显存/吞吐八倍",
+          "score": 1,
+          "answer_anchor": "总显存",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "头共享改变KV元素，不自动跨请求共享物理块",
+          "score": 1,
+          "answer_anchor": "改变投影",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "分页管理物理块并可复用相同前缀",
+          "score": 1,
+          "answer_anchor": "相同物理块",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "只读共享块不必COW",
+          "score": 0.5,
+          "answer_anchor": "共享块写入",
+          "rationale": "Writes are scoped to shared blocks; immutable read-only/no-COW case not made explicit: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "修改被多方引用块需隔离/COW",
+          "score": 1,
+          "answer_anchor": "copy-on-write",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "完成请求可在迭代边界退出并接纳新请求",
+          "score": 1,
+          "answer_anchor": "迭代边界",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "调度区别分页及模型结构，具体吞吐须测量",
+          "score": 1,
+          "answer_anchor": "调度机制",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [
+        {
+          "category": "false",
+          "answer_anchor": "只作用于",
+          "explanation": "After prefix blocks are physically shared once, changing KV heads still changes bytes in that shared copy. It does not apply only to private tokens.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "category": "condition_missing",
+          "answer_anchor": "无前缀共享",
+          "explanation": "Prefix sharing is not necessary for the same-condition logical head-count ratio; do not mix logical KV with total-device-memory claims.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "category": "unsupported",
+          "answer_anchor": "瓶颈完全在 KV 显存容量与带宽",
+          "explanation": "A capacity/bandwidth bottleneck plus scheduling alone is not a proof of exact eightfold throughput; missing kernel/system model.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "answer": "不能宣称\"总显存减少八倍、吞吐提高八倍\"，因为32→4只改变一个乘数，而显存与吞吐各由多个独立机制决定，且证据本身只是机制归纳，不含该场景的实测。\n\n**头数量**：缓存张量字节约为 \\(2 \\cdot L \\cdot B \\cdot T \\cdot H_{kv} \\cdot d_{head} \\cdot s\\)，GQA 只降低 \\(H_{kv}\\)，其他条件（层数、batch、序列长度、\\(d_{head}\\)、精度）相同时缓存容量才与 \\(H_{kv}\\) 成正比[E1][E3]。32→4 是 8 倍，但这是\"逻辑张量容量\"层面的条件结论，不是端到端显存。总显存还含权重、激活、临时缓冲、分配器预留（allocated 与 reserved 不同）[E5]；且 GQA 是改变投影与缓存结构，不是删除已有缓存的一部分，已有权重转换需训练或 uptraining，质量不保证[E1][E3]。重复展开 KV 张量还会削弱工程收益[E3]。\n\n**前缀物理存储**：大量请求共享同一提示前缀时，若采用分页 KV 与共享前缀，共享部分可引用相同物理块，重复存储被消除[E1][E2]。此时前缀部分的物理占用已与请求数近似无关，再减少 \\(H_{kv}\\) 只作用于\"独有 token\"部分，8 倍不再对应总占用。反之若未做前缀共享，每请求各存一份前缀，头数缩减的绝对收益更大——所以倍数取决于是否共享、共享比例与独有长度分布，不能一概而论。分页本身不改变每独有 token 的 K/V 元素数，也不改变头数[E1][E2]。\n\n**共享块写入**：共享前缀块被多请求引用，写入必须靠引用计数与 copy-on-write，否则会破坏其他请求的缓存[E2]。这带来额外元数据与写时复制的开销，且末块仍可能未填满，内部碎片未完全消除[E1][E2]。因此显存收益是\"减少重复存储\"与\"管理开销/碎片\"的净差，不是纯 8 倍。\n\n**请求完成后接纳新请求**：输出长度不同时，固定整批会留下空闲位置；连续批处理在迭代边界让结束请求退出、等待请求进入，从而利用这些空位[E6]。这属于调度机制，与分页 KV 可配合但相互独立[E2][E6]。吞吐提升来自调度与显存释放后能容纳更多并发，而非头数本身；动态调度不降低单 token 固有计算量，收益受负载与延迟目标影响[E6]。此外 decode 每步仍要读取历史 K/V，缓存不消除注意力计算[E1]；prefill 与 decode 瓶颈不同，必须分阶段比较并计入排队、调度与分配成本[E4][E5]。\n\n**条件总结**：8 倍显存仅在\"无前缀共享、其他维度与精度不变、只计 KV 张量容量\"时成立；8 倍吞吐需要额外假设瓶颈完全在 KV 显存容量与带宽、且调度能无缝填满释放的槽位——证据未提供该场景的实测，故只能作为条件推导，不能作为普遍保证[E1][E3][E5]。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:paged-kv",
+        "E3": "wiki-article:gqa",
+        "E4": "wiki-article:prefill-decode",
+        "E5": "wiki-article:measurement",
+        "E6": "wiki-article:continuous-batching"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M01-B-coverage6.json",
+      "raw_sha256": "5a4c65f557c4fd87348e101c53c71fdca25140a5ee44558bb6e6b066539a31d9",
+      "mode": "REPLAY_EXACT_REQUEST"
+    },
+    {
+      "id": "M01",
+      "arm": "coverage_graph6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "其他维度精度固定，32到4逻辑KV为1/8",
+          "score": 1,
+          "answer_anchor": "32→4",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "逻辑比例不推出总显存/吞吐八倍",
+          "score": 1,
+          "answer_anchor": "总显存",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "头共享改变KV元素，不自动跨请求共享物理块",
+          "score": 1,
+          "answer_anchor": "改变投影",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "分页管理物理块并可复用相同前缀",
+          "score": 1,
+          "answer_anchor": "相同物理块",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "只读共享块不必COW",
+          "score": 0.5,
+          "answer_anchor": "共享块写入",
+          "rationale": "Writes are scoped to shared blocks; immutable read-only/no-COW case not made explicit: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "修改被多方引用块需隔离/COW",
+          "score": 1,
+          "answer_anchor": "copy-on-write",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c31560-34002",
+              "source_quote": "blocks that need modification",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 7"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "完成请求可在迭代边界退出并接纳新请求",
+          "score": 1,
+          "answer_anchor": "迭代边界",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "调度区别分页及模型结构，具体吞吐须测量",
+          "score": 1,
+          "answer_anchor": "调度机制",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-orca-osdi22:b0b993441062:c5343-8296",
+              "source_quote": "granularity of iteration instead of request",
+              "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+              "locator": "PDF file p. 3"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [
+        {
+          "category": "false",
+          "answer_anchor": "只作用于",
+          "explanation": "After prefix blocks are physically shared once, changing KV heads still changes bytes in that shared copy. It does not apply only to private tokens.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "category": "condition_missing",
+          "answer_anchor": "无前缀共享",
+          "explanation": "Prefix sharing is not necessary for the same-condition logical head-count ratio; do not mix logical KV with total-device-memory claims.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "category": "unsupported",
+          "answer_anchor": "瓶颈完全在 KV 显存容量与带宽",
+          "explanation": "A capacity/bandwidth bottleneck plus scheduling alone is not a proof of exact eightfold throughput; missing kernel/system model.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "answer": "不能宣称\"总显存减少八倍、吞吐提高八倍\"，因为32→4只改变一个乘数，而显存与吞吐各由多个独立机制决定，且证据本身只是机制归纳，不含该场景的实测。\n\n**头数量**：缓存张量字节约为 \\(2 \\cdot L \\cdot B \\cdot T \\cdot H_{kv} \\cdot d_{head} \\cdot s\\)，GQA 只降低 \\(H_{kv}\\)，其他条件（层数、batch、序列长度、\\(d_{head}\\)、精度）相同时缓存容量才与 \\(H_{kv}\\) 成正比[E1][E3]。32→4 是 8 倍，但这是\"逻辑张量容量\"层面的条件结论，不是端到端显存。总显存还含权重、激活、临时缓冲、分配器预留（allocated 与 reserved 不同）[E5]；且 GQA 是改变投影与缓存结构，不是删除已有缓存的一部分，已有权重转换需训练或 uptraining，质量不保证[E1][E3]。重复展开 KV 张量还会削弱工程收益[E3]。\n\n**前缀物理存储**：大量请求共享同一提示前缀时，若采用分页 KV 与共享前缀，共享部分可引用相同物理块，重复存储被消除[E1][E2]。此时前缀部分的物理占用已与请求数近似无关，再减少 \\(H_{kv}\\) 只作用于\"独有 token\"部分，8 倍不再对应总占用。反之若未做前缀共享，每请求各存一份前缀，头数缩减的绝对收益更大——所以倍数取决于是否共享、共享比例与独有长度分布，不能一概而论。分页本身不改变每独有 token 的 K/V 元素数，也不改变头数[E1][E2]。\n\n**共享块写入**：共享前缀块被多请求引用，写入必须靠引用计数与 copy-on-write，否则会破坏其他请求的缓存[E2]。这带来额外元数据与写时复制的开销，且末块仍可能未填满，内部碎片未完全消除[E1][E2]。因此显存收益是\"减少重复存储\"与\"管理开销/碎片\"的净差，不是纯 8 倍。\n\n**请求完成后接纳新请求**：输出长度不同时，固定整批会留下空闲位置；连续批处理在迭代边界让结束请求退出、等待请求进入，从而利用这些空位[E6]。这属于调度机制，与分页 KV 可配合但相互独立[E2][E6]。吞吐提升来自调度与显存释放后能容纳更多并发，而非头数本身；动态调度不降低单 token 固有计算量，收益受负载与延迟目标影响[E6]。此外 decode 每步仍要读取历史 K/V，缓存不消除注意力计算[E1]；prefill 与 decode 瓶颈不同，必须分阶段比较并计入排队、调度与分配成本[E4][E5]。\n\n**条件总结**：8 倍显存仅在\"无前缀共享、其他维度与精度不变、只计 KV 张量容量\"时成立；8 倍吞吐需要额外假设瓶颈完全在 KV 显存容量与带宽、且调度能无缝填满释放的槽位——证据未提供该场景的实测，故只能作为条件推导，不能作为普遍保证[E1][E3][E5]。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:paged-kv",
+        "E3": "wiki-article:gqa",
+        "E4": "wiki-article:prefill-decode",
+        "E5": "wiki-article:measurement",
+        "E6": "wiki-article:continuous-batching"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M01-B-coverage_graph6.json",
+      "raw_sha256": "f4a1815f9554cfe49e2ca716137046eb7a760b44e6a4bc3ee58b327bf379aa9b",
+      "mode": "REPLAY_EXACT_REQUEST"
+    },
+    {
+      "id": "M02",
+      "arm": "direct6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "m'=max(m,m_b)，指数和按新最大值重缩放",
+          "score": 1,
+          "answer_anchor": "max(m,m_b)",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "加权和同样重缩放，最终输出o/l",
+          "score": 1,
+          "answer_anchor": "o'/l'",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "避免物化完整矩阵/减少HBM访问",
+          "score": 1,
+          "answer_anchor": "HBM",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "精确稠密算术量不因此变为线性",
+          "score": 1,
+          "answer_anchor": "二次",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "接口不保证实际融合后端",
+          "score": 1,
+          "answer_anchor": "只是接口",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "需检查设备/dtype/形状及实际选择",
+          "score": 1,
+          "answer_anchor": "dtype",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "训练/prefill/decode形状瓶颈不同，不能普遍保证更快",
+          "score": 0.5,
+          "answer_anchor": "训练",
+          "rationale": "Contrasts workloads and history reads but not explicit prefill/decode shapes/bottleneck contrast: partial.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "同输入数值核对及预热同步重复计时并记录配置",
+          "score": 1,
+          "answer_anchor": "重复计时",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "分块合并的数学正确性只说明\"若按此方式计算，结果与整体softmax在容差内一致\"，它属于算法层面的恒等变形，不涉及运行时到底执行了哪段代码。合并公式为：设已处理块保留运行最大值 \\(m\\)、指数和 \\(l\\)、未归一化加权和 \\(o\\)，新块给出 \\(m_b,l_b,o_b\\)，则 \\(m'=\\max(m,m_b)\\)，\\(l'=e^{m-m'}l+e^{m_b-m'}l_b\\)，\\(o'=e^{m-m'}o+e^{m_b-m'}o_b\\)，最终输出 \\(o'/l'\\)，旧块须按新最大值重缩放[E1]。注意这不是逐块独立softmax再平均，掩码与全 \\(-\\infty\\) 行需专门处理[E1]。因此该公式是\"精确注意力\"的数学依据，但精确算法不等于逐bit相同，浮点累加顺序不同会带来容差内差异[E2]。\n\nIO机制是另一层：FlashAttention 的收益来自分块与片上存储，减少 HBM 读写和 \\(T\\times T\\) 中间矩阵物化[E2]。但二次注意力的算术量并未因此变成线性，收益依序列长度、硬件与内核限制而变[E2]。所以即便数学上可合并，也不保证某个具体内核被启用、更不保证端到端更快；减少峰值中间存储同样不保证端到端更快[E1]。\n\n后端约束决定\"是否真的选中 FlashAttention\"。PyTorch 的 scaled_dot_product_attention 只是接口，具体后端由设备、dtype、形状与支持条件决定，它不是 FlashAttention 的同义词[E3]。概念计算为 \\(\\mathrm{softmax}(QK^\\top\\cdot scale+bias)V\\)，默认 \\(scale=1/\\sqrt{d_k}\\)[E3]。自动 fallback 不必然发出 warning，文档所述 warning 与用户禁用 math、要求融合内核的情境有关[E3]。因此\"数学上可合并\"无法推出\"运行时选中了融合内核\"；要证明后者需记录实际后端（如 sdpa_kernel 选择、profiler 内核名），而证据中未提供此类运行时后端标识，属未知。\n\n训练、提示处理与逐token生成是不同负载。训练与非自回归全序列任务不应直接套用增量推理收益[E5]；prefill 与 decode 需分开测量[E4]。KV Cache 复用历史 K/V 但每步仍读取历史缓存，batch 很小时管理开销可能抵消收益[E5]。所以注意力内核的局部加速不能直接外推为训练、提示处理、逐token生成三者都更快。\n\n应补充的测量证据：固定输入、权重、dtype、batch、头数与 \\(T_q/T_k\\)，先核对输出容差，再做预热、GPU 同步与重复计时，报告统计量与环境[E4]；区分延迟、吞吐、allocated 与 reserved 显存[E4]；推理区分 prefill/decode，服务说明排队是否计入[E4]；性能必须注明实际后端、硬件、dtype、batch、头数及 \\(T_q/T_k\\)，不能把某次 3.68 倍当作接口保证[E3]。旧 mygpt JSON 不是当前硬件的新测量，缺失硬件、重复次数或实际后端时应写未知[E4]。",
+      "citation_mapping": {
+        "E1": "wiki-article:online-softmax",
+        "E2": "wiki-article:flash-attention",
+        "E3": "wiki-article:sdpa",
+        "E4": "wiki-article:measurement",
+        "E5": "wiki-article:kv-cache",
+        "E6": "wiki-article:activations"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M02-B-direct6.json",
+      "raw_sha256": "da700f08787c7f631aca8ca0468a2b7cb8641b91d309a2d7bb8bd35c344a2e16",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M02",
+      "arm": "coverage6",
+      "score": 8,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "m'=max(m,m_b)，指数和按新最大值重缩放",
+          "score": 1,
+          "answer_anchor": "max(m,m_b)",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "加权和同样重缩放，最终输出o/l",
+          "score": 1,
+          "answer_anchor": "o'/l'",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "避免物化完整矩阵/减少HBM访问",
+          "score": 1,
+          "answer_anchor": "HBM",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "精确稠密算术量不因此变为线性",
+          "score": 1,
+          "answer_anchor": "二次",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "接口不保证实际融合后端",
+          "score": 1,
+          "answer_anchor": "只是接口",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "需检查设备/dtype/形状及实际选择",
+          "score": 1,
+          "answer_anchor": "dtype",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "训练/prefill/decode形状瓶颈不同，不能普遍保证更快",
+          "score": 1,
+          "answer_anchor": "训练",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "同输入数值核对及预热同步重复计时并记录配置",
+          "score": 1,
+          "answer_anchor": "重复计时",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "分块合并的数学正确性只说明\"可以精确地不物化完整分数矩阵\"，它属于算法层面的恒等变形，与\"运行时实际调用了哪个内核\"以及\"端到端是否更快\"是两个不同层次的命题。\n\n先看合并公式。设已处理块保留运行最大值 $m$、指数和 $l$、未归一化加权和 $o$；新块给出 $m_b,l_b,o_b$，则 $m'=\\max(m,m_b)$，$l'=e^{m-m'}l+e^{m_b-m'}l_b$，$o'=e^{m-m'}o+e^{m_b-m'}o_b$，最终输出 $o'/l'$，旧块必须按新最大值重缩放[E1]。这是精确的在线 softmax 递推，不是逐块独立 softmax 后平均[E1]。但要注意：掩码与全 $-\\infty$ 空块需专门处理，不能机械套用[E1]；浮点累加顺序改变会带来容差内差异，\"精确\"不等于逐 bit 相同[E2]。因此公式成立只证明算法可行，不证明任何实现被选中。\n\n再看 IO 机制。FlashAttention 的收益来自按 Q/K/V 分块、利用片上存储减少 HBM 读写与中间矩阵物化[E2]，这是 IO 层面的优化，且收益依序列长度、硬件与内核限制而变[E2]；二次注意力算术量并未因此变成线性[E2]。所以即便内核被调用，加速幅度也是条件性的，不能外推为普遍保证。\n\n后端约束是关键一环。PyTorch 的 `scaled_dot_product_attention` 只是接口，具体后端由设备、dtype、形状与支持条件决定，它并非 FlashAttention 的同义词[E3]；自动 fallback 也不必然发出 warning[E3]。因此\"代码里写了 SDPA\"不能推出\"选中了 FlashAttention\"，必须记录实际后端。此外，训练、提示处理（prefill）与逐 token 生成（decode）是不同形状与不同瓶颈的工作负载：prefill 是长 $T_q$ 的大矩阵情形，decode 是 $T_q$ 很小、受 KV 读取与访存限制的情形，二者不能共享同一加速结论；证据中未给出针对这三类负载分别的实测，故此处只能作为条件性推断，不能断言都会更快。\n\n应补充的测量证据：固定输入、权重、dtype、batch、头数与 $T_q/T_k$，先核对输出容差，再做预热、GPU 同步与重复计时，报告统计量与环境[E4]；明确记录实际后端、硬件与重复次数，缺失时写\"未知\"而非补造[E4]；区分延迟、吞吐、allocated 与 reserved 显存等不同指标[E4]；推理需分开 prefill 与 decode，服务需说明排队是否计入[E4]；旧 JSON 结果不是当前硬件的新测量，缓存复用缩短的实验时间也不能当作部署速度[E4]。只有这些证据齐备，才能从\"公式精确\"推进到\"确实选中该后端且在该负载上更快\"。",
+      "citation_mapping": {
+        "E1": "wiki-article:online-softmax",
+        "E2": "wiki-article:flash-attention",
+        "E3": "wiki-article:sdpa",
+        "E4": "wiki-article:measurement",
+        "E5": "wiki-article:activations",
+        "E6": "wiki-article:training"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M02-B-coverage6.json",
+      "raw_sha256": "cff235edcaf726a55bec6ffba8c903f6de9b4894580af87b58fc89c3664a1d1d",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M02",
+      "arm": "coverage_graph6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "m'=max(m,m_b)，指数和按新最大值重缩放",
+          "score": 1,
+          "answer_anchor": "max(m,m_b)",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "加权和同样重缩放，最终输出o/l",
+          "score": 1,
+          "answer_anchor": "o'/l'",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c15122-16331",
+              "source_quote": "softmax one block at a time",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "避免物化完整矩阵/减少HBM访问",
+          "score": 1,
+          "answer_anchor": "HBM",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "精确稠密算术量不因此变为线性",
+          "score": 1,
+          "answer_anchor": "二次",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "接口不保证实际融合后端",
+          "score": 1,
+          "answer_anchor": "只是接口",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "需检查设备/dtype/形状及实际选择",
+          "score": 1,
+          "answer_anchor": "dtype",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "训练/prefill/decode形状瓶颈不同，不能普遍保证更快",
+          "score": 0.5,
+          "answer_anchor": "训练",
+          "rationale": "Training forward/backward and decode history reads explained; prefill shape/bottleneck contrast not explicit: partial.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "同输入数值核对及预热同步重复计时并记录配置",
+          "score": 1,
+          "answer_anchor": "重复计时",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "合并公式本身只说明\"分块计算在数学上等价于整块 softmax\"，属于算法层面的恒等性，不涉及任何实现选择。设已处理块保留运行最大值 m、指数和 l、未归一化加权和 o，新块给出 m_b、l_b、o_b，则 m'=max(m,m_b)，l'=exp(m−m')l+exp(m_b−m')l_b，o'=exp(m−m')o+exp(m_b−m')o_b，最终输出 o'/l'；旧块必须按新最大值重缩放[E1]。这是精确恒等，不是逐块 softmax 后平均[E1]。但浮点累加顺序不同会产生容差内差异，\"精确算法\"不等于逐 bit 相同[E2]。因此该公式证明的是\"若某内核按此方式分块，则结果在容差内正确\"，而非\"PyTorch 走了这条路\"。\n\nIO 机制是另一层。FlashAttention 的收益来自按 Q/K/V 块计算、利用片上存储减少 HBM 读写与中间矩阵物化[E2]；它不改变二次算术复杂度，收益随序列长度、硬件与内核限制而变[E2]。所以即便数学等价成立，速度提升仍是条件性的，不能由公式推出。\n\n后端约束才是关键缺口。PyTorch 的 scaled_dot_product_attention 只是接口，实际后端由设备、dtype、形状与支持条件决定，并非 FlashAttention 的同义词[E3]；自动 fallback 也不必然发出 warning[E3]。因此\"调用 SDPA\"不能证明\"选中了 FlashAttention\"，必须显式记录实际后端。\n\n任务层面同样不能外推。训练是前向加反向、优化器与精度配置的综合[E6]；提示处理（prefill）与逐 token 生成（decode）是不同阶段，decode 每步只处理新 token 并读取历史 KV，收益受上下文长度与 batch 影响，batch 很小时缓存管理开销可能抵消收益[E5]；训练或非自回归全序列任务不应直接套用增量推理收益[E5]。\n\n应补充的测量证据：固定输入、权重、dtype、batch、头数与 Tq/Tk，先核对输出容差，再做预热、GPU 同步与重复计时，报告统计量与环境[E4]；明确记录实际后端、硬件与配置，区分延迟、吞吐、allocated 与 reserved 显存[E3][E4]；推理需分开 prefill 与 decode，服务需说明排队是否计入[E4]。缺失硬件、重复次数或实际后端时应写\"未知\"，不能补造[E4]；旧 JSON 结果不是当前硬件的新测量[E4]。只有这些证据齐备，才能谈\"更快\"。",
+      "citation_mapping": {
+        "E1": "wiki-article:online-softmax",
+        "E2": "wiki-article:flash-attention",
+        "E3": "wiki-article:sdpa",
+        "E4": "wiki-article:measurement",
+        "E5": "wiki-article:kv-cache",
+        "E6": "wiki-article:training"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M02-B-coverage_graph6.json",
+      "raw_sha256": "005f376332bcc8fb92b50bcebb65dbc7e31dbadd0b7acecfc33cad1095cbb0c6",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M03",
+      "arm": "direct6",
+      "score": 6.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "未包外层归一化的残差局部J为I+JF",
+          "score": 1,
+          "answer_anchor": "I+J_F",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "多层Jacobian乘积不保证任意深度稳定",
+          "score": 0.5,
+          "answer_anchor": "堆叠深度",
+          "rationale": "Mentions stacked depth and gradient limits, not the multilayer Jacobian product: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "区分Post外归一化与Pre内归一化恒等路径",
+          "score": 1,
+          "answer_anchor": "Post-LN",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "块外恒等路径不取消最终LayerNorm",
+          "score": 0,
+          "answer_anchor": "恒等路径",
+          "rationale": "Final normalization is present in supplied pre-ln article but omitted from answer: missing.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "初始化梯度理论限定初始化/假设",
+          "score": 1,
+          "answer_anchor": "初始化",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "论文任务不能推出所有任务免warmup",
+          "score": 1,
+          "answer_anchor": "任意",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "优化器/学习率等设置影响实际训练",
+          "score": 1,
+          "answer_anchor": "优化器",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "结构不保证训练更快，需同配置实际测量",
+          "score": 1,
+          "answer_anchor": "硬件",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "残差连接只保证Jacobian中存在直接项，不保证整条链路的梯度尺度良好。设子层为F，残差块输出y=x+F(x)，则局部Jacobian为I+J_F，恒等项确实提供了一条不经过F的梯度通路[E1]。但实际反向传播的梯度还受堆叠深度、归一化位置与损失影响，因此\"有残差就永不梯度消失或爆炸\"是错误推广[E1]。关键差别在归一化摆放：Post-LN为y=LN(x+F(x))，梯度必须再穿过LN的Jacobian；Pre-LN为y=x+F(LN(x))，残差支路保留直接恒等项，归一化只作用于进入子层的那一支[E1][E2]。LN对每个(B,T)位置在特征维上用当前输入的均值与方差归一化，再施加γ、β，其Jacobian含投影项，会改变梯度尺度[E3]。因此即便结构上有恒等路径，Post-LN在初始化时各层梯度规模随深度变化更剧烈，这正是相关论文分析初始化梯度并讨论warmup需求的出发点[E2]。\n\n但这是条件性结论，不是普遍保证。该分析针对论文自身的初始化方案与训练设置；原论文的warmup是具体配置：Adam（β1=0.9、β2=0.98、ε=10^−9），学习率$d_{model}^{-0.5}\\min(step^{-0.5},\\,step\\cdot warmup\\_steps^{-1.5})$，warmup_steps=4000，先线性升温再按步数平方根倒数衰减[E4]。这些是原论文超参数，不是所有Transformer的最优设置；Pre-LN论文的梯度分析不保证在任意大模型、任意优化器与学习率下可无条件移除warmup[E4][E2]。归一化类型（LN/RMSNorm）与摆放（Pre/Post）也是彼此独立的选项，不能混为一谈[E2][E3]。\n\n\"训练更快\"更需限定测量边界。速度必须绑定任务、硬件、dtype、batch与后端；正确性、延迟、吞吐、已分配与预留显存是不同指标，比较前应先核对输出容差，再做预热、GPU同步与重复计时[E5]。旧mygpt的JSON结果不是当前硬件的新测量，缓存复用缩短的实验时间也不能当作部署加速[E5]。此外dropout位置与推理开关、混合精度与梯度缩放都会影响实际行为，需按具体实现核对[E6][E4]。\n\n结论：残差恒等路径解释了为何深层网络可优化，但归一化位置改变了局部Jacobian的尺度传播，warmup是对此的一种经验性稳定手段。现有证据只支持\"在特定初始化与优化设置下Pre-LN可减轻对warmup的依赖\"这类条件结论，不足以保证所有任务无需warmup，也不足以断言训练必然更快；后者须在明确任务与硬件下实测才能判断[E2][E4][E5]。",
+      "citation_mapping": {
+        "E1": "wiki-article:residual",
+        "E2": "wiki-article:pre-ln",
+        "E3": "wiki-article:layernorm",
+        "E4": "wiki-article:training",
+        "E5": "wiki-article:measurement",
+        "E6": "wiki-article:dropout"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M03-B-direct6.json",
+      "raw_sha256": "29281b2640661ebf9248fb1db733d29df4813395c862d3f82b0d0dc08200899f",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M03",
+      "arm": "coverage6",
+      "score": 6.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "未包外层归一化的残差局部J为I+JF",
+          "score": 1,
+          "answer_anchor": "I+J_F",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "多层Jacobian乘积不保证任意深度稳定",
+          "score": 0.5,
+          "answer_anchor": "堆叠深度",
+          "rationale": "Mentions stacked depth and gradient limits, not the multilayer Jacobian product: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "区分Post外归一化与Pre内归一化恒等路径",
+          "score": 1,
+          "answer_anchor": "Post-LN",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "块外恒等路径不取消最终LayerNorm",
+          "score": 0,
+          "answer_anchor": "恒等路径",
+          "rationale": "Final normalization is present in supplied pre-ln article but omitted from answer: missing.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "初始化梯度理论限定初始化/假设",
+          "score": 1,
+          "answer_anchor": "初始化",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "论文任务不能推出所有任务免warmup",
+          "score": 1,
+          "answer_anchor": "任意",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "优化器/学习率等设置影响实际训练",
+          "score": 1,
+          "answer_anchor": "优化器",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "结构不保证训练更快，需同配置实际测量",
+          "score": 1,
+          "answer_anchor": "硬件",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "残差连接只保证结构上存在一条恒等路径，并不保证训练动力学良好。设子层为F，残差块输出y=x+F(x)，其Jacobian形式为I+J_F，确实存在直接梯度项；但实际梯度还受堆叠深度、归一化位置与损失影响，因此不能声称\"有残差就永不梯度消失或爆炸\"[E1]。这正是Transformer仍受归一化位置与warmup影响的结构性原因：残差与归一化是两个独立选择，归一化放在子层前还是相加后，会改变梯度所经过的算子序列[E1][E2]。\n\n具体到两种摆放：Post-LN为y=LN(x+F(x))，梯度在回传时必须穿过LN的Jacobian；Pre-LN为y=x+F(LN(x))，残差支路保留直接恒等项，梯度可沿该支路不经LN回传[E1][E2]。相关论文在初始化时分析梯度规模，指出Post-LN在初始化阶段各层梯度尺度差异较大、需要warmup稳定，而Pre-LN在该分析下梯度尺度更接近，因而在其设置中可减弱对warmup的依赖[E2]。需要注意，这是初始化时刻的局部Jacobian分析，属于条件性推导，而非对训练全程的保证；LN本身对当前输入统计做归一化，其Jacobian还依赖epsilon、精度与初始化[E3]。\n\n训练设置层面，原论文使用Adam（β1=0.9、β2=0.98、ε=10^-9）与学习率$\\eta=d_{model}^{-0.5}\\min(step^{-0.5},\\,step\\cdot warmup\\_steps^{-1.5})$，warmup_steps=4000，即先线性升温再按步数平方根倒数衰减[E4]。这说明warmup是与特定优化器、学习率曲线和模型规模绑定的配置，而非架构的必然属性；Pre-LN论文的结论也不保证在任意大模型、优化器和学习率下可无条件移除warmup[E4][E2]。\n\n性能测量层面，即便某配置下训练更稳定，也不能直接推出\"训练更快\"。速度结论必须绑定任务、硬件、dtype、batch与后端，并区分正确性、延迟、吞吐与显存等不同指标；旧实验JSON不是当前硬件的新测量，缓存复用缩短的实验时间也不能当作部署速度[E5]。RMSNorm省去中心化同样不自动意味着某硬件上更快[E6]。\n\n因此结论是：不能据此保证所有任务无需warmup且训练更快。可以支持的较弱命题是——在Pre-LN结构、相应初始化与学习率设置下，warmup的必要性可能降低；这是有条件的经验与理论观察，需在目标任务上以受控测量验证，而不能推广为普遍保证[E2][E4][E5]。",
+      "citation_mapping": {
+        "E1": "wiki-article:residual",
+        "E2": "wiki-article:pre-ln",
+        "E3": "wiki-article:layernorm",
+        "E4": "wiki-article:training",
+        "E5": "wiki-article:measurement",
+        "E6": "wiki-article:normalization"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M03-B-coverage6.json",
+      "raw_sha256": "fdd9c51c4cc5488014245efb017acfde77289a4093820c90ce3c69c66f371fdd",
+      "mode": "REPLAY_EXACT_REQUEST"
+    },
+    {
+      "id": "M03",
+      "arm": "coverage_graph6",
+      "score": 6.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "未包外层归一化的残差局部J为I+JF",
+          "score": 1,
+          "answer_anchor": "I+J_F",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "多层Jacobian乘积不保证任意深度稳定",
+          "score": 0.5,
+          "answer_anchor": "堆叠深度",
+          "rationale": "Mentions stacked depth and gradient limits, not the multilayer Jacobian product: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "区分Post外归一化与Pre内归一化恒等路径",
+          "score": 1,
+          "answer_anchor": "Post-LN",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "块外恒等路径不取消最终LayerNorm",
+          "score": 0,
+          "answer_anchor": "恒等路径",
+          "rationale": "Final normalization is present in supplied pre-ln article but omitted from answer: missing.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+              "source_quote": "Final LayerNorm",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "初始化梯度理论限定初始化/假设",
+          "score": 1,
+          "answer_anchor": "初始化",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "论文任务不能推出所有任务免warmup",
+          "score": 1,
+          "answer_anchor": "任意",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "优化器/学习率等设置影响实际训练",
+          "score": 1,
+          "answer_anchor": "优化器",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "结构不保证训练更快，需同配置实际测量",
+          "score": 1,
+          "answer_anchor": "硬件",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+              "source_quote": "F (x)+ x",
+              "title": "Deep Residual Learning for Image Recognition",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "残差连接只保证结构上存在一条恒等路径，并不保证训练动力学良好。设子层为F，残差块输出y=x+F(x)，其Jacobian形式为I+J_F，确实存在直接梯度项；但实际梯度还受堆叠深度、归一化位置与损失影响，因此不能声称\"有残差就永不梯度消失或爆炸\"[E1]。这正是Transformer仍受归一化位置与warmup影响的结构性原因：残差与归一化是两个独立选择，归一化放在子层前还是相加后，会改变梯度所经过的算子序列[E1][E2]。\n\n具体到两种摆放：Post-LN为y=LN(x+F(x))，梯度在回传时必须穿过LN的Jacobian；Pre-LN为y=x+F(LN(x))，残差支路保留直接恒等项，梯度可沿该支路不经LN回传[E1][E2]。相关论文在初始化时分析梯度规模，指出Post-LN在初始化阶段各层梯度尺度差异较大、需要warmup稳定，而Pre-LN在该分析下梯度尺度更接近，因而在其设置中可减弱对warmup的依赖[E2]。需要注意，这是初始化时刻的局部Jacobian分析，属于条件性推导，而非对训练全程的保证；LN本身对当前输入统计做归一化，其Jacobian还依赖epsilon、精度与初始化[E3]。\n\n训练设置层面，原论文使用Adam（β1=0.9、β2=0.98、ε=10^-9）与学习率$\\eta=d_{model}^{-0.5}\\min(step^{-0.5},\\,step\\cdot warmup\\_steps^{-1.5})$，warmup_steps=4000，即先线性升温再按步数平方根倒数衰减[E4]。这说明warmup是与特定优化器、学习率曲线和模型规模绑定的配置，而非架构的必然属性；Pre-LN论文的结论也不保证在任意大模型、优化器和学习率下可无条件移除warmup[E4][E2]。\n\n性能测量层面，即便某配置下训练更稳定，也不能直接推出\"训练更快\"。速度结论必须绑定任务、硬件、dtype、batch与后端，并区分正确性、延迟、吞吐与显存等不同指标；旧实验JSON不是当前硬件的新测量，缓存复用缩短的实验时间也不能当作部署速度[E5]。RMSNorm省去中心化同样不自动意味着某硬件上更快[E6]。\n\n因此结论是：不能据此保证所有任务无需warmup且训练更快。可以支持的较弱命题是——在Pre-LN结构、相应初始化与学习率设置下，warmup的必要性可能降低；这是有条件的经验与理论观察，需在目标任务上以受控测量验证，而不能推广为普遍保证[E2][E4][E5]。",
+      "citation_mapping": {
+        "E1": "wiki-article:residual",
+        "E2": "wiki-article:pre-ln",
+        "E3": "wiki-article:layernorm",
+        "E4": "wiki-article:training",
+        "E5": "wiki-article:measurement",
+        "E6": "wiki-article:normalization"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M03-B-coverage_graph6.json",
+      "raw_sha256": "3a54413bf72846cd3e7e92b2ecfc65b6cb4cc522bf0d868f4f374eb33fc5370c",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M04",
+      "arm": "direct6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "MLM选定位置目标与next-token目标不同",
+          "score": 1,
+          "answer_anchor": "下一token",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "换mask不等于完成目标/权重训练适配",
+          "score": 1,
+          "answer_anchor": "训练目标",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "mask控制可见性而非缓存容量或头数",
+          "score": 1,
+          "answer_anchor": "可见性",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "缓存要求历史状态不随新增未来改变",
+          "score": 0.5,
+          "answer_anchor": "因果",
+          "rationale": "Causal/position/mask requirements stated, but no explicit historical-state invariance under future append: partial.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "缓存位置与mask须兼容",
+          "score": 1,
+          "answer_anchor": "mask一致",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "KV头共享改变结构不保证原权重精确等价",
+          "score": 1,
+          "answer_anchor": "投影",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "因果已知序列训练也能并行，未知token解码逐步",
+          "score": 1,
+          "answer_anchor": "并行",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "质量/实际速度需验证而非普遍保证",
+          "score": 1,
+          "answer_anchor": "实测",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "不能直接视为等价且更快的自回归生成器。需要把四个层面拆开。\n\n**目标函数**：BERT的MLM是遮盖部分位置并预测原token，损失只对被选位置计算，输入替换（80/10/10）与注意力可见性是两回事[E2]。改成单向注意力并不改变训练目标；MLM不能等同于GPT式下一token目标[E2]。因此即使结构上变成因果解码器，原checkpoint优化的仍是双向掩码重建任务，其输出分布不保证与自回归似然一致。要成为自回归生成器，需改用因果语言建模目标重新训练或至少继续训练，这一点证据只支持\"不能直接等同\"，具体质量需实验。\n\n**可见性**：因果掩码约束位置i只能读j≤i，且原始解码器还需右移目标输入以防泄露[E6]。把BERT的双向注意力换成三角mask只是可见性改变，不提供位置信号本身——绝对位置、RoPE或相对偏置仍负责顺序信息[E6]。另外KV Cache中T_query与T_key可能不同，非方形causal对齐方式不能任意假定，布尔mask语义依API而异[E6]。这些都需要逐层核对实现。\n\n**历史状态复用条件**：KV Cache复用要求上下文、位置偏移和mask一致，训练或非自回归全序列任务不应直接套用增量推理收益[E1]。prefill建立缓存、decode每步只算新token的Q/K/V并追加[E1][E4]。因此\"能缓存\"是条件性的：只有在严格因果、位置连续、mask一致时才成立；batch很小时缓存管理开销还可能抵消收益[E1]。这是机制推论，不是速度保证。\n\n**头共享**：GQA/MQA让多个query头共享KV头，缓存字节在其他条件相同时与H_kv成正比，MQA把H个KV头减到1个，容量约为1/H[E1][E3][E5]。但共享改变投影与缓存结构，而非删除已有缓存的一部分；已有权重改成GQA涉及训练或uptraining，不能保证直接转换后质量不变[E1][E3]。重复展开KV张量还可能削弱工程收益[E3]。头数减少也不自动消除预留浪费或碎片，那是分页的独立问题[E1][E3]。\n\n**训练并行性**：prefill可并行处理多个已知token，decode每请求每轮只有一个新query，二者并行度和瓶颈不同[E4]。MLM训练时全序列并行、双向可见；改成因果后训练仍可全序列并行（用三角mask），但推理decode阶段天然串行，不能用prefill长序列测量解释batch1增量decode收益[E4]。\n\n**结论**：单向注意力+KV缓存+GQA三者组合在结构上可行，但\"等价\"需要目标函数与位置/mask一致性的重新训练验证，\"更快\"需要分阶段实测（TTFT、单token延迟、吞吐），证据不提供通用加速倍数[E4]。需训练：因果LM目标、GQA投影（或uptraining）；需验证：mask/位置对齐、缓存正确性、端到端延迟与质量。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:bert-mlm",
+        "E3": "wiki-article:gqa",
+        "E4": "wiki-article:prefill-decode",
+        "E5": "wiki-article:mqa",
+        "E6": "wiki-article:causal-mask"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M04-B-direct6.json",
+      "raw_sha256": "d7f8818a1ac581105c874936d4aa9cb53f9f62fcc7334a6a85d8e87d2daf538d",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M04",
+      "arm": "coverage6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "MLM选定位置目标与next-token目标不同",
+          "score": 1,
+          "answer_anchor": "下一token",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "换mask不等于完成目标/权重训练适配",
+          "score": 1,
+          "answer_anchor": "训练目标",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "mask控制可见性而非缓存容量或头数",
+          "score": 1,
+          "answer_anchor": "可见性",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "缓存要求历史状态不随新增未来改变",
+          "score": 0.5,
+          "answer_anchor": "因果",
+          "rationale": "Causal/position/mask requirements stated, but no explicit historical-state invariance under future append: partial.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "缓存位置与mask须兼容",
+          "score": 1,
+          "answer_anchor": "mask一致",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "KV头共享改变结构不保证原权重精确等价",
+          "score": 1,
+          "answer_anchor": "投影",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "因果已知序列训练也能并行，未知token解码逐步",
+          "score": 1,
+          "answer_anchor": "并行",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "质量/实际速度需验证而非普遍保证",
+          "score": 1,
+          "answer_anchor": "实测",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "不能直接视为等价且更快的自回归生成器。需要逐层拆开看。\n\n**目标函数**：BERT的MLM是遮盖部分位置并预测原token，损失只对被选位置计算，输入替换（80/10/10）与注意力连接掩码是两个不同层面[E2]。这与GPT式\"给定前缀预测下一token\"的目标不同，MLM不能直接等同于下一token目标[E2]。因此即便把注意力改成单向，训练目标仍是MLM，模型学到的条件分布是\"被遮盖位置在双向上下文下的分布\"，而非严格的前缀条件分布。要成为自回归生成器，目标函数必须改为因果语言建模并重新训练；这一步无法靠推理侧改造完成。\n\n**可见性**：原BERT编码器可从左右上下文读取信息，并非对所有token施加因果三角mask[E2]。改成单向注意力会改变每个位置可见的上下文集合，从而改变模型实际计算的函数，原checkpoint在该新mask下的行为没有依据保证合理。此外增量解码要求上下文、位置偏移和mask必须一致[E1]，mask不一致时缓存复用本身就不成立。\n\n**历史状态复用条件**：KV Cache只在自回归解码中复用历史token各层的K/V，prefill建立缓存后每步只算新token的Q/K/V并追加[E1]。其前提是因果可见性、位置偏移与mask一致[E1]；训练或非自回归全序列任务不应直接套用增量推理收益[E1]。所以\"单向注意力+KV缓存\"在机制上自洽，但这是条件性推论，不是对原BERT权重的等价性保证。\n\n**头共享**：GQA/MQA让多个query头共享KV头，缓存字节在其他条件相同时与H_kv成正比，MQA把H个KV头减到1个时缓存变为原来的1/H[E1][E3]。但共享KV改变投影与缓存结构，而非简单删除已有缓存的一部分[E3]；已有权重改成GQA涉及训练或uptraining，不能保证直接转换后质量不变[E1][E3]。重复展开KV张量还可能削弱工程收益[E3]。另外缓存容量下降比例不是端到端提速比例[E3]，batch很小时缓存管理开销可能抵消收益[E1]。\n\n**训练并行性**：MLM可在全序列上并行计算所有被选位置的损失[E2]；因果LM训练时各位置仍可并行（teacher forcing），但推理必须串行逐token，prefill与decode的并行度和瓶颈不同[E4]，不能用prefill长序列测量解释batch1增量decode的收益[E4]。\n\n**结论与待验证项**：结构上\"单向注意力+增量KV+GQA\"是标准解码器配方，机制可行；但\"等价\"不成立（目标函数与可见性都变了），\"更快\"只是条件性预期。需要：以因果LM目标重新训练或至少uptraining并评估质量；验证新mask下位置编码与mask一致性；实测端到端延迟而非仅缓存容量；确认头共享转换后的质量与展开开销。证据中未提供此类等价性或加速实验，故不能给出普遍保证。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:bert-mlm",
+        "E3": "wiki-article:gqa",
+        "E4": "wiki-article:prefill-decode",
+        "E5": "wiki-article:speculative",
+        "E6": "wiki-article:training"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M04-B-coverage6.json",
+      "raw_sha256": "631301cadaf57b54a1591fdd4c5a6bba3f8792272978e147b8d7205669a598d8",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M04",
+      "arm": "coverage_graph6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "MLM选定位置目标与next-token目标不同",
+          "score": 1,
+          "answer_anchor": "下一token",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "换mask不等于完成目标/权重训练适配",
+          "score": 1,
+          "answer_anchor": "训练目标",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "mask控制可见性而非缓存容量或头数",
+          "score": 1,
+          "answer_anchor": "可见性",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1810.04805:6bb076ca96de:c14307-16636",
+              "source_quote": "the unchanged i-th token 10% of the time",
+              "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "缓存要求历史状态不随新增未来改变",
+          "score": 0.5,
+          "answer_anchor": "因果",
+          "rationale": "Causal/position/mask requirements stated, but no explicit historical-state invariance under future append: partial.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "缓存位置与mask须兼容",
+          "score": 1,
+          "answer_anchor": "mask一致",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "source_quote": "up to and including that position",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "KV头共享改变结构不保证原权重精确等价",
+          "score": 1,
+          "answer_anchor": "投影",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "因果已知序列训练也能并行，未知token解码逐步",
+          "score": 1,
+          "answer_anchor": "并行",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "质量/实际速度需验证而非普遍保证",
+          "score": 1,
+          "answer_anchor": "实测",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "不能直接视为等价且更快的自回归生成器。需要逐层拆开看。\n\n**目标函数**：BERT的MLM是遮盖部分位置并预测原token，损失只对被选位置计算，输入替换（80/10/10）与注意力连接掩码是两个不同层面[E2]。这与GPT式\"给定前缀预测下一token\"的目标不同，MLM不能直接等同于下一token目标[E2]。因此即便把注意力改成单向，训练目标仍是MLM，模型学到的条件分布是\"被遮盖位置在双向上下文下的分布\"，而非严格的前缀条件分布。要成为自回归生成器，目标函数必须改为因果语言建模并重新训练；这一步无法靠推理侧改造完成。\n\n**可见性**：原BERT编码器可从左右上下文读取信息，并非对所有token施加因果三角mask[E2]。改成单向注意力会改变每个位置可见的上下文集合，从而改变模型实际计算的函数，原checkpoint在该新mask下的行为没有依据保证合理。此外增量解码要求上下文、位置偏移和mask必须一致[E1]，mask不一致时缓存复用本身就不成立。\n\n**历史状态复用条件**：KV Cache只在自回归解码中复用历史token各层的K/V，prefill建立缓存后每步只算新token的Q/K/V并追加[E1]。其前提是因果可见性、位置偏移与mask一致[E1]；训练或非自回归全序列任务不应直接套用增量推理收益[E1]。所以\"单向注意力+KV缓存\"在机制上自洽，但这是条件性推论，不是对原BERT权重的等价性保证。\n\n**头共享**：GQA/MQA让多个query头共享KV头，缓存字节在其他条件相同时与H_kv成正比，MQA把H个KV头减到1个时缓存变为原来的1/H[E1][E3]。但共享KV改变投影与缓存结构，而非简单删除已有缓存的一部分[E3]；已有权重改成GQA涉及训练或uptraining，不能保证直接转换后质量不变[E1][E3]。重复展开KV张量还可能削弱工程收益[E3]。另外缓存容量下降比例不是端到端提速比例[E3]，batch很小时缓存管理开销可能抵消收益[E1]。\n\n**训练并行性**：MLM可在全序列上并行计算所有被选位置的损失[E2]；因果LM训练时各位置仍可并行（teacher forcing），但推理必须串行逐token，prefill与decode的并行度和瓶颈不同[E4]，不能用prefill长序列测量解释batch1增量decode的收益[E4]。\n\n**结论与待验证项**：结构上\"单向注意力+增量KV+GQA\"是标准解码器配方，机制可行；但\"等价\"不成立（目标函数与可见性都变了），\"更快\"只是条件性预期。需要：以因果LM目标重新训练或至少uptraining并评估质量；验证新mask下位置编码与mask一致性；实测端到端延迟而非仅缓存容量；确认头共享转换后的质量与展开开销。证据中未提供此类等价性或加速实验，故不能给出普遍保证。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:bert-mlm",
+        "E3": "wiki-article:gqa",
+        "E4": "wiki-article:prefill-decode",
+        "E5": "wiki-article:speculative",
+        "E6": "wiki-article:training"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M04-B-coverage_graph6.json",
+      "raw_sha256": "cd308b65b3e4fb547072f5208f53728c8253a6623435c9ad7ee7c169e079a931",
+      "mode": "REPLAY_EXACT_REQUEST"
+    },
+    {
+      "id": "M07",
+      "arm": "direct6",
+      "score": 7.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "图关联边不蕴含跨机制因果保证",
+          "score": 1,
+          "answer_anchor": "不足以推出",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "不编造长度准确率或性能结论",
+          "score": 1,
+          "answer_anchor": "保证",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "RoPE旋转关联相对位置内积",
+          "score": 1,
+          "answer_anchor": "n−m",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "可计算更长位置不保证任意长度准确",
+          "score": 1,
+          "answer_anchor": "任意长上下文准确",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "KV缓存复用历史K/V而非改位置机制",
+          "score": 1,
+          "answer_anchor": "历史",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "复用需位置及可见上下文/历史状态兼容",
+          "score": 0.5,
+          "answer_anchor": "位置索引",
+          "rationale": "Position compatibility explicit; visible-context/mask or historical-state compatibility omitted: partial.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "GQA共享KV头/改变头数",
+          "score": 1,
+          "answer_anchor": "KV 头",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "GQA不提供任意长度外推或准确率保证",
+          "score": 1,
+          "answer_anchor": "准确率",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "不足以推出。RoPE、KV Cache 与 GQA 三者各自解决的是不同层面的问题，资料中没有任何一条把\"三者组合\"与\"任意长度外推且保持准确率\"联系起来的论证，因此该结论既无直接依据，也不能由机制推导得到。\n\n先看 RoPE 能支持什么。RoPE 对 query 和 key 的成对通道施加位置相关旋转，位置 m 得 q_m=R_m q、k_n=R_n k，内积 q^T R_m^T R_n k 在固定频率构造下依赖相对位移 n−m，且旋转保持每个二维通道对的范数[E2]。这支持的是\"相对位置信息被注入注意力分数\"这一结构性结论，以及\"推理缓存必须保证位置索引与旋转约定一致\"这一正确性条件[E2]。它不能支持外推保证：资料明确写\"相对位移结构并不保证任意长上下文准确；上下文扩展、频率缩放或插值是额外策略，不能混作原始 RoPE\"[E2]。位置表示词条同样强调\"固定公式可计算训练长度外的位置，不等于模型在那些位置仍准确\"，且各方法的外推实验不能跨数据集、长度和模型直接比较[E3]。\n\n再看 KV Cache 与 GQA。KV Cache 复用历史 K/V 以避免重算，缓存张量字节约为 2*L*B*T*H_kv*d_head*s[E1]。GQA 让 H_q/H_kv 个 query 头共享同一 KV 头，缓存字节在其他条件相同时与 H_kv 成正比，H_kv=H_q 退化为 MHA，H_kv=1 对应 MQA[E4]。因此 GQA 能支持的结论仅限于容量与带宽侧：减少 KV 头数降低实际存储的 K/V 元素数量，在其他维度与精度相同时减少缓存容量和加载数据量[E4][E1]。它不能支持质量或长度结论：共享 KV 改变投影与缓存结构而非删除已有缓存，已有权重改成 GQA 涉及训练或 uptraining，不能保证直接转换后质量不变[E4][E1]；缓存容量下降比例也不是端到端提速比例[E4]。此外 GQA 不实现分页、按需分配或前缀共享，不能由头数减少推断预留浪费或碎片已消除[E4][E5]。\n\n因此，RoPE 与 KV Cache 的关联（位置索引须与缓存一致）只是正确性前提，GQA 只是容量优化；\"任意长度外推\"属于位置外推策略问题，\"保持准确率\"属于训练与质量评估问题，二者在给定资料中均无支撑。资料未提供任何长上下文准确率实验，故该命题应判为无依据，而非条件成立。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:rope",
+        "E3": "wiki-article:position",
+        "E4": "wiki-article:gqa",
+        "E5": "wiki-article:paged-kv",
+        "E6": "wiki-article:pre-ln"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M07-B-direct6.json",
+      "raw_sha256": "4f98c5bfcad336b4bf99314c36773c9e5ef86157cc8e5324e5edcb02944ce62d",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M07",
+      "arm": "coverage6",
+      "score": 8,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "图关联边不蕴含跨机制因果保证",
+          "score": 1,
+          "answer_anchor": "不能。",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "不编造长度准确率或性能结论",
+          "score": 1,
+          "answer_anchor": "保证",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "RoPE旋转关联相对位置内积",
+          "score": 1,
+          "answer_anchor": "n−m",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "可计算更长位置不保证任意长度准确",
+          "score": 1,
+          "answer_anchor": "任意长上下文准确",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "KV缓存复用历史K/V而非改位置机制",
+          "score": 1,
+          "answer_anchor": "历史",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "复用需位置及可见上下文/历史状态兼容",
+          "score": 1,
+          "answer_anchor": "位置索引",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "GQA共享KV头/改变头数",
+          "score": 1,
+          "answer_anchor": "KV头",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "GQA不提供任意长度外推或准确率保证",
+          "score": 1,
+          "answer_anchor": "准确率",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "不能。RoPE与KV Cache的关联只说明二者在推理时需保持位置索引与旋转约定一致，并不构成任何长度外推或精度保证。\n\n先看RoPE能支持什么。RoPE对q、k施加位置相关旋转，内积q^T R_m^T R_n k在固定频率构造下依赖相对位移n−m，且旋转保持每个二维通道对的范数[E2]。这只是一个结构性质：它说明相对位置信息被编码进注意力分数，而非输入相加位置向量[E2]。KV Cache方面，增量解码保留历史各层K/V，每步只算新token的Q/K/V并追加，再用当前Q读取历史缓存；其前提是上下文、位置偏移与mask必须一致[E1]。因此可支持的结论仅是：若缓存中的K/V按与RoPE一致的绝对位置旋转写入，且位置索引连续正确，则解码时相对位移关系在形式上得以维持[E1][E2]。这是正确性前提，不是外推能力。\n\n再看不能支持什么。资料明确指出，RoPE的相对位移结构\"并不保证任意长上下文准确\"；上下文扩展、频率缩放或插值是额外策略，不能混作原始RoPE[E2]。位置表示词条同样强调，固定公式可计算训练长度外的位置，不等于模型在那些位置仍准确，且各方法的外推实验不能跨数据集、长度和模型直接比较[E3]。KV Cache词条也说明缓存只复用计算、不消除每步对历史K/V的读取，且训练或非自回归全序列任务不应直接套用增量推理收益[E1]。\n\nGQA的作用边界更清楚。GQA让H_q/H_kv个query头共享一个KV头，缓存字节在其他条件相同时与H_kv成正比，H_kv=H_q退化为MHA、H_kv=1为MQA[E4]。它改变的是投影与缓存结构，减少实际存储的K/V元素数量，从而降低缓存容量与加载数据量[E4][E1]。但资料明确：缓存容量下降比例不是端到端提速比例；已有权重改成GQA涉及训练或uptraining，不能保证直接转换后质量不变[E4]。GQA的结构变化本身不实现分页、按需分配或前缀共享，不能由头数减少推断预留浪费或碎片已消除[E4]。\n\n因此，从\"RoPE与KV Cache有关联\"推不出\"GQA保证任意长度外推且保持准确率\"。GQA是KV容量与质量的折中，与位置外推是不同维度的问题；外推需要额外的上下文扩展策略并需实测验证，而资料未提供任何GQA在超训练长度上保持准确率的证据。上述均为机制层面的条件性推论，不是论文给出的普遍保证[E4][E2]。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:rope",
+        "E3": "wiki-article:position",
+        "E4": "wiki-article:gqa",
+        "E5": "wiki-article:pre-ln",
+        "E6": "wiki-article:continuous-batching"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M07-B-coverage6.json",
+      "raw_sha256": "88d08608be7fbd4b501e68b5f2204e87c9d8a6d17e0a8b6c549e732a3bd21517",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M07",
+      "arm": "coverage_graph6",
+      "score": 8,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "图关联边不蕴含跨机制因果保证",
+          "score": 1,
+          "answer_anchor": "不能。",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "不编造长度准确率或性能结论",
+          "score": 1,
+          "answer_anchor": "保证",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "RoPE旋转关联相对位置内积",
+          "score": 1,
+          "answer_anchor": "n−m",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "可计算更长位置不保证任意长度准确",
+          "score": 1,
+          "answer_anchor": "任意长上下文准确",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "KV缓存复用历史K/V而非改位置机制",
+          "score": 1,
+          "answer_anchor": "历史",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "复用需位置及可见上下文/历史状态兼容",
+          "score": 1,
+          "answer_anchor": "位置索引",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            },
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "GQA共享KV头/改变头数",
+          "score": 1,
+          "answer_anchor": "KV头",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "GQA不提供任意长度外推或准确率保证",
+          "score": 1,
+          "answer_anchor": "准确率",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2104.09864:abd4e80aae4d:c14290-15871",
+              "source_quote": "n−m",
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "locator": "PDF file p. 5"
+            },
+            {
+              "source_id": "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+              "source_quote": "pass a valid `cache_position` value",
+              "title": "Hugging Face Transformers v4.57.0 / Caching",
+              "locator": "L68–L96"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "不能。RoPE与KV Cache的关联只说明二者在推理时需保持位置索引与旋转约定一致，并不构成任何长度外推或精度保证。\n\n先看RoPE能支持什么。RoPE对q、k施加位置相关旋转，内积q^T R_m^T R_n k在固定频率构造下依赖相对位移n−m，且旋转保持每个二维通道对的范数[E2]。这只是一个结构性质：它说明相对位置信息被编码进注意力分数，而非输入相加位置向量[E2]。KV Cache方面，增量解码保留历史各层K/V，每步只算新token的Q/K/V并追加，再用当前Q读取历史缓存；其前提是上下文、位置偏移与mask必须一致[E1]。因此可支持的结论仅是：若缓存中的K/V按与RoPE一致的绝对位置旋转写入，且位置索引连续正确，则解码时相对位移关系在形式上得以维持[E1][E2]。这是正确性前提，不是外推能力。\n\n再看不能支持什么。资料明确指出，RoPE的相对位移结构\"并不保证任意长上下文准确\"；上下文扩展、频率缩放或插值是额外策略，不能混作原始RoPE[E2]。位置表示词条同样强调，固定公式可计算训练长度外的位置，不等于模型在那些位置仍准确，且各方法的外推实验不能跨数据集、长度和模型直接比较[E3]。KV Cache词条也说明缓存只复用计算、不消除每步对历史K/V的读取，且训练或非自回归全序列任务不应直接套用增量推理收益[E1]。\n\nGQA的作用边界更清楚。GQA让H_q/H_kv个query头共享一个KV头，缓存字节在其他条件相同时与H_kv成正比，H_kv=H_q退化为MHA、H_kv=1为MQA[E4]。它改变的是投影与缓存结构，减少实际存储的K/V元素数量，从而降低缓存容量与加载数据量[E4][E1]。但资料明确：缓存容量下降比例不是端到端提速比例；已有权重改成GQA涉及训练或uptraining，不能保证直接转换后质量不变[E4]。GQA的结构变化本身不实现分页、按需分配或前缀共享，不能由头数减少推断预留浪费或碎片已消除[E4]。\n\n因此，从\"RoPE与KV Cache有关联\"推不出\"GQA保证任意长度外推且保持准确率\"。GQA是KV容量与质量的折中，与位置外推是不同维度的问题；外推需要额外的上下文扩展策略并需实测验证，而资料未提供任何GQA在超训练长度上保持准确率的证据。上述均为机制层面的条件性推论，不是论文给出的普遍保证[E4][E2]。",
+      "citation_mapping": {
+        "E1": "wiki-article:kv-cache",
+        "E2": "wiki-article:rope",
+        "E3": "wiki-article:position",
+        "E4": "wiki-article:gqa",
+        "E5": "wiki-article:pre-ln",
+        "E6": "wiki-article:continuous-batching"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M07-B-coverage_graph6.json",
+      "raw_sha256": "8302ab510630df537118d46153932027636701c0630486fb982a9d3145185fa7",
+      "mode": "REPLAY_EXACT_REQUEST"
+    },
+    {
+      "id": "M08",
+      "arm": "direct6",
+      "score": 6.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "没有指定设备配置时精确倍率未知，不造数字",
+          "score": 1,
+          "answer_anchor": "无法给出精确吞吐倍数",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "需设备/batch/长度/dtype/基线定义",
+          "score": 1,
+          "answer_anchor": "基线定义",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "需预热同步重复及阶段/口径一致",
+          "score": 1,
+          "answer_anchor": "测量协议",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "旧观察不等于当前设备实测",
+          "score": 1,
+          "answer_anchor": "旧mygpt",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "GQA头数比只约束同条件逻辑KV",
+          "score": 1,
+          "answer_anchor": "H_kv",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "分页管理物理存储，FlashAttention改善IO而非稠密算术阶数",
+          "score": 1,
+          "answer_anchor": "二次",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "Pre-LN免warmup限定初始化及任务设置",
+          "score": 0,
+          "answer_anchor": "warmup",
+          "rationale": "Treats warmup only as GPU measurement preheating, omits Pre-LN training/initialization boundary.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "机制不能推出普遍免warmup或直接相乘吞吐",
+          "score": 0.5,
+          "answer_anchor": "warmup",
+          "rationale": "Refuses a warmup guarantee but misses training mechanism and explicit no-product explanation: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [],
+      "answer": "无法给出精确吞吐倍数，也无法断言一定无需warmup。理由与缺失证据逐项如下。\n\n一、机制层面只能给出方向性、条件性结论，不能给出数值。GQA通过多个query头共享KV头，在其他维度与精度相同时使缓存字节与H_kv成正比，H_kv=H_q退化为MHA、H_kv=1为MQA[E2]；缓存张量字节约为 \\(2 \\cdot L \\cdot B \\cdot T \\cdot H_{kv} \\cdot d_{head} \\cdot s\\)[E3]。但词条明确说明\"缓存容量下降比例不是端到端提速比例\"，且重复展开KV张量可能削弱工程收益[E2]。分页KV只改变分配、利用率与共享，不减少每个独有token所需的K/V元素，末块仍可能未填满[E1][E3]。FlashAttention是精确注意力的IO优化，减少HBM读写与中间矩阵物化，但二次注意力算术未变成线性，收益依序列长度、硬件与内核限制而变[E4]。因此三者组合的端到端倍数属于条件推导，本库未提供可推广的普遍保证。\n\n二、缺少的证据（逐项）：\n1. 硬件型号与规格：问题中显卡未指定；本库明确要求性能结果与硬件绑定，缺失硬件时应写未知[E6]。\n2. 基线定义：未说明基线是MHA+朴素注意力、是否含分页、是否含continuous batching；分页与continuous batching是可配合但独立的机制[E1]。\n3. 工作负载参数：batch、Tq/Tk、prefill与decode比例、并发请求数、前缀共享率均未给定；比较注意力实现须固定输入、权重、dtype、batch、头数与Tq/Tk[E6]。\n4. 模型配置：H_q、H_kv、层数L、d_head、dtype/精度s未给定，无法代入容量公式[E3]。\n5. 实际后端与内核：是否真正启用FlashAttention后端、块大小、是否发生KV重复展开，均未知[E4][E2]。\n6. 测量协议：预热次数、GPU同步、重复次数、统计量（均值/分位数）、allocated与reserved的区分均未提供[E6]。\n7. 本库现有JSON为旧mygpt测量，不是当前硬件的新测量，不能外推[E6]。\n\n三、关于warmup：不能判断\"一定无需warmup\"。本库只规定做性能比较时应先预热、GPU同步并重复计时[E6]，并未给出任何\"某实现可跳过预热\"的结论；FlashAttention的数值差异与内核选择、首次调用编译/自动调优等情形本库未涉及，故该判断缺乏依据，应记为未知。",
+      "citation_mapping": {
+        "E1": "wiki-article:paged-kv",
+        "E2": "wiki-article:gqa",
+        "E3": "wiki-article:kv-cache",
+        "E4": "wiki-article:flash-attention",
+        "E5": "wiki-article:alibi",
+        "E6": "wiki-article:measurement"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M08-B-direct6.json",
+      "raw_sha256": "43342c756093baec575ae640d801da7acf499ebd7806101405e8b818e74eb23e",
+      "mode": "LIVE"
+    },
+    {
+      "id": "M08",
+      "arm": "coverage6",
+      "score": 5.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "没有指定设备配置时精确倍率未知，不造数字",
+          "score": 1,
+          "answer_anchor": "无法给出精确吞吐倍数",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "需设备/batch/长度/dtype/基线定义",
+          "score": 0.5,
+          "answer_anchor": "基线定义",
+          "rationale": "Hardware/batch/length/baseline described, dtype not explicitly requested among missing measurements: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "需预热同步重复及阶段/口径一致",
+          "score": 0,
+          "answer_anchor": "测量方法",
+          "rationale": "Generic measurement-method request, no preheat/synchronization/repetition or comparable phase protocol: missing under full frozen criterion.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "旧观察不等于当前设备实测",
+          "score": 0,
+          "answer_anchor": "本库无此数据",
+          "rationale": "No distinction of old observations versus current hardware experiment.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "GQA头数比只约束同条件逻辑KV",
+          "score": 1,
+          "answer_anchor": "H_kv",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "分页管理物理存储，FlashAttention改善IO而非稠密算术阶数",
+          "score": 1,
+          "answer_anchor": "二次",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "Pre-LN免warmup限定初始化及任务设置",
+          "score": 1,
+          "answer_anchor": "warmup",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "机制不能推出普遍免warmup或直接相乘吞吐",
+          "score": 1,
+          "answer_anchor": "warmup",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [
+        {
+          "category": "unsupported",
+          "answer_anchor": "本知识库中没有任何",
+          "explanation": "A retrieved subset lacking a matching measurement does not certify library-wide absence of historical measurements. Limit to no supported exact result for the unspecified target hardware.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "answer": "无法给出精确吞吐倍数，也无法判定\"一定无需warmup\"。本知识库中没有任何针对\"GQA+分页KV Cache\"组合或FlashAttention在具体显卡上的端到端吞吐测量，更没有相对基线的倍数数值。\n\n逐项说明：\n\n1) GQA：词条只给出结构关系——缓存字节在其他条件相同时与KV头数H_kv成正比，H_kv=H_q退化为MHA、H_kv=1为MQA[E2]；缓存张量字节约为2*L*B*T*H_kv*d_head*s[E3]。词条明确\"缓存容量下降比例不是端到端提速比例\"，且重复展开KV张量可能削弱工程收益[E2]。因此只能做条件推导：若其他维度与精度相同，容量按H_kv比例缩小，但这不是吞吐倍数。\n\n2) 分页KV Cache：分页只改变分配、利用率与共享，按需分配减少预留浪费、末块仍可能未填满，且\"不会单独减少每个独有token所需的K/V元素\"[E1][E3]。它不提供任何速度倍数；batch很小时管理开销还可能抵消收益[E3]。\n\n3) FlashAttention：它是精确注意力的IO优化，减少HBM读写与中间矩阵物化，但\"二次注意力算术未因省去矩阵物化而自动变成线性；收益依序列长度、硬件与内核限制而变\"[E4]。因此倍数必须由具体序列长度、显卡与内核决定，本库无此数据。\n\n4) 组合效应：词条指出这些路线\"可组合，但不能互相替代\"，且该比较是机制归纳而非新速度实验[E3]。故不能把三者收益相乘或相加。\n\n5) warmup：本库仅有Pre-LN/Post-LN词条，说明相关论文在其设置中考察warmup需求，并明确\"不能把论文实验结论说成普遍无需warmup\"[E6]。这与推理吞吐无关，更不构成\"无需warmup\"的依据。\n\n缺少的证据：(a) 指定GPU型号、显存带宽与算力、内核/框架版本；(b) 基线定义（是否含KV Cache、是否continuous batching、batch与序列长度分布）；(c) 实测吞吐（tokens/s）与测量方法；(d) GQA的H_q/H_kv具体取值及是否重复展开KV；(e) 分页块大小、前缀共享命中率；(f) 若\"warmup\"指GPU/内核预热或学习率预热，需明确所指并给出对应测量或训练配置。以上均缺失，故只能给出机制层面的定性判断，不能给出精确倍数或\"一定无需warmup\"的结论。",
+      "citation_mapping": {
+        "E1": "wiki-article:paged-kv",
+        "E2": "wiki-article:gqa",
+        "E3": "wiki-article:kv-cache",
+        "E4": "wiki-article:flash-attention",
+        "E5": "wiki-article:alibi",
+        "E6": "wiki-article:pre-ln"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M08-B-coverage6.json",
+      "raw_sha256": "03b4f4c457bb2f0ae023a7413ad1dabb8e1c3658819461d574f0a32f29f0e3de",
+      "mode": "REPLAY_EXACT_REQUEST"
+    },
+    {
+      "id": "M08",
+      "arm": "coverage_graph6",
+      "score": 5.5,
+      "maximum": 8,
+      "items": [
+        {
+          "index": 1,
+          "criterion": "没有指定设备配置时精确倍率未知，不造数字",
+          "score": 1,
+          "answer_anchor": "无法给出精确吞吐倍数",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "criterion": "需设备/batch/长度/dtype/基线定义",
+          "score": 0.5,
+          "answer_anchor": "基线定义",
+          "rationale": "Hardware/batch/length/baseline described, dtype not explicitly requested among missing measurements: partial.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "criterion": "需预热同步重复及阶段/口径一致",
+          "score": 0,
+          "answer_anchor": "测量方法",
+          "rationale": "Generic measurement-method request, no preheat/synchronization/repetition or comparable phase protocol: missing under full frozen criterion.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "criterion": "旧观察不等于当前设备实测",
+          "score": 0,
+          "answer_anchor": "本库无此数据",
+          "rationale": "No distinction of old observations versus current hardware experiment.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "criterion": "GQA头数比只约束同条件逻辑KV",
+          "score": 1,
+          "answer_anchor": "H_kv",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2305.13245:3ed3d65bc419:c4200-6482",
+              "source_quote": "mean-pooling all the original heads",
+              "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+              "locator": "L21–L32"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "criterion": "分页管理物理存储，FlashAttention改善IO而非稠密算术阶数",
+          "score": 1,
+          "answer_anchor": "二次",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "source_quote": "reduce the amount of HBM accesses",
+              "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "source_quote": "set of queries simultaneously",
+              "title": "Attention Is All You Need",
+              "locator": "PDF file p. 4"
+            },
+            {
+              "source_id": "depth-2309.06180:4e592d02d9a3:c6727-9418",
+              "source_quote": "alleviates internal frag-",
+              "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+              "locator": "PDF file p. 2"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "criterion": "Pre-LN免warmup限定初始化及任务设置",
+          "score": 1,
+          "answer_anchor": "warmup",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "criterion": "机制不能推出普遍免warmup或直接相乘吞吐",
+          "score": 1,
+          "answer_anchor": "warmup",
+          "rationale": "Required scoped content present; extra claims are reviewed separately.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "extra_errors": [
+        {
+          "category": "unsupported",
+          "answer_anchor": "本知识库中没有任何",
+          "explanation": "A retrieved subset lacking a matching measurement does not certify library-wide absence of historical measurements. Limit to no supported exact result for the unspecified target hardware.",
+          "original_support": [
+            {
+              "source_id": "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "source_quote": "at initialization",
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "locator": "PDF file p. 2"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            },
+            {
+              "source_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "source_quote": "Each of the fused kernels has specific input limitations",
+              "title": "PyTorch 2.11 scaled_dot_product_attention",
+              "locator": "L70–L89"
+            },
+            {
+              "source_id": "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+              "source_quote": "torch.cuda.synchronize()",
+              "title": "mygpt / bench.py",
+              "locator": "L36–L89"
+            }
+          ]
+        }
+      ],
+      "answer": "无法给出精确吞吐倍数，也无法判定\"一定无需warmup\"。本知识库中没有任何针对\"GQA+分页KV Cache\"组合或FlashAttention在具体显卡上的端到端吞吐测量，更没有相对基线的倍数数值。\n\n逐项说明：\n\n1) GQA：词条只给出结构关系——缓存字节在其他条件相同时与KV头数H_kv成正比，H_kv=H_q退化为MHA、H_kv=1为MQA[E2]；缓存张量字节约为2*L*B*T*H_kv*d_head*s[E3]。词条明确\"缓存容量下降比例不是端到端提速比例\"，且重复展开KV张量可能削弱工程收益[E2]。因此只能做条件推导：若其他维度与精度相同，容量按H_kv比例缩小，但这不是吞吐倍数。\n\n2) 分页KV Cache：分页只改变分配、利用率与共享，按需分配减少预留浪费、末块仍可能未填满，且\"不会单独减少每个独有token所需的K/V元素\"[E1][E3]。它不提供任何速度倍数；batch很小时管理开销还可能抵消收益[E3]。\n\n3) FlashAttention：它是精确注意力的IO优化，减少HBM读写与中间矩阵物化，但\"二次注意力算术未因省去矩阵物化而自动变成线性；收益依序列长度、硬件与内核限制而变\"[E4]。因此倍数必须由具体序列长度、显卡与内核决定，本库无此数据。\n\n4) 组合效应：词条指出这些路线\"可组合，但不能互相替代\"，且该比较是机制归纳而非新速度实验[E3]。故不能把三者收益相乘或相加。\n\n5) warmup：本库仅有Pre-LN/Post-LN词条，说明相关论文在其设置中考察warmup需求，并明确\"不能把论文实验结论说成普遍无需warmup\"[E6]。这与推理吞吐无关，更不构成\"无需warmup\"的依据。\n\n缺少的证据：(a) 指定GPU型号、显存带宽与算力、内核/框架版本；(b) 基线定义（是否含KV Cache、是否continuous batching、batch与序列长度分布）；(c) 实测吞吐（tokens/s）与测量方法；(d) GQA的H_q/H_kv具体取值及是否重复展开KV；(e) 分页块大小、前缀共享命中率；(f) 若\"warmup\"指GPU/内核预热或学习率预热，需明确所指并给出对应测量或训练配置。以上均缺失，故只能给出机制层面的定性判断，不能给出精确倍数或\"一定无需warmup\"的结论。",
+      "citation_mapping": {
+        "E1": "wiki-article:paged-kv",
+        "E2": "wiki-article:gqa",
+        "E3": "wiki-article:kv-cache",
+        "E4": "wiki-article:flash-attention",
+        "E5": "wiki-article:alibi",
+        "E6": "wiki-article:pre-ln"
+      },
+      "raw_path": "results/live/graph_coverage/7a1a00b2-13e7-45fd-8e71-032557506f8c/M08-B-coverage_graph6.json",
+      "raw_sha256": "d5f35ffe0203a176ad9166042a10cdf67595a8fb51813c4bc23d5e2e8687954f",
+      "mode": "LIVE"
+    }
+  ],
+  "pairs": [
+    {
+      "id": "M01",
+      "scores": {
+        "direct6": 7.5,
+        "coverage6": 7.5,
+        "coverage_graph6": 7.5
+      }
+    },
+    {
+      "id": "M02",
+      "scores": {
+        "direct6": 7.5,
+        "coverage6": 8,
+        "coverage_graph6": 7.5
+      }
+    },
+    {
+      "id": "M03",
+      "scores": {
+        "direct6": 6.5,
+        "coverage6": 6.5,
+        "coverage_graph6": 6.5
+      }
+    },
+    {
+      "id": "M04",
+      "scores": {
+        "direct6": 7.5,
+        "coverage6": 7.5,
+        "coverage_graph6": 7.5
+      }
+    },
+    {
+      "id": "M07",
+      "scores": {
+        "direct6": 7.5,
+        "coverage6": 8,
+        "coverage_graph6": 8
+      }
+    },
+    {
+      "id": "M08",
+      "scores": {
+        "direct6": 6.5,
+        "coverage6": 5.5,
+        "coverage_graph6": 5.5
+      }
+    }
+  ],
+  "coverage_minus_direct_pp": 0.0,
+  "graph_minus_coverage_pp": -1.0416666666666665,
+  "graph_minus_direct_pp": -1.0416666666666665,
+  "sensitivity": {
+    "rule": "Accept generic workload contrast and partial generic measurement/no-current-result wording equally across applicable arms",
+    "totals": {
+      "direct6": 43.5,
+      "coverage6": 44.0,
+      "coverage_graph6": 44.0
+    },
+    "graph_minus_coverage_pp": 0.0
+  },
+  "posthoc_ambiguity_audit": {
+    "id": "M08",
+    "issue": "Question does not disambiguate learning-rate warmup and GPU preheat. Preflight failed to flag this; frozen rubric assumes training interpretation. Preserve primary results, not a uniquely correct query interpretation.",
+    "excluding_case_exploratory_totals": {
+      "direct6": 36.5,
+      "coverage6": 37.5,
+      "coverage_graph6": 37.0
+    },
+    "excluding_case_denominator": 40,
+    "graph_minus_coverage_pp": -1.25,
+    "revised_future_query": "只根据资料，说明GQA、分页和FlashAttention能否决定未指定GPU上的精确吞吐倍数；另请区分GPU计时前预热与学习率warmup，分别列出判断所需证据，不能将两者混用。",
+    "revised_query_tested": false,
+    "new_provider_calls": 0
+  },
+  "graph_context_different_cases": [
+    "M02"
+  ],
+  "independent_graph_effective_cases": 1,
+  "cut": {
+    "id": "M02",
+    "target": "kv-cache",
+    "all_incoming_edges": [
+      [
+        "causal-mask",
+        "kv-cache"
+      ],
+      [
+        "position",
+        "kv-cache"
+      ],
+      [
+        "prefill-decode",
+        "kv-cache"
+      ],
+      [
+        "gqa",
+        "kv-cache"
+      ],
+      [
+        "mqa",
+        "kv-cache"
+      ],
+      [
+        "paged-kv",
+        "kv-cache"
+      ],
+      [
+        "measurement",
+        "kv-cache"
+      ],
+      [
+        "speculative",
+        "kv-cache"
+      ],
+      [
+        "rope",
+        "kv-cache"
+      ]
+    ],
+    "context_changed": true,
+    "same_request_as": "coverage6",
+    "fresh_calls": 0,
+    "output_scores": {
+      "before": 7.5,
+      "after_replayed": 8
+    },
+    "limits": "One node-access intervention changes replacement context; n=1 model generation each. Not stable single-edge entailment causality."
+  },
+  "actual_input_tokens": 67838,
+  "actual_output_tokens": 8603,
+  "cost_usd": null,
+  "human_attested": false,
+  "ground_truth_release": false,
+  "blind": false,
+  "overall_graph_superiority_established": false,
+  "coverage_superiority_established": false,
+  "frozen_bindings_unchanged": true,
+  "historical_artifacts_unchanged": true,
+  "limitations": [
+    "six reused exposed development queries; no new heldout claim",
+    "five graph and no-graph pairs identical; do not treat as six independent effects",
+    "partial-score sensitivity makes graph difference zero rather than positive",
+    "primary answer detail omissions despite evidence being present are generation-layer failures",
+    "no latency or cost advantage estimate; repeated slots not duplicate physical billing"
+  ]
+}

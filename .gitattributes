@@ -1,0 +1,2 @@
+# Frozen text, JSON and source hashes must survive Windows/Linux checkout.
+* -text

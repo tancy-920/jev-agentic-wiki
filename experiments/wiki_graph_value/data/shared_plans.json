@@ -1,0 +1,664 @@
+[
+  {
+    "question": "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。",
+    "status": "validated_reused_after_fix",
+    "resolution": {
+      "standalone_question": "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。",
+      "context_turn_ids": [],
+      "action": "RETRIEVE",
+      "plan": {
+        "intent": "CONCEPT_EXPLANATION",
+        "goal": "Explain how in multi-head attention with d_model=768 and 12 equal-width query heads the Q/K/V projections, per-head dimension, concatenation and output projection connect, and justify the scaling factor's dimension basis without treating head count as a speedup multiplier.",
+        "evidence_needs": [
+          "Q/K/V linear projection shapes from d_model=768 to the projected dimension in multi-head attention",
+          "Per-head dimension computation with 12 equal-width heads (d_model divided by head count)",
+          "Concatenation of per-head outputs and the final output projection back to d_model",
+          "Dimension basis for the scaling factor (1/sqrt(d_k)) applied to QK^T scores",
+          "Explanation that multiple heads are not a direct speedup multiplier"
+        ],
+        "queries": [
+          "multi-head attention d_model 768 12 heads Q K V projection per-head dimension concatenation output projection scaling factor sqrt d_k"
+        ],
+        "user_constraints": [
+          "不把头数直接解释成提速倍数"
+        ]
+      },
+      "retrieval_translation": {
+        "english_query": "In multi-head attention, if d_model=768, the number of query heads is 12 and all heads are of equal width, how do the Q/K/V projections, per-head dimension, concatenation and output projection connect? Please explain the dimension basis of the scaling factor, and do not directly interpret the number of heads as a speedup multiplier.",
+        "constraint_translations": [
+          "do not directly interpret the number of heads as a speedup multiplier"
+        ]
+      }
+    },
+    "terminology": {
+      "original_query": "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。",
+      "expanded_query": "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。",
+      "corrections": [],
+      "rejected_choices": [],
+      "suggestions": [
+        {
+          "original": "多头注意力",
+          "candidates": [
+            {
+              "canonical": "多头注意力",
+              "wiki_pages": [
+                "mha"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c1194-2694",
+                "mygpt-train.py:52262ac90caa:c0-1445"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        }
+      ],
+      "policy": "source-vocabulary-one-edit-v1",
+      "new_provider_calls": 0
+    }
+  },
+  {
+    "question": "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及Pre-LN/Post-LN，并解释为什么换成Pre-LN不能推出任何模型都可取消warmup。",
+    "status": "validated_reused_after_fix",
+    "resolution": {
+      "standalone_question": "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及Pre-LN/Post-LN，并解释为什么换成Pre-LN不能推出任何模型都可取消warmup。",
+      "context_turn_ids": [],
+      "action": "RETRIEVE",
+      "plan": {
+        "intent": "COMPARISON",
+        "goal": "Decompose Transformer normalization into three independent questions (statistical axis, whether mean is subtracted, position relative to residual), compare LayerNorm, RMSNorm, BatchNorm and Pre-LN/Post-LN along these axes, and explain why switching to Pre-LN does not imply any model can drop warmup.",
+        "evidence_needs": [
+          "Definition of the three decomposition axes for normalization: statistical axis (which dimensions statistics are computed over), whether mean subtraction is performed, and placement relative to the residual connection",
+          "LayerNorm and RMSNorm: statistical axis, mean-subtraction behavior, and typical placement in Transformer blocks",
+          "BatchNorm: statistical axis, mean-subtraction behavior, and applicability/placement in Transformer architectures",
+          "Pre-LN vs Post-LN: exact position of normalization relative to the residual branch and the resulting training dynamics",
+          "Why Pre-LN improves training stability yet does not justify removing warmup for arbitrary models (e.g., dependence on depth, initialization, other components)"
+        ],
+        "queries": [
+          "Transformer normalization decomposition statistical axis mean subtraction position in residual LayerNorm RMSNorm BatchNorm Pre-LN Post-LN comparison",
+          "Pre-LN Post-LN normalization placement residual connection warmup learning rate stability why Pre-LN does not remove need for warmup"
+        ],
+        "user_constraints": [
+          "并解释为什么换成Pre-LN不能推出任何模型都可取消warmup"
+        ]
+      },
+      "retrieval_translation": {
+        "english_query": "Decompose Transformer normalization into three independent questions: statistical axis, whether mean is subtracted, and position in the residual. Compare LayerNorm, RMSNorm, BatchNorm and Pre-LN/Post-LN, and explain why switching to Pre-LN cannot imply that any model can remove warmup.",
+        "constraint_translations": [
+          "and explain why switching to Pre-LN cannot imply that any model can remove warmup"
+        ]
+      }
+    },
+    "terminology": {
+      "original_query": "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及Pre-LN/Post-LN，并解释为什么换成Pre-LN不能推出任何模型都可取消warmup。",
+      "expanded_query": "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及pre-LN/post-LN，并解释为什么换成pre-LN不能推出任何模型都可取消warmup。",
+      "corrections": [
+        {
+          "original": "Pre-LN",
+          "source_alias": "pre-LN",
+          "role": "retrieval_suggestion_not_ground_truth"
+        },
+        {
+          "original": "Post-LN",
+          "source_alias": "post-LN",
+          "role": "retrieval_suggestion_not_ground_truth"
+        }
+      ],
+      "rejected_choices": [],
+      "suggestions": [
+        {
+          "original": "Transformer",
+          "candidates": [
+            {
+              "canonical": "Transformer",
+              "wiki_pages": [
+                "transformer"
+              ],
+              "attested_chunk_ids": [
+                "paper-1706.03762:eee8b5a0bcc2:c0-2632",
+                "paper-1706.03762:eee8b5a0bcc2:c2858-5920"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "归一化",
+          "candidates": [
+            {
+              "canonical": "归一化",
+              "wiki_pages": [
+                "normalization"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c0-1426",
+                "mygpt-model.py:e05006957de4:c1194-2694"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "残差",
+          "candidates": [
+            {
+              "canonical": "残差",
+              "wiki_pages": [
+                "residual"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c0-1426",
+                "mygpt-model.py:e05006957de4:c12523-14451"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "LayerNorm",
+          "candidates": [
+            {
+              "canonical": "LayerNorm",
+              "wiki_pages": [
+                "layernorm"
+              ],
+              "attested_chunk_ids": [
+                "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+                "paper-1910.10683:7aa53b0ecc3b:c12742-15676"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "RMSNorm",
+          "candidates": [
+            {
+              "canonical": "RMSNorm",
+              "wiki_pages": [
+                "normalization"
+              ],
+              "attested_chunk_ids": [
+                "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532",
+                "pytorch-rmsnorm-2.11:9d22e35bf7b3:c1267-2350"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "BatchNorm",
+          "candidates": [
+            {
+              "canonical": "BatchNorm",
+              "wiki_pages": [
+                "batchnorm"
+              ],
+              "attested_chunk_ids": [
+                "paper-2205.14135:b86de4ee5c52:c9855-11869",
+                "depth-1910.07467:14a6a097250f:c0-2733"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "Pre-LN",
+          "candidates": [
+            {
+              "canonical": "pre-LN",
+              "wiki_pages": [
+                "pre-ln"
+              ],
+              "attested_chunk_ids": [
+                "depth-2002.04745:8e1c3e3564f6:c0-2433",
+                "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "Post-LN",
+          "candidates": [
+            {
+              "canonical": "post-LN",
+              "wiki_pages": [
+                "pre-ln"
+              ],
+              "attested_chunk_ids": [
+                "depth-2002.04745:8e1c3e3564f6:c0-2433",
+                "depth-2002.04745:8e1c3e3564f6:c2141-4427"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        }
+      ],
+      "policy": "source-vocabulary-one-edit-v1",
+      "new_provider_calls": 0
+    }
+  },
+  {
+    "question": "从原始Transformer到Decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。",
+    "status": "validated_reused_after_fix",
+    "resolution": {
+      "standalone_question": "从原始Transformer到Decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。",
+      "context_turn_ids": [],
+      "action": "RETRIEVE",
+      "plan": {
+        "intent": "COMPARISON",
+        "goal": "Compare the original Transformer encoder-decoder architecture with a decoder-only model, explaining how a single training forward pass differs from the autoregressive generation loop, and where encoder outputs and cross-attention, right-shifted targets and causal visibility, position-wise FFN, and KV cache each play a role, distinguishing architectural facts from inference optimizations.",
+        "evidence_needs": [
+          "Original Transformer encoder-decoder architecture: encoder output feeding cross-attention in the decoder, and how cross-attention is used during training forward pass versus generation",
+          "Right-shifted target inputs and causal (masked) self-attention visibility in the decoder, and how this differs in decoder-only training",
+          "Position-wise feed-forward network (FFN) applied per position in encoder and decoder layers, and its role in a single forward pass",
+          "KV cache: what it stores, when it is used in the autoregressive generation loop, and why it is an inference optimization rather than an architectural fact",
+          "Decoder-only model training forward pass versus autoregressive generation loop: differences in inputs, masking, and computation",
+          "Distinction between architectural facts (encoder-decoder structure, cross-attention, causal masking, position-wise FFN) and inference optimizations (KV cache)"
+        ],
+        "queries": [
+          "original Transformer encoder-decoder cross-attention encoder output decoder right-shifted target causal masking position-wise feed-forward network",
+          "decoder-only model training forward pass versus autoregressive generation loop KV cache inference optimization"
+        ],
+        "user_constraints": []
+      },
+      "retrieval_translation": {
+        "english_query": "From the original Transformer to decoder-only, explain how a single training forward pass differs from the autoregressive generation loop: where do encoder outputs and cross-attention, right-shifted targets and causal visibility, position-wise FFN, and KV cache each play a role? Distinguish architectural facts from inference optimizations.",
+        "constraint_translations": []
+      }
+    },
+    "terminology": {
+      "original_query": "从原始Transformer到Decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。",
+      "expanded_query": "从原始Transformer到decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。",
+      "corrections": [
+        {
+          "original": "Decoder-only",
+          "source_alias": "decoder-only",
+          "role": "retrieval_suggestion_not_ground_truth"
+        }
+      ],
+      "rejected_choices": [],
+      "suggestions": [
+        {
+          "original": "Transformer",
+          "candidates": [
+            {
+              "canonical": "Transformer",
+              "wiki_pages": [
+                "transformer"
+              ],
+              "attested_chunk_ids": [
+                "paper-1706.03762:eee8b5a0bcc2:c0-2632",
+                "paper-1706.03762:eee8b5a0bcc2:c2858-5920"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "Decoder-only",
+          "candidates": [
+            {
+              "canonical": "decoder-only",
+              "wiki_pages": [
+                "gpt"
+              ],
+              "attested_chunk_ids": [
+                "paper-1910.10683:7aa53b0ecc3b:c58510-61047",
+                "paper-1910.10683:7aa53b0ecc3b:c60710-61496"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "训练",
+          "candidates": [
+            {
+              "canonical": "训练",
+              "wiki_pages": [
+                "training"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c0-1426",
+                "mygpt-model.py:e05006957de4:c3941-5197"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "FFN",
+          "candidates": [
+            {
+              "canonical": "FFN",
+              "wiki_pages": [
+                "mlp"
+              ],
+              "attested_chunk_ids": [
+                "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+                "paper-1706.03762:eee8b5a0bcc2:c13665-14608"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "KV缓存",
+          "candidates": [
+            {
+              "canonical": "KV缓存",
+              "wiki_pages": [
+                "kv-cache"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c5047-6681",
+                "mygpt-model.py:e05006957de4:c6488-7889"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        }
+      ],
+      "policy": "source-vocabulary-one-edit-v1",
+      "new_provider_calls": 0
+    }
+  },
+  {
+    "question": "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。",
+    "status": "validated_reused_after_fix",
+    "resolution": {
+      "standalone_question": "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。",
+      "context_turn_ids": [],
+      "action": "RETRIEVE",
+      "plan": {
+        "intent": "MULTI_HOP",
+        "goal": "Verify in mygpt/model.py where _attn_baseline and _attn_sdpa apply dropout and mask, what dropout_p is passed to SDPA in training vs eval, whether is_causal=True is used, with concrete code locations, distinguishing executable code from performance observations in comments.",
+        "evidence_needs": [
+          "Source of _attn_baseline in mygpt/model.py showing where dropout and mask are applied, with line references",
+          "Source of _attn_sdpa in mygpt/model.py showing where dropout and mask are applied and the dropout_p value passed to SDPA in training vs eval, and whether is_causal=True is used",
+          "Comments in mygpt/model.py containing performance observations, to be distinguished from executable code"
+        ],
+        "queries": [
+          "mygpt/model.py _attn_baseline _attn_sdpa dropout mask implementation",
+          "mygpt/model.py _attn_sdpa dropout_p training eval is_causal=True SDPA"
+        ],
+        "user_constraints": []
+      },
+      "retrieval_translation": {
+        "english_query": "Verify the actual implementation in this repository's mygpt/model.py: where do _attn_baseline and _attn_sdpa respectively apply dropout and mask? What dropout_p is passed to SDPA during training and eval, and is is_causal=True used? Cite specific code locations and distinguish executable code from performance observations in comments.",
+        "constraint_translations": []
+      }
+    },
+    "terminology": {
+      "original_query": "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。",
+      "expanded_query": "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。",
+      "corrections": [],
+      "rejected_choices": [],
+      "suggestions": [
+        {
+          "original": "dropout_p",
+          "candidates": [
+            {
+              "canonical": "dropout",
+              "wiki_pages": [
+                "dropout"
+              ],
+              "attested_chunk_ids": [
+                "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+                "paper-1706.03762:eee8b5a0bcc2:c22763-24539"
+              ]
+            }
+          ],
+          "kind": "spelling_candidate"
+        },
+        {
+          "original": "mygpt",
+          "candidates": [
+            {
+              "canonical": "mygpt",
+              "wiki_pages": [
+                "gpt"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-readme.md:2d20f1a5d663:c0-2086",
+                "mygpt-readme.md:2d20f1a5d663:c10199-12641"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "dropout",
+          "candidates": [
+            {
+              "canonical": "dropout",
+              "wiki_pages": [
+                "dropout"
+              ],
+              "attested_chunk_ids": [
+                "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+                "paper-1706.03762:eee8b5a0bcc2:c22763-24539"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "训练",
+          "candidates": [
+            {
+              "canonical": "训练",
+              "wiki_pages": [
+                "training"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c0-1426",
+                "mygpt-model.py:e05006957de4:c3941-5197"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "SDPA",
+          "candidates": [
+            {
+              "canonical": "SDPA",
+              "wiki_pages": [
+                "sdpa"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-readme.md:2d20f1a5d663:c0-2086",
+                "mygpt-readme.md:2d20f1a5d663:c6983-8692"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "性能",
+          "candidates": [
+            {
+              "canonical": "性能",
+              "wiki_pages": [
+                "measurement"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c0-1426",
+                "mygpt-sample.py:a522fb11f829:c0-1114"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        }
+      ],
+      "policy": "source-vocabulary-one-edit-v1",
+      "new_provider_calls": 0
+    }
+  },
+  {
+    "question": "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。",
+    "status": "validated",
+    "resolution": {
+      "standalone_question": "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。",
+      "context_turn_ids": [],
+      "action": "RETRIEVE",
+      "plan": {
+        "intent": "CONCEPT_EXPLANATION",
+        "goal": "Explain FlashAttention tiling: why per-block softmax cannot be averaged, which running statistics are maintained when merging blocks, rescaling on max change, and why avoiding the full attention matrix is not linear complexity.",
+        "evidence_needs": [
+          "Why per-block softmax outputs cannot be directly averaged across blocks",
+          "Running statistics maintained when merging new and old blocks (running max, running sum, accumulator)",
+          "How rescaling is applied when the running maximum changes",
+          "Why avoiding materializing the full attention matrix does not make attention arithmetic linear complexity"
+        ],
+        "queries": [
+          "FlashAttention tiling why per-block softmax cannot be averaged merging blocks running max running sum rescaling online softmax"
+        ],
+        "user_constraints": [
+          "为什么不能对每一块各自softmax后直接平均",
+          "以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度"
+        ]
+      },
+      "retrieval_translation": {
+        "english_query": "In FlashAttention tiled attention computation, why can per-block softmax results not be directly averaged? Explain which quantities must be maintained when merging new and old blocks, how rescaling is done when the maximum changes, and why avoiding the full attention matrix does not mean attention arithmetic becomes linear complexity.",
+        "constraint_translations": [
+          "why can per-block softmax results not be directly averaged",
+          "and why avoiding the full attention matrix does not mean attention arithmetic becomes linear complexity"
+        ]
+      }
+    },
+    "terminology": {
+      "original_query": "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。",
+      "expanded_query": "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。",
+      "corrections": [],
+      "rejected_choices": [],
+      "suggestions": [
+        {
+          "original": "FlashAttention",
+          "candidates": [
+            {
+              "canonical": "FlashAttention",
+              "wiki_pages": [
+                "flash-attention"
+              ],
+              "attested_chunk_ids": [
+                "paper-2205.14135:b86de4ee5c52:c0-2471",
+                "paper-2205.14135:b86de4ee5c52:c3556-5723"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        }
+      ],
+      "policy": "source-vocabulary-one-edit-v1",
+      "new_provider_calls": 0
+    }
+  },
+  {
+    "question": "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。",
+    "status": "validated",
+    "resolution": {
+      "standalone_question": "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。",
+      "context_turn_ids": [],
+      "action": "RETRIEVE",
+      "plan": {
+        "intent": "MULTI_HOP",
+        "goal": "Explain how to identify the actual PyTorch SDPA backend, verify numerical correctness, and design reproducible measurements distinguishing prefill/decode, GPU async timing, allocated/reserved memory, and existing JSON records.",
+        "evidence_needs": [
+          "Methods to determine which PyTorch SDPA backend is actually dispatched",
+          "Numerical correctness verification of SDPA against reference attention",
+          "Reproducible benchmarking with GPU asynchronous timing and synchronization",
+          "Distinguishing prefill and decode phases in measurement",
+          "allocated vs reserved memory semantics in PyTorch",
+          "Scope and limits of existing JSON measurement records"
+        ],
+        "queries": [
+          "PyTorch SDPA backend selection how to check which backend is used flash attention memory efficient math",
+          "SDPA numerical correctness verification reference attention comparison reproducible benchmark prefill decode GPU asynchronous timing allocated reserved memory JSON records"
+        ],
+        "user_constraints": []
+      },
+      "retrieval_translation": {
+        "english_query": "Someone reports that after calling PyTorch SDPA memory usage dropped and single-run timing got faster, and claims all decode scenarios will speed up. How would you determine the actual backend, verify numerical correctness, and design reproducible measurements? Please distinguish the applicable scope of prefill/decode, GPU asynchronous timing, allocated/reserved, and existing JSON records.",
+        "constraint_translations": []
+      }
+    },
+    "terminology": {
+      "original_query": "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。",
+      "expanded_query": "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。",
+      "corrections": [],
+      "rejected_choices": [],
+      "suggestions": [
+        {
+          "original": "SDPA",
+          "candidates": [
+            {
+              "canonical": "SDPA",
+              "wiki_pages": [
+                "sdpa"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-readme.md:2d20f1a5d663:c0-2086",
+                "mygpt-readme.md:2d20f1a5d663:c6983-8692"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "显存",
+          "candidates": [
+            {
+              "canonical": "显存",
+              "wiki_pages": [
+                "measurement"
+              ],
+              "attested_chunk_ids": [
+                "mygpt-model.py:e05006957de4:c0-1426",
+                "mygpt-model.py:e05006957de4:c1194-2694"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "prefill",
+          "candidates": [
+            {
+              "canonical": "prefill",
+              "wiki_pages": [
+                "prefill-decode"
+              ],
+              "attested_chunk_ids": [
+                "paper-2309.06180:7ba2ff703be1:c17264-19250",
+                "mygpt-readme.md:2d20f1a5d663:c8442-10433"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        },
+        {
+          "original": "decode",
+          "candidates": [
+            {
+              "canonical": "decode",
+              "wiki_pages": [
+                "prefill-decode"
+              ],
+              "attested_chunk_ids": [
+                "paper-1911.02150:292091205298:c0-1731",
+                "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c14264-16346"
+              ]
+            }
+          ],
+          "kind": "exact_or_format"
+        }
+      ],
+      "policy": "source-vocabulary-one-edit-v1",
+      "new_provider_calls": 0
+    }
+  }
+]

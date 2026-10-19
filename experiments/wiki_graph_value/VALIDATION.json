@@ -1,0 +1,228 @@
+{
+  "type": "PACKAGING_VALIDATION_NOT_NEW_QUALITY_BENCHMARK",
+  "date": "2026-10-19",
+  "provider_calls": 0,
+  "cleanroom": {
+    "operating_system": "Windows",
+    "python_site_packages_disabled": true,
+    "offline_reproduction_passed": true,
+    "standard_library_tests_passed": 5,
+    "corpus_validation_passed": true
+  },
+  "rebuilt_retrieval": {
+    "fresh_index": true,
+    "sources": {
+      "sources": 56,
+      "chunks": 1145,
+      "original_pdf_binaries_included": false,
+      "normalized_text_and_exact_chunk_spans_verified": true
+    },
+    "device": "cuda",
+    "warmups": 0,
+    "repetitions": 1,
+    "rows": [
+      {
+        "id": "N01",
+        "modes": {
+          "source": {
+            "evidence_ids": [
+              "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+              "paper-2305.13245:3ed3d65bc419:c2100-4367",
+              "author-t2t-v1.2.0-common-attention:4d7013143123:c26383-29239",
+              "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+              "paper-2305.13245:3ed3d65bc419:c13133-15425",
+              "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+              "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+              "depth-2307.08691:f917fc544aae:c18723-19905",
+              "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+              "paper-1706.03762:eee8b5a0bcc2:c24539-26145",
+              "author-t2t-v1.2.0-common-attention:4d7013143123:c37512-38307",
+              "author-t2t-v1.2.0-common-attention:4d7013143123:c28929-29835"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki": {
+            "evidence_ids": [
+              "wiki-article:mha",
+              "wiki-article:measurement"
+            ],
+            "historical_evidence_ids_match": true
+          }
+        }
+      },
+      {
+        "id": "N02",
+        "modes": {
+          "source": {
+            "evidence_ids": [
+              "depth-2002.04745:8e1c3e3564f6:c27876-30276",
+              "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+              "depth-1910.07467:14a6a097250f:c23757-25859",
+              "depth-2002.04745:8e1c3e3564f6:c22837-25142",
+              "depth-2002.04745:8e1c3e3564f6:c26216-28169",
+              "depth-1910.07467:14a6a097250f:c7675-10103",
+              "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+              "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+              "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+              "depth-1910.07467:14a6a097250f:c19973-22525",
+              "depth-2002.04745:8e1c3e3564f6:c77157-78063"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki": {
+            "evidence_ids": [
+              "wiki-article:layernorm",
+              "wiki-article:pre-ln",
+              "wiki-article:normalization",
+              "wiki-article:batchnorm"
+            ],
+            "historical_evidence_ids_match": true
+          }
+        }
+      },
+      {
+        "id": "N03",
+        "modes": {
+          "source": {
+            "evidence_ids": [
+              "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+              "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+              "paper-1910.10683:7aa53b0ecc3b:c117215-119641",
+              "paper-2309.06180:7ba2ff703be1:c7362-9520",
+              "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+              "paper-1910.10683:7aa53b0ecc3b:c61496-63183",
+              "paper-1910.10683:7aa53b0ecc3b:c49392-51825",
+              "paper-1910.10683:7aa53b0ecc3b:c11430-12742",
+              "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+              "paper-1706.03762:eee8b5a0bcc2:c27513-29798"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki": {
+            "evidence_ids": [
+              "wiki-article:cross-attention",
+              "wiki-article:gpt",
+              "wiki-article:forward-flow",
+              "wiki-article:causal-mask"
+            ],
+            "historical_evidence_ids_match": true
+          }
+        }
+      },
+      {
+        "id": "N04",
+        "modes": {
+          "source": {
+            "evidence_ids": [
+              "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+              "mygpt-readme.md:2d20f1a5d663:c0-2086",
+              "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+              "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+              "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+              "foundation-pytorch-transformer-2.11:ebf4e5af7173:c29080-31620",
+              "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+              "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+              "mygpt-model.py:e05006957de4:c0-1426",
+              "foundation-pytorch-transformer-2.11:ebf4e5af7173:c45349-48093",
+              "mygpt-bench.py:4ab37b20b5e7:c6545-7944"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki": {
+            "evidence_ids": [
+              "wiki-article:dropout",
+              "wiki-article:sdpa",
+              "wiki-article:gpt",
+              "wiki-article:training"
+            ],
+            "historical_evidence_ids_match": true
+          }
+        }
+      },
+      {
+        "id": "N05",
+        "modes": {
+          "source": {
+            "evidence_ids": [
+              "paper-2205.14135:b86de4ee5c52:c5396-7564",
+              "depth-2307.08691:f917fc544aae:c8888-10540",
+              "paper-2205.14135:b86de4ee5c52:c13633-15122",
+              "paper-2205.14135:b86de4ee5c52:c71910-74461",
+              "depth-2307.08691:f917fc544aae:c3449-6144",
+              "paper-2205.14135:b86de4ee5c52:c3556-5723",
+              "paper-2205.14135:b86de4ee5c52:c11869-13995",
+              "paper-2205.14135:b86de4ee5c52:c21449-22492",
+              "depth-2307.08691:f917fc544aae:c11834-14080",
+              "paper-2205.14135:b86de4ee5c52:c19938-21661",
+              "paper-2205.14135:b86de4ee5c52:c17886-18495",
+              "depth-2307.08691:f917fc544aae:c0-2698"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki": {
+            "evidence_ids": [
+              "wiki-article:flash-attention",
+              "wiki-article:online-softmax"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki_graph": {
+            "evidence_ids": [
+              "wiki-article:flash-attention",
+              "wiki-article:online-softmax"
+            ],
+            "historical_evidence_ids_match": true
+          }
+        }
+      },
+      {
+        "id": "N06",
+        "modes": {
+          "source": {
+            "evidence_ids": [
+              "paper-2205.14135:b86de4ee5c52:c92804-94371",
+              "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+              "paper-2205.14135:b86de4ee5c52:c33318-36119",
+              "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+              "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+              "mygpt-model.py:e05006957de4:c7739-9025",
+              "paper-2205.14135:b86de4ee5c52:c3556-5723",
+              "depth-2307.08691:f917fc544aae:c29079-30756",
+              "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+              "depth-2307.08691:f917fc544aae:c31921-33440",
+              "mygpt-model.py:e05006957de4:c1194-2694",
+              "mygpt-readme.md:2d20f1a5d663:c0-2086",
+              "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki": {
+            "evidence_ids": [
+              "wiki-article:sdpa",
+              "wiki-article:prefill-decode",
+              "wiki-article:measurement",
+              "wiki-article:flash-attention"
+            ],
+            "historical_evidence_ids_match": true
+          },
+          "llm_wiki_graph": {
+            "evidence_ids": [
+              "wiki-article:sdpa",
+              "wiki-article:prefill-decode",
+              "wiki-article:measurement",
+              "wiki-article:flash-attention",
+              "wiki-article:online-softmax"
+            ],
+            "historical_evidence_ids_match": true
+          }
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "One retrieval repetition is an execution check, not a latency benchmark.",
+    "Windows executed locally; Linux workflow supplied but not yet executed on GitHub.",
+    "Paid benchmark-live entrypoint was not executed during packaging.",
+    "No new factual judgments or human attestations were produced."
+  ]
+}

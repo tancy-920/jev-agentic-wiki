@@ -1,0 +1,19 @@
+# Active when this standalone folder/archive is published as a repository root.
+name: Offline experiment reproduction
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -S reproduce.py
+      - run: python -S benchmark_retrieval.py --check-inputs
+      - run: python -S -m unittest discover -s tests -v

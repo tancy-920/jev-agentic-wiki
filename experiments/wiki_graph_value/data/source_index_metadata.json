@@ -1,0 +1,112 @@
+{
+  "created_at_utc": "2026-10-17T02:12:48.558547+00:00",
+  "config": {
+    "seed": 42,
+    "paths": {
+      "raw": "data\\processed\\transformer_wiki_v13\\snapshots",
+      "processed": "data\\processed\\transformer_wiki_v13",
+      "manifest": "data\\processed\\transformer_wiki_v13\\sources.jsonl"
+    },
+    "chunking": {
+      "tokenizer": "cl100k_base",
+      "size": 600,
+      "overlap": 100
+    },
+    "embedding": {
+      "model": "BAAI/bge-small-en-v1.5",
+      "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+      "local_files_only": true,
+      "device": "cuda",
+      "batch_size": 16,
+      "query_prefix": "Represent this sentence for searching relevant passages: ",
+      "window_tokens": 450,
+      "window_overlap": 50
+    },
+    "qdrant": {
+      "mode": "local",
+      "path": "data\\processed\\transformer_wiki_v13\\qdrant",
+      "url": "http://localhost:6333"
+    },
+    "retrieval": {
+      "top_k": 20,
+      "dense_k": 30,
+      "sparse_k": 30,
+      "rrf_k": 60,
+      "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "reranker_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+      "reranker_local_files_only": true,
+      "reranker_window_overlap": 50,
+      "reranker_enabled": true
+    },
+    "agent": {
+      "max_iterations": 2,
+      "jev_mode": "mock",
+      "web_search_enabled": false,
+      "relevance_uncertainty": "exclude",
+      "decision_threshold": 0.75
+    },
+    "llm": {
+      "provider": "deepseek",
+      "base_url": "https://api.deepseek.com/beta",
+      "model": "deepseek-flash",
+      "strong_model": "deepseek-flash",
+      "api_format": "chat_completions",
+      "timeout_seconds": 120.0,
+      "max_output_tokens": 4096,
+      "fast_reasoning_effort": "none",
+      "strong_reasoning_effort": "none",
+      "max_claims": 4
+    },
+    "jev": {
+      "endpoint": "https://api.typesafe.ai/v1/systemone",
+      "model": "jev-latest",
+      "timeout_seconds": 60.0,
+      "relevance_batch_size": 20
+    },
+    "answer": {
+      "style": "balanced",
+      "language": "zh-CN"
+    },
+    "intent": {
+      "enabled": true,
+      "max_queries": 2,
+      "uncertainty": "original_query"
+    },
+    "translation": {
+      "enabled": true,
+      "target_language": "en"
+    },
+    "verification": {
+      "mode": "paragraph",
+      "max_spans_per_paragraph": 8,
+      "max_total_spans": 16
+    },
+    "structured_output": {
+      "responses_format": "strict_function"
+    }
+  },
+  "versions": {
+    "qdrant-client": "1.19.1",
+    "rank-bm25": "0.2.2",
+    "numpy": "2.5.3"
+  },
+  "collection": "papers_8eccab98090e03da2859",
+  "fingerprint": "8eccab98090e03da2859b472fd70ab169f6980cae9c91615abb48e471c41a46c",
+  "chunks_sha256": "0bf63b2c00efb98d266eb0a8e4db04295d1d5e00069a2c6bded8264d63016045",
+  "chunks": 1145,
+  "indexed_papers": 21,
+  "indexed_sources": 56,
+  "embedding": {
+    "model": "BAAI/bge-small-en-v1.5",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "local_files_only": true,
+    "device": "cuda",
+    "batch_size": 16,
+    "query_prefix": "Represent this sentence for searching relevant passages: ",
+    "window_tokens": 450,
+    "window_overlap": 50
+  },
+  "resolved_revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+  "kind": "REAL",
+  "dimension": 384
+}

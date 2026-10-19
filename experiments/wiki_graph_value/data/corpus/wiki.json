@@ -1,0 +1,3436 @@
+{
+  "version": "transformer-mygpt-wiki-v13-official-mask-implementation",
+  "sources_sha256": "2f0df305904f2236492a476a881d2436d419ee1af4e2b8d8045af1cf0b1a1682",
+  "chunks_sha256": "0bf63b2c00efb98d266eb0a8e4db04295d1d5e00069a2c6bded8264d63016045",
+  "pages": [
+    {
+      "page_id": "transformer",
+      "title": "Transformer 架构",
+      "aliases": [
+        "Transformer",
+        "transformer架构"
+      ],
+      "guide": "先读原论文的编码器/解码器子层，再对照T5的架构分类和mygpt的Block。区分论文配置、架构类别与本地实现。",
+      "source_ids": [
+        "paper-1706.03762",
+        "paper-1910.10683",
+        "hf-transformers-cache-practices-4.49.0",
+        "paper-1810.04805",
+        "mygpt-model.py",
+        "mygpt-readme.md",
+        "author-t2t-v1.2.0-transformer",
+        "foundation-pytorch-transformer-2.11",
+        "depth-orca-osdi22"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "paper-1910.10683:7aa53b0ecc3b:c132875-133573",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+        "paper-1810.04805:6bb076ca96de:c10285-12186",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c5047-6681",
+        "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426",
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "depth-orca-osdi22:b0b993441062:c12952-15716"
+      ],
+      "related": [
+        "self-attention",
+        "cross-attention",
+        "gpt",
+        "normalization",
+        "residual",
+        "layernorm",
+        "bert-mlm"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "并行 parallel parallelism teacher forcing prefill decode：已知输入与注意力计算前提",
+          "guide": "先核对矩阵查询同时计算、多头并行与输入已知条件；跨层和生成步依赖需另查原始架构，缓存独立不等于计算独立。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+            "depth-orca-osdi22:b0b993441062:c12952-15716"
+          ],
+          "navigation_kind": "premise_bundle"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1910.10683:7aa53b0ecc3b:c132875-133573",
+            "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+            "paper-1810.04805:6bb076ca96de:c10285-12186",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "mygpt-model.py:e05006957de4:c5047-6681",
+            "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+            "mygpt-readme.md:2d20f1a5d663:c12397-14611"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "Encoder/Decoder原始实现与当前块内执行顺序",
+          "guide": "阅读固定版本的原始代码，核对实际变量来源、操作顺序与配置；代码行为不代表作者动机或通用性能结论。",
+          "evidence_ids": [
+            "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+            "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426"
+          ],
+          "navigation_kind": "premise_bundle"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "self-attention",
+      "title": "自注意力与 Q/K/V",
+      "aliases": [
+        "self-attention",
+        "self attention",
+        "自注意力",
+        "QKV"
+      ],
+      "guide": "按Q/K/V来源、缩放点积公式、softmax及输出投影阅读；再对照mygpt的三条注意力实现路径。",
+      "source_ids": [
+        "paper-1706.03762",
+        "mygpt-model.py"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-model.py:e05006957de4:c5047-6681"
+      ],
+      "related": [
+        "causal-mask",
+        "cross-attention",
+        "mha",
+        "attention-scoring",
+        "padding-mask"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "Q/K/V与位置之间的交互",
+          "guide": "自注意力的Q/K/V来自同一表示序列，经过不同可学习投影；不是全部来自同一个token。每个query与允许的key计算兼容性并加权value，多头投影和掩码另见对应专页。输入同源不代表投影权重相等。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c3941-5197",
+            "mygpt-model.py:e05006957de4:c5047-6681"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "cross-attention",
+      "title": "交叉注意力与架构分类",
+      "aliases": [
+        "cross-attention",
+        "cross attention",
+        "交叉注意力",
+        "encoder-decoder"
+      ],
+      "guide": "优先核对原论文中查询与键值的来源，再阅读架构/掩码分类。论文说明不能替代mygpt的实现证据。",
+      "source_ids": [
+        "paper-1706.03762",
+        "author-t2t-v1.2.0-transformer",
+        "foundation-pytorch-transformer-2.11",
+        "paper-1910.10683",
+        "paper-1810.04805",
+        "hf-transformers-cache-strategies-4.57.0",
+        "author-t2t-v1.2.0-common-attention"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426",
+        "paper-1910.10683:7aa53b0ecc3b:c52189-54691",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+        "paper-1810.04805:6bb076ca96de:c6145-8482",
+        "paper-1810.04805:6bb076ca96de:c14307-16636",
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911",
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c0-752",
+        "author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383"
+      ],
+      "related": [
+        "self-attention",
+        "gpt",
+        "transformer"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "Encoder/Decoder交叉注意力：子层执行顺序与Q/K/V来源",
+          "guide": "阅读固定版本的原始代码，核对实际变量来源、操作顺序与配置；代码行为不代表作者动机或通用性能结论。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+            "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426"
+          ],
+          "navigation_kind": "premise_bundle"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "paper-1910.10683:7aa53b0ecc3b:c52189-54691",
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+            "paper-1810.04805:6bb076ca96de:c6145-8482",
+            "paper-1810.04805:6bb076ca96de:c14307-16636",
+            "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911",
+            "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c0-752"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原作者Q/K/V投影定义",
+          "guide": "按query/memory参数及当前代码分支核对投影，勿将输入同源当作权重相同。",
+          "evidence_ids": [
+            "author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "causal-mask",
+      "title": "因果掩码与位置",
+      "aliases": [
+        "causal mask",
+        "causal",
+        "因果掩码",
+        "掩码",
+        "掩码多头注意力",
+        "masked multi-head attention",
+        "masked attention"
+      ],
+      "guide": "先看禁止未来位置的原论文定义，再检查代码中的布尔掩码、增量解码对齐与官方接口约定。",
+      "source_ids": [
+        "paper-1706.03762",
+        "mygpt-model.py",
+        "pytorch-sdpa-2.11",
+        "hf-transformers-cache-4.57.0",
+        "author-pytorch-v2.11.0-functional"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c6488-7889",
+        "mygpt-model.py:e05006957de4:c7739-9025",
+        "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+        "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239"
+      ],
+      "related": [
+        "self-attention",
+        "kv-cache",
+        "position",
+        "padding-mask",
+        "bert-mlm"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "padding mask causal mask score softmax：官方实现的类型转换与分数合并",
+          "guide": "先核对同版本布尔转换、广播、掩码合并及softmax顺序；区分文档措辞与分支内实际实现，不以注释推断所有后端。",
+          "evidence_ids": [
+            "author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367",
+            "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239"
+          ],
+          "navigation_kind": "premise_bundle"
+        },
+        {
+          "heading": "掩码多头注意力的计算",
+          "guide": "每个头计算softmax(QK^T/sqrt(d_k)+M)V，再拼接并投影。对禁止位置M取负无穷；因果掩码禁止看未来；掩码形状、数值型/布尔型约定必须按接口核对。增量解码时Q/K长度可能不同，掩码对齐需按实际位置检查；PyTorch布尔True语义以具体接口为准。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "mygpt-model.py:e05006957de4:c6488-7889",
+            "mygpt-model.py:e05006957de4:c7739-9025",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "pytorch-sdpa-2.11:42a07d742f7e:c0-2094"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+            "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+            "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c6488-7889",
+            "mygpt-model.py:e05006957de4:c7739-9025"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "gpt",
+      "title": "Decoder-only架构与mygpt实现",
+      "aliases": [
+        "GPT",
+        "GPT-2",
+        "mygpt",
+        "decoder-only"
+      ],
+      "guide": "先区分encoder-decoder、encoder-only和decoder-only的栈组成，再沿mygpt的嵌入、Block和输出层阅读。因果属性与架构类别分别说明；本地模型的实现和测量不能代表全部GPT风格模型。",
+      "source_ids": [
+        "paper-1910.10683",
+        "mygpt-readme.md",
+        "mygpt-model.py"
+      ],
+      "evidence_ids": [
+        "paper-1910.10683:7aa53b0ecc3b:c130789-133277",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-model.py:e05006957de4:c0-1426"
+      ],
+      "related": [
+        "position",
+        "mlp",
+        "normalization",
+        "training",
+        "tokenizer",
+        "embedding"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "架构类别与本地工程分开阅读",
+          "guide": "T5论文区分encoder-decoder、encoder-only（如BERT）和decoder-only语言模型。架构类别看组件组成；具体掩码、归一化、位置方案和缓存能力需核对各自实现，不由类别名称自动推出。",
+          "evidence_ids": [
+            "paper-1910.10683:7aa53b0ecc3b:c130789-133277",
+            "mygpt-readme.md:2d20f1a5d663:c0-2086"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c0-2086",
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "mygpt-model.py:e05006957de4:c14266-16158",
+            "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+            "mygpt-model.py:e05006957de4:c0-1426"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "position",
+      "title": "位置表示总览：绝对PE、RoPE与偏置",
+      "aliases": [
+        "positional embedding",
+        "position encoding",
+        "位置编码",
+        "位置嵌入",
+        "PE",
+        "PE编码",
+        "正弦位置编码",
+        "sinusoidal positional encoding"
+      ],
+      "guide": "按位置注入方式比较：正弦/学习式绝对PE加到输入，RoPE旋转Q/K，T5/ALiBi在注意力logit上加偏置。mygpt使用学习式位置表；收录其他算法的论文不代表本地实现已经采用。",
+      "source_ids": [
+        "paper-1706.03762",
+        "mygpt-model.py",
+        "depth-2104.09864",
+        "mygpt-readme.md",
+        "paper-1910.10683",
+        "foundation-2108.12409"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "depth-2104.09864:abd4e80aae4d:c10919-13279",
+        "depth-2104.09864:abd4e80aae4d:c14290-15871",
+        "depth-2104.09864:abd4e80aae4d:c3293-6099",
+        "depth-2104.09864:abd4e80aae4d:c5673-7829",
+        "paper-1706.03762:eee8b5a0bcc2:c25848-27513",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+        "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+        "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+        "foundation-2108.12409:cf6a3d07cc4d:c15367-17283",
+        "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+        "foundation-2108.12409:cf6a3d07cc4d:c18966-21650"
+      ],
+      "related": [
+        "gpt",
+        "kv-cache",
+        "rope",
+        "embedding",
+        "alibi"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "正弦PE公式与学习式位置表",
+          "guide": "原始正弦PE：PE(pos,2i)=sin(pos/10000^(2i/d))，PE(pos,2i+1)=cos(pos/10000^(2i/d))，与token embedding相加。mygpt使用可学习的位置表；RoPE则旋转Q/K。三者位置注入方式不同，长度行为需按具体实现检查。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+            "mygpt-model.py:e05006957de4:c14266-16158",
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "depth-2104.09864:abd4e80aae4d:c10919-13279",
+            "depth-2104.09864:abd4e80aae4d:c14290-15871"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "新增一手资料：机制与边界",
+          "guide": "对照以下完整论文原文深入阅读；论文算法不等于mygpt已实现能力，性能不跨配置移植。",
+          "evidence_ids": [
+            "depth-2104.09864:abd4e80aae4d:c10919-13279",
+            "depth-2104.09864:abd4e80aae4d:c14290-15871",
+            "depth-2104.09864:abd4e80aae4d:c3293-6099",
+            "depth-2104.09864:abd4e80aae4d:c5673-7829"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+            "paper-1706.03762:eee8b5a0bcc2:c25848-27513"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c14266-16158",
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "mygpt-readme.md:2d20f1a5d663:c0-2086",
+            "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "位置方案对比的有限范围",
+          "guide": "本库比较正弦绝对PE、学习式绝对位置表、RoPE、T5分桶相对偏置、ALiBi：依次核对输入相加、Q/K旋转或logit偏置的位置；参数/长度限制由实现确定。正弦公式可算更长位置不证明模型外推好，学习式位置表越界也不是更换参数长度就已验证质量。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+            "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+            "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+            "foundation-2108.12409:cf6a3d07cc4d:c15367-17283",
+            "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+            "foundation-2108.12409:cf6a3d07cc4d:c18966-21650",
+            "depth-2104.09864:abd4e80aae4d:c10919-13279",
+            "depth-2104.09864:abd4e80aae4d:c14290-15871"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "mlp",
+      "title": "逐位置FFN / MLP：投影、激活与宽度",
+      "aliases": [
+        "MLP",
+        "FFN",
+        "feed-forward",
+        "前馈网络",
+        "升维",
+        "降维"
+      ],
+      "guide": "先读逐位置FFN的两次线性投影与非线性，再比较门控变体和mygpt的GELU实现。残差连接、归一化及输入输出权重共享分别阅读专页。",
+      "source_ids": [
+        "paper-1706.03762",
+        "mygpt-model.py",
+        "depth-2002.05202",
+        "mygpt-readme.md"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c11035-12913",
+        "depth-2002.05202:2f0b42e51459:c2216-3968",
+        "depth-2002.05202:2f0b42e51459:c3762-4507",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c2583-4229",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "gpt",
+        "normalization",
+        "activations",
+        "residual"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "逐位置FFN：输入、非线性与输出维度",
+          "guide": "原始Transformer在每个位置独立应用相同FFN：max(0,xW1+b1)W2+b2；层内跨位置共享参数、不同层参数不同。原论文d_model=512、d_ff=2048是其配置，不能泛化为所有FFN固定宽度。门控激活与三矩阵结构另见激活页；残差是子层外的连接。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "mygpt-model.py:e05006957de4:c11035-12913"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "新增一手资料：机制与边界",
+          "guide": "对照以下完整论文原文深入阅读；论文算法不等于mygpt已实现能力，性能不跨配置移植。",
+          "evidence_ids": [
+            "depth-2002.05202:2f0b42e51459:c2216-3968",
+            "depth-2002.05202:2f0b42e51459:c3762-4507"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c11035-12913",
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "mygpt-model.py:e05006957de4:c2583-4229",
+            "mygpt-readme.md:2d20f1a5d663:c0-2086",
+            "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "normalization",
+      "title": "归一化总览与RMSNorm",
+      "aliases": [
+        "RMSNorm",
+        "归一化"
+      ],
+      "guide": "本页比较归一化函数并聚焦RMSNorm；LayerNorm统计轴、BatchNorm和Pre/Post-LN分别沿专页阅读。区分原论文函数、本地配置与实验观测。",
+      "source_ids": [
+        "pytorch-rmsnorm-2.11",
+        "depth-1910.07467",
+        "depth-2002.04745",
+        "mygpt-model.py",
+        "mygpt-results-rmsnorm_metrics.json"
+      ],
+      "evidence_ids": [
+        "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532",
+        "depth-1910.07467:14a6a097250f:c0-2733",
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+        "depth-2002.04745:8e1c3e3564f6:c7049-9310",
+        "depth-1910.07467:14a6a097250f:c3581-5993",
+        "depth-1910.07467:14a6a097250f:c7675-10103",
+        "pytorch-rmsnorm-2.11:9d22e35bf7b3:c1267-2350",
+        "mygpt-model.py:e05006957de4:c2583-4229",
+        "mygpt-model.py:e05006957de4:c1194-2694",
+        "mygpt-results-rmsnorm_metrics.json:25396ba25fac:c0-1356"
+      ],
+      "related": [
+        "training",
+        "gpt",
+        "measurement",
+        "pre-ln",
+        "batchnorm",
+        "layernorm"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "RMSNorm函数与归一化轴",
+          "guide": "固定官方接口为y_i=x_i/sqrt(ε+mean(x²))×γ_i，沿normalized_shape指定的末尾维度统计；不执行减均值。与LN的中心化、偏置配置和Pre/Post-LN的放置位置分开比较；去掉运算不等于已验证本机速度收益。",
+          "evidence_ids": [
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532",
+            "depth-1910.07467:14a6a097250f:c0-2733"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "新增一手资料：机制与边界",
+          "guide": "对照以下完整论文原文深入阅读；论文算法不等于mygpt已实现能力，性能不跨配置移植。",
+          "evidence_ids": [
+            "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+            "depth-2002.04745:8e1c3e3564f6:c7049-9310",
+            "depth-1910.07467:14a6a097250f:c3581-5993",
+            "depth-1910.07467:14a6a097250f:c7675-10103"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532",
+            "pytorch-rmsnorm-2.11:9d22e35bf7b3:c1267-2350"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c2583-4229",
+            "mygpt-model.py:e05006957de4:c1194-2694"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-rmsnorm_metrics.json:25396ba25fac:c0-1356"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "kv-cache",
+      "title": "KV Cache 增量解码",
+      "aliases": [
+        "KV Cache",
+        "kvcache",
+        "kvcahe",
+        "KV缓存",
+        "缓存",
+        "incremental decoding"
+      ],
+      "guide": "先读缓存为何可复用，再看逐步更新、注意力掩码与位置索引。4.49.0和4.57.0文档必须按各自版本阅读。",
+      "source_ids": [
+        "hf-transformers-cache-4.57.0",
+        "hf-transformers-cache-practices-4.49.0",
+        "paper-1911.02150",
+        "mygpt-model.py",
+        "mygpt-sample.py",
+        "mygpt-results-bench_speedup_vs_batch.json"
+      ],
+      "evidence_ids": [
+        "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
+        "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+        "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+        "paper-1911.02150:292091205298:c0-1731",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "mygpt-model.py:e05006957de4:c15869-17957",
+        "mygpt-sample.py:a522fb11f829:c2447-3941",
+        "mygpt-sample.py:a522fb11f829:c867-2738",
+        "mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376"
+      ],
+      "related": [
+        "prefill-decode",
+        "gqa",
+        "paged-kv",
+        "measurement"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "缓存复用前提、当前K/V与逐层状态",
+          "guide": "在所引因果自注意力设置中，过去表示不随未来token改变，因此过去K/V可复用。decode仍需计算当前Q、K、V并追加当前K/V，每层有各自缓存；不是只计算Q。位置、掩码、模型状态与缓存内容须一致。缓存机制、GQA头数、分页内存及调度是不同层面的设计。",
+          "evidence_ids": [
+            "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
+            "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+            "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+            "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+            "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+            "paper-1911.02150:292091205298:c0-1731"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c14266-16158",
+            "mygpt-model.py:e05006957de4:c15869-17957",
+            "mygpt-sample.py:a522fb11f829:c2447-3941",
+            "mygpt-sample.py:a522fb11f829:c867-2738"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "prefill-decode",
+      "title": "Prefill 与 Decode",
+      "aliases": [
+        "prefill",
+        "decode",
+        "增量解码",
+        "预填充"
+      ],
+      "guide": "沿mygpt整段输入与增量生成代码追踪缓存生命周期，并结合官方缓存文档检查位置及掩码约束。",
+      "source_ids": [
+        "hf-transformers-cache-4.57.0",
+        "hf-transformers-cache-practices-4.49.0",
+        "paper-1911.02150",
+        "mygpt-model.py",
+        "mygpt-paged_kv.py"
+      ],
+      "evidence_ids": [
+        "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+        "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c3979-6531",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+        "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+        "paper-1911.02150:292091205298:c0-1731",
+        "mygpt-model.py:e05006957de4:c15869-17957",
+        "mygpt-model.py:e05006957de4:c0-1426",
+        "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+        "mygpt-paged_kv.py:4453b1b84e0f:c6418-8055"
+      ],
+      "related": [
+        "kv-cache",
+        "causal-mask",
+        "paged-kv",
+        "continuous-batching"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+            "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+            "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c3979-6531",
+            "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+            "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+            "paper-1911.02150:292091205298:c0-1731"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c15869-17957",
+            "mygpt-model.py:e05006957de4:c0-1426",
+            "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+            "mygpt-paged_kv.py:4453b1b84e0f:c6418-8055"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "mha",
+      "title": "MHA 多头注意力",
+      "aliases": [
+        "MHA",
+        "multi-head attention",
+        "多头注意力"
+      ],
+      "guide": "先读多头投影、拼接及输出公式，再与GQA/MQA的查询头和KV头配置对照；头数取值需注明模型。",
+      "source_ids": [
+        "paper-1706.03762",
+        "paper-2305.13245",
+        "mygpt-model.py"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "paper-2305.13245:3ed3d65bc419:c2100-4367",
+        "paper-2305.13245:3ed3d65bc419:c0-2100",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-model.py:e05006957de4:c1194-2694"
+      ],
+      "related": [
+        "gqa",
+        "mqa",
+        "self-attention"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "paper-2305.13245:3ed3d65bc419:c2100-4367",
+            "paper-2305.13245:3ed3d65bc419:c0-2100"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c3941-5197",
+            "mygpt-model.py:e05006957de4:c1194-2694"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "gqa",
+      "title": "GQA 分组查询注意力",
+      "aliases": [
+        "GQA",
+        "grouped-query attention",
+        "分组查询注意力"
+      ],
+      "guide": "先读GQA定义，再核对本地头数约束、KV缓存形状与原始测量；质量与显存结果属于不同实验。",
+      "source_ids": [
+        "paper-2305.13245",
+        "mygpt-model.py",
+        "mygpt-results-bench_gqa_memory.json",
+        "mygpt-results-gqa1_metrics.json",
+        "mygpt-results-gqa2_metrics.json"
+      ],
+      "evidence_ids": [
+        "paper-2305.13245:3ed3d65bc419:c4200-6482",
+        "paper-2305.13245:3ed3d65bc419:c13133-15425",
+        "mygpt-model.py:e05006957de4:c0-1426",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-results-bench_gqa_memory.json:12a3cf8406d0:c0-612",
+        "mygpt-results-gqa1_metrics.json:2a751af5abd5:c0-1360",
+        "mygpt-results-gqa2_metrics.json:356f7ea90b77:c0-1359"
+      ],
+      "related": [
+        "mha",
+        "mqa",
+        "kv-cache"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-2305.13245:3ed3d65bc419:c4200-6482",
+            "paper-2305.13245:3ed3d65bc419:c13133-15425"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c0-1426",
+            "mygpt-model.py:e05006957de4:c3941-5197"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-bench_gqa_memory.json:12a3cf8406d0:c0-612",
+            "mygpt-results-gqa1_metrics.json:2a751af5abd5:c0-1360",
+            "mygpt-results-gqa2_metrics.json:356f7ea90b77:c0-1359"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "mqa",
+      "title": "MQA 多查询注意力",
+      "aliases": [
+        "MQA",
+        "multi-query attention",
+        "多查询注意力"
+      ],
+      "guide": "先读MQA原始来源摘录，再与GQA定义及本地缓存测量对照。摘录不是完整论文，不能据此声称覆盖全部实验。",
+      "source_ids": [
+        "paper-1911.02150",
+        "paper-2305.13245",
+        "mygpt-results-bench_gqa_memory.json"
+      ],
+      "evidence_ids": [
+        "paper-1911.02150:292091205298:c0-1731",
+        "paper-2305.13245:3ed3d65bc419:c4200-6482",
+        "paper-2305.13245:3ed3d65bc419:c13133-15425",
+        "mygpt-results-bench_gqa_memory.json:12a3cf8406d0:c0-612"
+      ],
+      "related": [
+        "mha",
+        "gqa",
+        "kv-cache"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-1911.02150:292091205298:c0-1731",
+            "paper-2305.13245:3ed3d65bc419:c4200-6482",
+            "paper-2305.13245:3ed3d65bc419:c13133-15425"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-bench_gqa_memory.json:12a3cf8406d0:c0-612"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "sdpa",
+      "title": "PyTorch SDPA 与后端选择",
+      "aliases": [
+        "SDPA",
+        "scaled_dot_product_attention",
+        "cuDNN",
+        "fused attention",
+        "融合注意力"
+      ],
+      "guide": "先核对PyTorch接口、掩码和后端限制，再读mygpt实际调用与后端探测；接口名称不构成实际内核运行证明。",
+      "source_ids": [
+        "pytorch-sdpa-2.11",
+        "mygpt-model.py",
+        "mygpt-bench.py",
+        "mygpt-results-bench_attention_impls.json"
+      ],
+      "evidence_ids": [
+        "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "mygpt-model.py:e05006957de4:c1194-2694",
+        "mygpt-model.py:e05006957de4:c8927-10267",
+        "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+        "mygpt-bench.py:4ab37b20b5e7:c9306-11043",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c4113-5673",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331"
+      ],
+      "related": [
+        "flash-attention",
+        "online-softmax",
+        "measurement"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "pytorch-sdpa-2.11:42a07d742f7e:c0-2094"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c1194-2694",
+            "mygpt-model.py:e05006957de4:c8927-10267",
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+            "mygpt-bench.py:4ab37b20b5e7:c9306-11043"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c4113-5673",
+            "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "flash-attention",
+      "title": "FlashAttention 与 IO 优化",
+      "aliases": [
+        "FlashAttention",
+        "Flash Attention",
+        "闪存注意力"
+      ],
+      "guide": "从论文的精确注意力与IO目标读起，再核对分块算法。将论文算法、本地SDPA入口和实际可用后端分开。",
+      "source_ids": [
+        "paper-2205.14135",
+        "pytorch-sdpa-2.11",
+        "depth-2307.08691",
+        "mygpt-readme.md"
+      ],
+      "evidence_ids": [
+        "paper-2205.14135:b86de4ee5c52:c0-2471",
+        "paper-2205.14135:b86de4ee5c52:c3556-5723",
+        "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+        "depth-2307.08691:f917fc544aae:c3449-6144",
+        "depth-2307.08691:f917fc544aae:c21985-24558",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+        "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+        "mygpt-readme.md:2d20f1a5d663:c8442-10433"
+      ],
+      "related": [
+        "sdpa",
+        "online-softmax",
+        "measurement"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "精确注意力、IO优化与计算复杂度",
+          "guide": "FlashAttention分块并用在线softmax减少HBM读写，避免完整注意力矩阵的物化；精确密集注意力仍需处理token对，不能把显存优化说成线性算术复杂度或近似注意力。FlashAttention-2进一步优化并行与工作划分；调用SDPA不证明选中了某个Flash内核。",
+          "evidence_ids": [
+            "paper-2205.14135:b86de4ee5c52:c0-2471",
+            "paper-2205.14135:b86de4ee5c52:c3556-5723",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "depth-2307.08691:f917fc544aae:c3449-6144",
+            "depth-2307.08691:f917fc544aae:c21985-24558"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "新增一手资料：机制与边界",
+          "guide": "对照以下完整论文原文深入阅读；论文算法不等于mygpt已实现能力，性能不跨配置移植。",
+          "evidence_ids": [
+            "depth-2307.08691:f917fc544aae:c3449-6144",
+            "depth-2307.08691:f917fc544aae:c21985-24558"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-2205.14135:b86de4ee5c52:c0-2471",
+            "paper-2205.14135:b86de4ee5c52:c3556-5723",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+            "mygpt-readme.md:2d20f1a5d663:c8442-10433"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "online-softmax",
+      "title": "分块注意力与在线 Softmax",
+      "aliases": [
+        "online softmax",
+        "chunked attention",
+        "在线softmax",
+        "分块注意力"
+      ],
+      "guide": "先读分块归一化的原文，再逐行对照running max、running sum与重缩放代码；纯PyTorch分块不等于融合内核。",
+      "source_ids": [
+        "paper-2205.14135",
+        "mygpt-model.py",
+        "mygpt-results-bench_attention_impls.json"
+      ],
+      "evidence_ids": [
+        "paper-2205.14135:b86de4ee5c52:c13633-15122",
+        "paper-2205.14135:b86de4ee5c52:c15122-16331",
+        "paper-2205.14135:b86de4ee5c52:c11869-13995",
+        "mygpt-model.py:e05006957de4:c10000-11173",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c1321-2882",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528"
+      ],
+      "related": [
+        "flash-attention",
+        "sdpa"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-2205.14135:b86de4ee5c52:c13633-15122",
+            "paper-2205.14135:b86de4ee5c52:c15122-16331",
+            "paper-2205.14135:b86de4ee5c52:c11869-13995"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c10000-11173",
+            "mygpt-model.py:e05006957de4:c3941-5197"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c1321-2882",
+            "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "paged-kv",
+      "title": "分页 KV Cache 与前缀共享",
+      "aliases": [
+        "PagedAttention",
+        "paged kv",
+        "分页缓存",
+        "分页KV",
+        "前缀共享",
+        "vLLM"
+      ],
+      "guide": "先读逻辑块到物理块的映射，再看本地池、块表与共享代码。论文系统的能力不能直接归于Python原型。",
+      "source_ids": [
+        "paper-2309.06180",
+        "mygpt-paged_kv.py",
+        "mygpt-readme.md",
+        "depth-orca-osdi22",
+        "depth-2309.06180",
+        "mygpt-results-bench_paged_kv.json"
+      ],
+      "evidence_ids": [
+        "paper-2309.06180:7ba2ff703be1:c14989-17264",
+        "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+        "mygpt-paged_kv.py:4453b1b84e0f:c1976-3903",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+        "depth-orca-osdi22:b0b993441062:c22008-24173",
+        "depth-orca-osdi22:b0b993441062:c23849-26414",
+        "depth-2309.06180:4e592d02d9a3:c21000-23565",
+        "depth-2309.06180:4e592d02d9a3:c23235-24761",
+        "depth-2309.06180:4e592d02d9a3:c31560-34002",
+        "depth-2309.06180:4e592d02d9a3:c33679-36093",
+        "paper-2309.06180:7ba2ff703be1:c23494-24418",
+        "paper-2309.06180:7ba2ff703be1:c21043-23494",
+        "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+        "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c0-1544"
+      ],
+      "related": [
+        "kv-cache",
+        "prefill-decode",
+        "measurement",
+        "continuous-batching"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "内存组织与调度分开理解",
+          "guide": "分页KV用逻辑块到物理块的映射组织非连续缓存；前缀共享与写时复制依具体实现。Continuous batching处理请求的加入、完成和迭代调度，是另一层系统能力。mygpt只实现分页原型，README声明无写时复制和调度器。",
+          "evidence_ids": [
+            "paper-2309.06180:7ba2ff703be1:c14989-17264",
+            "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+            "mygpt-paged_kv.py:4453b1b84e0f:c1976-3903",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+            "depth-orca-osdi22:b0b993441062:c22008-24173",
+            "depth-orca-osdi22:b0b993441062:c23849-26414"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "新增一手资料：机制与边界",
+          "guide": "对照以下完整论文原文深入阅读；论文算法不等于mygpt已实现能力，性能不跨配置移植。",
+          "evidence_ids": [
+            "depth-2309.06180:4e592d02d9a3:c21000-23565",
+            "depth-2309.06180:4e592d02d9a3:c23235-24761",
+            "depth-2309.06180:4e592d02d9a3:c31560-34002",
+            "depth-2309.06180:4e592d02d9a3:c33679-36093"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原理与官方资料",
+          "guide": "按原文版本核对定义、公式与前提；网页摘录不等于完整文档。PDF数学符号可能存在提取失真，精确公式请同时核对原始PDF。",
+          "evidence_ids": [
+            "paper-2309.06180:7ba2ff703be1:c14989-17264",
+            "paper-2309.06180:7ba2ff703be1:c23494-24418",
+            "paper-2309.06180:7ba2ff703be1:c21043-23494"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+            "mygpt-paged_kv.py:4453b1b84e0f:c1976-3903",
+            "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+            "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+            "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c0-1544"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": [
+        {
+          "concept": "本地分页实现",
+          "limitation": "README明确无写时复制/调度器，注意力仍收集连续张量；不能等同完整vLLM系统。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ]
+        }
+      ]
+    },
+    {
+      "page_id": "training",
+      "title": "训练：优化器、学习率与数值精度",
+      "aliases": [
+        "training",
+        "训练",
+        "bf16",
+        "fp32",
+        "TinyShakespeare",
+        "梯度检查点"
+      ],
+      "guide": "先读原始Transformer的优化器、学习率和正则化，再对照mygpt自己的训练代码、精度与原始JSON。论文配方和本地配方是两组配置，不能混成同一实验。",
+      "source_ids": [
+        "paper-1706.03762",
+        "mygpt-train.py",
+        "mygpt-readme.md",
+        "mygpt-results-base_metrics.json",
+        "mygpt-results-gqa1_metrics.json",
+        "mygpt-results-gqa2_metrics.json"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c20388-21360",
+        "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+        "mygpt-train.py:52262ac90caa:c4587-6729",
+        "mygpt-train.py:52262ac90caa:c6470-7904",
+        "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+        "mygpt-results-base_metrics.json:b0fb3bff29ed:c0-1363",
+        "mygpt-results-gqa1_metrics.json:2a751af5abd5:c0-1360",
+        "mygpt-results-gqa2_metrics.json:356f7ea90b77:c0-1359"
+      ],
+      "related": [
+        "gpt",
+        "normalization",
+        "measurement",
+        "dropout",
+        "batchnorm"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "原始Transformer优化器、学习率与正则化",
+          "guide": "原论文Adam β1=0.9、β2=0.98、ε=10^-9；lr=d_model^(-1/2)×min(step^(-1/2),step×warmup^(-3/2))，warmup=4000。原论文dropout与label smoothing并非同一机制；mygpt采用自己的warmup/cosine与训练配置，不能混合成一个统一配方。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c20388-21360",
+            "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+            "mygpt-train.py:52262ac90caa:c4587-6729",
+            "mygpt-train.py:52262ac90caa:c6470-7904"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-train.py:52262ac90caa:c4587-6729",
+            "mygpt-train.py:52262ac90caa:c6470-7904",
+            "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+            "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-base_metrics.json:b0fb3bff29ed:c0-1363",
+            "mygpt-results-gqa1_metrics.json:2a751af5abd5:c0-1360",
+            "mygpt-results-gqa2_metrics.json:356f7ea90b77:c0-1359"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": [
+        {
+          "concept": "梯度检查点",
+          "limitation": "mygpt未实现梯度检查点；不能将其他论文中的重计算说明视为该工程实现。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ]
+        }
+      ]
+    },
+    {
+      "page_id": "measurement",
+      "title": "性能测量、正确性与适用条件",
+      "aliases": [
+        "benchmark",
+        "speedup",
+        "性能",
+        "显存",
+        "加速",
+        "batch",
+        "数值等价"
+      ],
+      "guide": "先看计时与同步代码，再查环境和原始JSON。区分前向/生成、最快重复值/统计均值，以及容量/速度收益。",
+      "source_ids": [
+        "mygpt-bench.py",
+        "mygpt-readme.md",
+        "mygpt-results-bench_speedup_vs_batch.json",
+        "mygpt-results-bench_forward_cost.json",
+        "mygpt-requirements.txt"
+      ],
+      "evidence_ids": [
+        "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+        "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+        "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+        "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+        "mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376",
+        "mygpt-results-bench_forward_cost.json:f3529c0f7798:c0-284",
+        "mygpt-requirements.txt:7d5067774196:c0-202"
+      ],
+      "related": [
+        "kv-cache",
+        "sdpa",
+        "paged-kv",
+        "training"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+            "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+            "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+            "mygpt-readme.md:2d20f1a5d663:c6983-8692"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "本地实验与复现环境",
+          "guide": "查看原始配置和测量，限定设备、精度、规模、批量与计时方法；不推广为普遍收益。",
+          "evidence_ids": [
+            "mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376",
+            "mygpt-results-bench_forward_cost.json:f3529c0f7798:c0-284",
+            "mygpt-requirements.txt:7d5067774196:c0-202"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "speculative",
+      "title": "推测解码与未实现技术",
+      "aliases": [
+        "speculative decoding",
+        "推测解码",
+        "未实现"
+      ],
+      "guide": "本页仅整理mygpt README中未采用推测解码的评估与限制；不是该算法完整教程，也不是已实现系统的性能报告。",
+      "source_ids": [
+        "mygpt-readme.md"
+      ],
+      "evidence_ids": [
+        "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "measurement",
+        "kv-cache"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "existing-source-reading-map-v2",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "mygpt实现与工程说明",
+          "guide": "对照代码和README，区分已实现、可选路径与未实现能力。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+            "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": [
+        {
+          "concept": "推测解码",
+          "limitation": "仅有README成本评估，未实现，也未收录该算法完整原始论文。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c10199-12641"
+          ]
+        }
+      ]
+    },
+    {
+      "page_id": "rope",
+      "title": "RoPE旋转位置编码",
+      "aliases": [
+        "RoPE",
+        "rotary position embedding",
+        "旋转位置编码"
+      ],
+      "guide": "阅读旋转公式、Q/K位置与相对距离性质，再检查缓存位置一致性；不把RoPE与加法PE混为一谈。",
+      "source_ids": [
+        "depth-2104.09864",
+        "mygpt-readme.md"
+      ],
+      "evidence_ids": [
+        "depth-2104.09864:abd4e80aae4d:c10919-13279",
+        "depth-2104.09864:abd4e80aae4d:c14290-15871",
+        "depth-2104.09864:abd4e80aae4d:c3293-6099",
+        "depth-2104.09864:abd4e80aae4d:c5673-7829",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "position",
+        "self-attention",
+        "kv-cache"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-depth-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "旋转构造与相对位置",
+          "guide": "RoPE作用于投影后的Q/K：q_m=R(m)W_q x_m，k_n=R(n)W_k x_n。由于R(m)^T R(n)=R(n-m)，点积体现相对位移。每对通道用sin/cos旋转，原论文给出频率theta_i=10000^(-2(i-1)/d)。位置索引、维度配对及缓存偏移需一致；这不保证任意长度外推质量。",
+          "evidence_ids": [
+            "depth-2104.09864:abd4e80aae4d:c10919-13279",
+            "depth-2104.09864:abd4e80aae4d:c14290-15871",
+            "depth-2104.09864:abd4e80aae4d:c3293-6099",
+            "depth-2104.09864:abd4e80aae4d:c5673-7829"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "实现与长度边界",
+          "guide": "论文性质不代表任意长度都保持质量。mygpt当前使用学习式位置表，README声明未采用RoPE；新增论文不改变工程实现。",
+          "evidence_ids": [
+            "depth-2104.09864:abd4e80aae4d:c10919-13279",
+            "depth-2104.09864:abd4e80aae4d:c14290-15871",
+            "depth-2104.09864:abd4e80aae4d:c3293-6099",
+            "depth-2104.09864:abd4e80aae4d:c5673-7829",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": [
+        {
+          "concept": "RoPE",
+          "limitation": "现已收录原始论文机制；mygpt仍未实现这一算法，资料扩充不改变工程实现。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ]
+        }
+      ]
+    },
+    {
+      "page_id": "pre-ln",
+      "title": "Pre-LN与Post-LN",
+      "aliases": [
+        "pre-LN",
+        "preln",
+        "post-LN",
+        "postln",
+        "前置归一化",
+        "后置归一化"
+      ],
+      "guide": "先比较子层计算顺序，再看初始化梯度、warm-up和最终归一化；不把结构差异泛化为固定速度提升。",
+      "source_ids": [
+        "depth-2002.04745",
+        "mygpt-model.py"
+      ],
+      "evidence_ids": [
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+        "depth-2002.04745:8e1c3e3564f6:c7049-9310",
+        "mygpt-model.py:e05006957de4:c11035-12913",
+        "mygpt-model.py:e05006957de4:c12523-14451"
+      ],
+      "related": [
+        "normalization",
+        "training",
+        "transformer"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-depth-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "残差与归一化位置",
+          "guide": "Post-LN：y=LN(x+Sublayer(x))；Pre-LN：y=x+Sublayer(LN(x))。比较的是归一化与残差的位置，不是LayerNorm/RMSNorm函数的选择；末端归一化和初始化梯度另需按具体架构检查。",
+          "evidence_ids": [
+            "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+            "depth-2002.04745:8e1c3e3564f6:c7049-9310"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "梯度、warm-up与适用条件",
+          "guide": "论文从初始化梯度分析并用实验比较warm-up需求；不能推出所有Pre-LN模型都无需warm-up或训练技巧。",
+          "evidence_ids": [
+            "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+            "depth-2002.04745:8e1c3e3564f6:c7049-9310"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt实现核对",
+          "guide": "查看Block.forward中ln_1/ln_2与两条残差的相对位置，不以配置名称代替代码。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c11035-12913",
+            "mygpt-model.py:e05006957de4:c12523-14451"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "activations",
+      "title": "FFN激活：ReLU、GELU与SwiGLU",
+      "aliases": [
+        "SwiGLU",
+        "ReLU",
+        "GELU",
+        "GLU",
+        "Swish",
+        "激活函数"
+      ],
+      "guide": "比较公式、投影数量、参数量匹配和来源实验；性能结论限定论文设置，不能承诺更换激活即普遍更好。",
+      "source_ids": [
+        "depth-2002.05202",
+        "paper-1706.03762",
+        "mygpt-model.py",
+        "foundation-pytorch-activation-2.11",
+        "foundation-1606.08415",
+        "mygpt-readme.md"
+      ],
+      "evidence_ids": [
+        "depth-2002.05202:2f0b42e51459:c2216-3968",
+        "depth-2002.05202:2f0b42e51459:c3762-4507",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c11035-12913",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "foundation-pytorch-activation-2.11:8b8076c9383f:c1831-4154",
+        "foundation-pytorch-activation-2.11:8b8076c9383f:c19312-21442",
+        "foundation-1606.08415:54bf88ceea5f:c2784-4719",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "mlp",
+        "normalization",
+        "gpt"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-depth-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "基础FFN与门控公式",
+          "guide": "原始ReLU FFN为max(0,xW1+b1)W2+b2；论文的无偏置SwiGLU FFN为(Swish_1(xW)逐元素乘xV)W2，Swish_1(z)=z×sigmoid(z)。门控有三张投影矩阵，基础FFN有两张。非线性、分支相乘与输出投影需分别理解。",
+          "evidence_ids": [
+            "depth-2002.05202:2f0b42e51459:c2216-3968",
+            "depth-2002.05202:2f0b42e51459:c3762-4507"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "中间宽度与参数匹配",
+          "guide": "忽略偏置时，普通FFN约2×d×h个参数，门控FFN约3×d×h_gate。匹配参数量得到h_gate=2h/3：若h=4d则约为8d/3。论文例子d=768，ReLU宽度3072、门控宽度2048；这不是激活函数固有维度，其他模型需核对具体配置。",
+          "evidence_ids": [
+            "depth-2002.05202:2f0b42e51459:c2216-3968",
+            "depth-2002.05202:2f0b42e51459:c3762-4507"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原始ReLU与本地GELU实现",
+          "guide": "分别核对原论文FFN和mygpt MLP；不同模型的非线性、宽度及偏置配置不能混用。mygpt未实现SwiGLU。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+            "mygpt-model.py:e05006957de4:c11035-12913",
+            "mygpt-model.py:e05006957de4:c12523-14451"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "ReLU、GELU与门控的性质和代价",
+          "guide": "ReLU=max(0,x)，负半轴导数为0；持续落在负半轴可能使单元缺少该支梯度，这是函数性质推论。GELU=xΦ(x)，是确定性平滑非线性，不能说它在推理时随机采样。SwiGLU有门控乘法和三矩阵，参数匹配时需缩小中间宽度；平滑、负值保留、算子数与吞吐是不同维度，实际收益限论文与硬件，不能宣称SwiGLU在所有场景更快更准。",
+          "evidence_ids": [
+            "foundation-pytorch-activation-2.11:8b8076c9383f:c1831-4154",
+            "foundation-pytorch-activation-2.11:8b8076c9383f:c19312-21442",
+            "foundation-1606.08415:54bf88ceea5f:c2784-4719",
+            "depth-2002.05202:2f0b42e51459:c2216-3968"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": [
+        {
+          "concept": "SwiGLU",
+          "limitation": "现已收录原始论文机制；mygpt仍未实现这一算法，资料扩充不改变工程实现。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ]
+        }
+      ]
+    },
+    {
+      "page_id": "tokenizer",
+      "title": "Tokenizer：BPE、WordPiece、Unigram与SentencePiece",
+      "aliases": [
+        "tokenizer",
+        "tokenization",
+        "分词",
+        "BPE",
+        "WordPiece",
+        "Unigram",
+        "SentencePiece",
+        "字节分词"
+      ],
+      "guide": "输入文本如何成为token ID，再如何交给embedding；比较算法、词表、未知符号与规范化，避免混同分词和向量化。",
+      "source_ids": [
+        "depth-tokenizer-hf-4.57",
+        "depth-1808.06226",
+        "depth-1508.07909",
+        "depth-1804.10959",
+        "mygpt-readme.md",
+        "foundation-bert-tokenizer-4.57",
+        "paper-1810.04805",
+        "paper-1706.03762"
+      ],
+      "evidence_ids": [
+        "depth-tokenizer-hf-4.57:8e310fb8d331:c752-1751",
+        "depth-tokenizer-hf-4.57:8e310fb8d331:c8001-9978",
+        "depth-1808.06226:fa30b4a82307:c7462-9739",
+        "depth-1808.06226:fa30b4a82307:c9555-11805",
+        "depth-1508.07909:e8c1f2db5b4b:c10093-12489",
+        "depth-1508.07909:e8c1f2db5b4b:c12489-14823",
+        "depth-1804.10959:365099810758:c7131-9576",
+        "depth-1804.10959:365099810758:c11015-13351",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "depth-tokenizer-hf-4.57:8e310fb8d331:c12609-13933",
+        "foundation-bert-tokenizer-4.57:15f92ca3917a:c16977-19600",
+        "paper-1810.04805:6bb076ca96de:c12186-14638",
+        "paper-1706.03762:eee8b5a0bcc2:c18059-20718"
+      ],
+      "related": [
+        "embedding",
+        "gpt",
+        "training"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-depth-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "分词管线与算法分类",
+          "guide": "区分规范化、预分词、子词模型、特殊token及解码。SentencePiece是工具与处理框架，支持BPE及Unigram，不能将工具名直接等同单一算法。",
+          "evidence_ids": [
+            "depth-tokenizer-hf-4.57:8e310fb8d331:c752-1751",
+            "depth-tokenizer-hf-4.57:8e310fb8d331:c8001-9978",
+            "depth-1808.06226:fa30b4a82307:c7462-9739",
+            "depth-1808.06226:fa30b4a82307:c9555-11805"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "BPE与WordPiece",
+          "guide": "BPE从符号开始迭代合并；WordPiece及字节级处理的区别按官方说明阅读。词表大小不等于字符数，token也不等于中文单字或英文单词。",
+          "evidence_ids": [
+            "depth-1508.07909:e8c1f2db5b4b:c10093-12489",
+            "depth-1508.07909:e8c1f2db5b4b:c12489-14823",
+            "depth-tokenizer-hf-4.57:8e310fb8d331:c752-1751",
+            "depth-tokenizer-hf-4.57:8e310fb8d331:c8001-9978"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "Unigram与子词正则化",
+          "guide": "Unigram从概率模型角度处理候选切分；训练时多种切分的正则化与推理时确定性编码需要分别说明。",
+          "evidence_ids": [
+            "depth-1804.10959:365099810758:c7131-9576",
+            "depth-1804.10959:365099810758:c11015-13351"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "mygpt范围",
+          "guide": "本地项目使用字符级词表；本页新增子词算法资料不表示mygpt已换用BPE或SentencePiece。",
+          "evidence_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c0-2086"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "WordPiece算法、最长匹配与应用原文",
+          "guide": "官方v4.57说明WordPiece以概率/似然思想选择合并，与按频次选合并的BPE区分；固定BERT实现采用最长匹配子词、词内##标记，无法完成切分或超长词可变为UNK。BERT使用WordPiece；原始Transformer英德实验明确采用BPE，英法实验另以word-piece词表表述，不能由相似术语推断算法完全相同。算法说明与具体实现应分别核对，不能推广为所有tokenizer行为。",
+          "evidence_ids": [
+            "depth-tokenizer-hf-4.57:8e310fb8d331:c12609-13933",
+            "foundation-bert-tokenizer-4.57:15f92ca3917a:c16977-19600",
+            "paper-1810.04805:6bb076ca96de:c12186-14638",
+            "paper-1706.03762:eee8b5a0bcc2:c18059-20718"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "embedding",
+      "title": "Token Embedding、位置嵌入与输出权重共享",
+      "aliases": [
+        "embedding",
+        "token embedding",
+        "词嵌入",
+        "嵌入",
+        "wte",
+        "权重绑定"
+      ],
+      "guide": "从token ID进入网络追踪到logits；输入嵌入、位置编码、上下文表示与输出投影是不同概念。",
+      "source_ids": [
+        "paper-1706.03762",
+        "author-t2t-v1.2.0-modalities",
+        "author-tensorflow-v1.3.0-init-ops",
+        "mygpt-model.py"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+        "author-t2t-v1.2.0-modalities:b5f73ae48f67:c1130-3425",
+        "author-tensorflow-v1.3.0-init-ops:38d036411557:c8163-9257",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "paper-1706.03762:eee8b5a0bcc2:c14608-17145"
+      ],
+      "related": [
+        "tokenizer",
+        "position",
+        "gpt",
+        "mlp"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-depth-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "Embedding缩放：原论文、初始化与条件方差",
+          "guide": "阅读固定版本的原始代码，核对实际变量来源、操作顺序与配置；代码行为不代表作者动机或通用性能结论。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+            "author-t2t-v1.2.0-modalities:b5f73ae48f67:c1130-3425",
+            "author-tensorflow-v1.3.0-init-ops:38d036411557:c8163-9257"
+          ],
+          "navigation_kind": "premise_bundle"
+        },
+        {
+          "heading": "ID查表与张量维度",
+          "guide": "词表大小V、模型宽度d时，token embedding是V×d的可学习表；B×T的token ID查表得到B×T×d。查表输出经后续层形成上下文表示；分词器产生离散ID，embedding负责映射向量，二者不能混同。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "mygpt-model.py:e05006957de4:c14266-16158"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "位置与输出层",
+          "guide": "对照wpe相加、pos_offset和lm_head，以及输出权重与wte的共享赋值。实现形状和共享方式以本地代码为准。",
+          "evidence_ids": [
+            "mygpt-model.py:e05006957de4:c12523-14451",
+            "mygpt-model.py:e05006957de4:c14266-16158"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原论文sqrt(d_model)缩放及解释边界",
+          "guide": "原论文明确在embedding层将权重乘sqrt(d_model)，该d_model是隐藏宽度而非词表大小；同时声明embedding与pre-softmax权重共享。原文没有给出这一缩放唯一必要性的证明。可在声明初始化方差和位置编码幅值后讨论数值尺度，但不能编造作者意图或要求所有Transformer照搬，mygpt也需单独核查。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+            "paper-1706.03762:eee8b5a0bcc2:c13665-14608"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "continuous-batching",
+      "title": "Continuous Batching与迭代级调度",
+      "aliases": [
+        "continuous batching",
+        "continuous batch",
+        "连续批处理",
+        "动态批处理",
+        "iteration-level scheduling",
+        "ORCA"
+      ],
+      "guide": "以ORCA原始论文理解迭代级调度，再结合PagedAttention看缓存管理；TTFT、逐token延迟和吞吐需分开。",
+      "source_ids": [
+        "depth-orca-osdi22",
+        "mygpt-readme.md"
+      ],
+      "evidence_ids": [
+        "depth-orca-osdi22:b0b993441062:c22008-24173",
+        "depth-orca-osdi22:b0b993441062:c23849-26414",
+        "depth-orca-osdi22:b0b993441062:c643-3163",
+        "depth-orca-osdi22:b0b993441062:c5343-8296",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "paged-kv",
+        "prefill-decode",
+        "measurement"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-depth-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "请求级与迭代级调度",
+          "guide": "ORCA按模型迭代而非整请求调度，从而更灵活地安排不同长度请求。阅读完成、加入批次和调度边界，不把批大小增大直接称为continuous batching。",
+          "evidence_ids": [
+            "depth-orca-osdi22:b0b993441062:c22008-24173",
+            "depth-orca-osdi22:b0b993441062:c23849-26414",
+            "depth-orca-osdi22:b0b993441062:c643-3163",
+            "depth-orca-osdi22:b0b993441062:c5343-8296"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "Selective Batching与系统约束",
+          "guide": "ORCA只对选定操作合批；连续批处理是调度组织问题，分页KV是内存组织问题，二者可以配合但不互相等同。",
+          "evidence_ids": [
+            "depth-orca-osdi22:b0b993441062:c22008-24173",
+            "depth-orca-osdi22:b0b993441062:c23849-26414",
+            "depth-orca-osdi22:b0b993441062:c643-3163",
+            "depth-orca-osdi22:b0b993441062:c5343-8296"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "工程与指标边界",
+          "guide": "mygpt分页原型没有调度器。论文吞吐/延迟结果受模型、硬件及负载约束，不能转记为本Demo性能。",
+          "evidence_ids": [
+            "depth-orca-osdi22:b0b993441062:c22008-24173",
+            "depth-orca-osdi22:b0b993441062:c23849-26414",
+            "depth-orca-osdi22:b0b993441062:c643-3163",
+            "depth-orca-osdi22:b0b993441062:c5343-8296",
+            "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "forward-flow",
+      "title": "Transformer前向流程：输入、层堆叠与输出概率",
+      "aliases": [
+        "前向流程",
+        "完整前向",
+        "完整流程",
+        "forward pass",
+        "transformer pipeline",
+        "从输入token到输出token"
+      ],
+      "guide": "按阶段阅读原文，区分原始encoder-decoder与decoder-only。此页是来源导航，不是问答预置答案。",
+      "source_ids": [
+        "paper-1706.03762",
+        "mygpt-readme.md",
+        "mygpt-model.py"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+        "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-model.py:e05006957de4:c12523-14451"
+      ],
+      "related": [
+        "transformer",
+        "tokenizer",
+        "embedding",
+        "position",
+        "self-attention",
+        "mlp",
+        "gpt",
+        "pre-ln"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "source-linked-workflow-navigation-v1",
+      "navigation_kind": "workflow",
+      "reading_sections": [
+        {
+          "heading": "输入与位置",
+          "guide": "先读原文的token嵌入与位置表示，再检查实现采用的具体位置方案；不要把原论文正弦PE泛化到全部模型。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+            "paper-1706.03762:eee8b5a0bcc2:c14608-17145"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "层内运算与架构边界",
+          "guide": "沿架构图核对注意力、逐位置FFN、残差及归一化的顺序。原论文为encoder-decoder；decoder-only省去编码器和交叉注意力，归一化位置以具体实现为准。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+            "mygpt-readme.md:2d20f1a5d663:c0-2086",
+            "mygpt-model.py:e05006957de4:c12523-14451"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "输出词表分布与生成循环",
+          "guide": "追踪隐藏表示到词表线性映射及softmax的原文。概率分布不等于已经选出token；选择规则及再次生成要另读相应实现，不能将某一种采样配置说成Transformer的固定步骤。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+            "mygpt-readme.md:2d20f1a5d663:c0-2086",
+            "mygpt-model.py:e05006957de4:c12523-14451"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "batchnorm",
+      "title": "BatchNorm：统计轴、训练与推理",
+      "aliases": [
+        "BatchNorm",
+        "Batch Normalization",
+        "BN",
+        "批归一化"
+      ],
+      "guide": "先明确归一化轴和统计来源，再讨论批大小、padding及分布变化；性能数字不能迁移到本项目。",
+      "source_ids": [
+        "foundation-1502.03167",
+        "foundation-pytorch-batchnorm-2.11",
+        "foundation-1607.06450"
+      ],
+      "evidence_ids": [
+        "foundation-1502.03167:ff1b9f13b590:c12196-14541",
+        "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131",
+        "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c11899-14252",
+        "foundation-1502.03167:ff1b9f13b590:c16449-18435",
+        "foundation-1607.06450:2e66a69eecc9:c5764-7454"
+      ],
+      "related": [
+        "layernorm",
+        "normalization",
+        "training"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "公式、统计轴与可学习参数",
+          "guide": "按原论文算法1阅读：μ_B为批均值，σ_B²为批内方差，y=γ(x−μ_B)/sqrt(σ_B²+ε)+β。PyTorch BatchNorm1d输入(N,C,L)时按每个通道汇总(N,L)，不是对每个token的特征维归一化。γ/β为可学习仿射参数；ε用于数值稳定。",
+          "evidence_ids": [
+            "foundation-1502.03167:ff1b9f13b590:c12196-14541",
+            "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131",
+            "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c11899-14252",
+            "foundation-1502.03167:ff1b9f13b590:c16449-18435"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "运行统计与train/eval差异",
+          "guide": "固定v2.11实现：默认训练前向使用有偏方差，running variance更新采用无偏估计；eval使用运行统计。momentum是运行统计更新系数，不是优化器动量。track_running_stats=False时eval仍用当前批统计，不能一概说BN推理总用历史均值。",
+          "evidence_ids": [
+            "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131",
+            "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c11899-14252"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "优点、限制与原论文解释的范围",
+          "guide": "原论文报告更快训练及一定正则化效果；这些是其任务结果。LN论文讨论BN对批量大小、序列变化及跨样本统计的依赖。不要把标题中的internal covariate shift当作已排除其他机制的唯一因果证明，也不要说Transformer数学上禁止BN。",
+          "evidence_ids": [
+            "foundation-1502.03167:ff1b9f13b590:c12196-14541",
+            "foundation-1502.03167:ff1b9f13b590:c16449-18435",
+            "foundation-1607.06450:2e66a69eecc9:c5764-7454"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "layernorm",
+      "title": "LayerNorm：特征维归一化与BN/RMSNorm区别",
+      "aliases": [
+        "LayerNorm",
+        "Layer Normalization",
+        "LN",
+        "层归一化"
+      ],
+      "guide": "区分归一化函数、统计轴和Pre/Post-LN；将适用理由与排他性断言分开。",
+      "source_ids": [
+        "foundation-1607.06450",
+        "foundation-pytorch-normalization-2.11",
+        "paper-1706.03762",
+        "depth-2002.04745"
+      ],
+      "evidence_ids": [
+        "foundation-1607.06450:2e66a69eecc9:c5764-7454",
+        "foundation-pytorch-normalization-2.11:fe394c3aea14:c1630-3907",
+        "foundation-pytorch-normalization-2.11:fe394c3aea14:c3565-6055",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+      ],
+      "related": [
+        "batchnorm",
+        "normalization",
+        "pre-ln",
+        "residual"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "公式、形状与统计来源",
+          "guide": "LN计算y=γ(x−μ)/sqrt(σ²+ε)+β。对(B,T,D)且normalized_shape=D的常见Transformer设置，每个token独立沿D统计；官方接口也支持多个末尾维度，不能把单一配置说成唯一合法轴。train与eval都使用输入统计。",
+          "evidence_ids": [
+            "foundation-1607.06450:2e66a69eecc9:c5764-7454",
+            "foundation-pytorch-normalization-2.11:fe394c3aea14:c1630-3907",
+            "foundation-pytorch-normalization-2.11:fe394c3aea14:c3565-6055"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "为何常用LN及结构位置",
+          "guide": "LN不引入跨样本归一化依赖，适合可变长度和不同批大小的序列处理；这不构成BN不能用于Transformer的证明。原始Transformer为Post-LN，Pre-LN则在子层前归一化，归一化函数与放置位置是两个独立问题。RMSNorm不减均值，另见对应原文。",
+          "evidence_ids": [
+            "foundation-1607.06450:2e66a69eecc9:c5764-7454",
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+            "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "residual",
+      "title": "残差连接：恒等路径、梯度与维度",
+      "aliases": [
+        "residual",
+        "残差",
+        "残差连接",
+        "shortcut"
+      ],
+      "guide": "原文机制与明示假设的公式推导分开；不将图像实验当成本项目收益。",
+      "source_ids": [
+        "foundation-1512.03385",
+        "paper-1706.03762",
+        "depth-2002.04745"
+      ],
+      "evidence_ids": [
+        "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+        "foundation-1512.03385:dace4e4f4f1a:c2137-4287",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+        "depth-2002.04745:8e1c3e3564f6:c7049-9310"
+      ],
+      "related": [
+        "forward-flow",
+        "pre-ln",
+        "layernorm",
+        "mlp"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "恒等分支与形状",
+          "guide": "残差块将目标写成x+F(x)，相加要求形状相容；原始Transformer子层和embedding输出宽度均为d_model。ResNet中的投影捷径属于其维度变化处理，不能直接说Transformer每个残差都另有投影。",
+          "evidence_ids": [
+            "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+            "foundation-1512.03385:dace4e4f4f1a:c2137-4287",
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "梯度路径与归一化边界",
+          "guide": "从y=x+F(x)可推导dy/dx=I+J_F，这是限定于该未包裹归一化表达式的数学推论；Post-LN还需链式乘LN的Jacobian，不能宣称残差保证梯度永不消失或不会爆炸。Pre/Post-LN训练差异参照具体论文。",
+          "evidence_ids": [
+            "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+            "foundation-1512.03385:dace4e4f4f1a:c2137-4287",
+            "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+            "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+            "depth-2002.04745:8e1c3e3564f6:c7049-9310"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "padding-mask",
+      "title": "Padding Mask：形状、布尔语义与输出边界",
+      "aliases": [
+        "padding mask",
+        "key_padding_mask",
+        "padding",
+        "填充掩码"
+      ],
+      "guide": "先核对接口和版本，再核对key/query轴与有效token；禁止把padding mask等同因果mask。",
+      "source_ids": [
+        "foundation-pytorch-activation-2.11",
+        "foundation-pytorch-transformer-2.11",
+        "pytorch-sdpa-2.11",
+        "author-pytorch-v2.11.0-functional"
+      ],
+      "evidence_ids": [
+        "foundation-pytorch-activation-2.11:8b8076c9383f:c37704-40193",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c4493-7539",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c9582-11976",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239"
+      ],
+      "related": [
+        "causal-mask",
+        "sdpa",
+        "self-attention",
+        "bert-mlm"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "padding mask causal mask score softmax：官方实现的类型转换与分数合并",
+          "guide": "先核对同版本布尔转换、广播、掩码合并及softmax顺序；区分文档措辞与分支内实际实现，不以注释推断所有后端。",
+          "evidence_ids": [
+            "author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367",
+            "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239"
+          ],
+          "navigation_kind": "premise_bundle"
+        },
+        {
+          "heading": "屏蔽key与屏蔽query不同",
+          "guide": "MHA key_padding_mask形状(N,S)，屏蔽各样本的key列；attn_mask可为(L,S)或(N×heads,L,S)。例如N=2、L=S=4，padding key mask是2×4；它不会自动令padding query对应的输出为零，这是由接口作用对象可得的推论。padding位置的loss/输出另行处理。",
+          "evidence_ids": [
+            "foundation-pytorch-activation-2.11:8b8076c9383f:c37704-40193"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "与因果掩码合并及接口差异",
+          "guide": "加性掩码在softmax前把禁止位置设为负无穷；padding禁止无效key，因果约束禁止未来，两者职责不同。v2.11 MHA/Transformer布尔True表示禁止，SDPA布尔True表示允许。浮点掩码按加性偏置理解，两种mask同时传入MHA时类型应匹配。",
+          "evidence_ids": [
+            "foundation-pytorch-activation-2.11:8b8076c9383f:c37704-40193",
+            "foundation-pytorch-transformer-2.11:ebf4e5af7173:c4493-7539",
+            "foundation-pytorch-transformer-2.11:ebf4e5af7173:c9582-11976",
+            "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+            "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "全屏蔽行与数值边界",
+          "guide": "若整行均为负无穷，朴素softmax存在未定义归一化，不能从普通公式推出所有实现都返回零或都NaN。这里收录的接口文档未保证所有设备、后端和need_weights分支行为一致；需避免无有效key的输入或在后续专项实现验证中明确处理。本轮没有运行数值测试。",
+          "evidence_ids": [
+            "foundation-pytorch-activation-2.11:8b8076c9383f:c37704-40193",
+            "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+            "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "dropout",
+      "title": "Dropout：缩放、位置与推理配置",
+      "aliases": [
+        "dropout",
+        "随机失活",
+        "丢弃率",
+        "残差dropout"
+      ],
+      "guide": "把模块eval、函数参数与训练配方分开；不把原论文0.1作为所有模型固定值。",
+      "source_ids": [
+        "foundation-pytorch-dropout-2.11",
+        "paper-1706.03762",
+        "pytorch-sdpa-2.11"
+      ],
+      "evidence_ids": [
+        "foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281",
+        "paper-1706.03762:eee8b5a0bcc2:c20388-21360",
+        "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+      ],
+      "related": [
+        "training",
+        "sdpa",
+        "forward-flow"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "随机失活与期望保持",
+          "guide": "nn.Dropout训练时以p独立置零，存活项乘1/(1−p)，因此在p<1及给定输入下可推导输出期望不变；eval时为恒等映射。eval改变模块模式，与关闭自动求导是不同操作。",
+          "evidence_ids": [
+            "foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "原Transformer与API例外",
+          "guide": "原论文将dropout施于子层输出、残差相加和归一化之前，以及embedding与PE之和；base为0.1。SDPA函数则按显式dropout_p执行，不能仅调用model.eval就保证函数参数自动归零；训练/推理须正确传参。mygpt配置按本地代码核对。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c20388-21360",
+            "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+            "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+            "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "attention-scoring",
+      "title": "Attention评分：Q/K、缩放与加性注意力",
+      "aliases": [
+        "attention score",
+        "加性注意力",
+        "缩放点积",
+        "QK共享",
+        "scaled dot product"
+      ],
+      "guide": "明确理论假设、数学推论与论文实验边界，不把设计惯例误写为不可能定理。",
+      "source_ids": [
+        "paper-1706.03762"
+      ],
+      "evidence_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+      ],
+      "related": [
+        "self-attention",
+        "mha",
+        "cross-attention",
+        "padding-mask"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "Q/K独立投影与共享参数的约束",
+          "guide": "原始自注意力Q=XW_Q，K=XW_K；输入同源不等于投影参数共享。在相同维度且忽略额外偏置时，若W_Q=W_K，则未加mask/位置项的QK^T成为QQ^T这一对称Gram矩阵；不同投影则无此对称约束。这是公式推导，不是共享参数非法或效果必差的实验结论；两两打分也不是只算每个向量的自身范数。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "点积与加性评分、复杂度及效果范围",
+          "guide": "原论文的additive attention通过单隐层前馈网络评分，并非简单Q+K；原文说两者理论复杂度相近，点积可利用优化矩阵乘法。比较复杂度必须声明序列长度、维度、隐层宽度及是否预计算投影；不可只看名称比较大O。原论文的小/大d_k效果讨论还区分未缩放点积。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "缩放方差推导与softmax",
+          "guide": "在分量独立、均值0、方差1且乘积项不相关的假设下，q·k的方差为d_k，除以sqrt(d_k)后方差为1。较大logit差可能令softmax饱和、梯度变小；真实训练后的Q/K未必满足这些统计假设。固定总宽度下多头常取d_k=d_model/h，是预算设计而非每头必须降维的普遍定律。",
+          "evidence_ids": [
+            "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+            "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "bert-mlm",
+      "title": "BERT MLM：输入遮盖与注意力可见性",
+      "aliases": [
+        "BERT MLM",
+        "MLM",
+        "masked language model",
+        "输入mask",
+        "BERT mask"
+      ],
+      "guide": "不要把BERT的输入[MASK]替换误解为没有attention padding mask，也不要将两种训练目标互换。",
+      "source_ids": [
+        "paper-1810.04805",
+        "paper-1706.03762"
+      ],
+      "evidence_ids": [
+        "paper-1810.04805:6bb076ca96de:c14307-16636",
+        "paper-1810.04805:6bb076ca96de:c0-2284",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934"
+      ],
+      "related": [
+        "padding-mask",
+        "causal-mask",
+        "tokenizer",
+        "transformer"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "训练目标与输入替换",
+          "guide": "BERT抽取15%的WordPiece位置预测原token，其中80%替换为[MASK]、10%随机token、10%保留原token。这是原论文训练配方，不是所有MLM固定参数；保留项仍属于预测目标。",
+          "evidence_ids": [
+            "paper-1810.04805:6bb076ca96de:c14307-16636",
+            "paper-1810.04805:6bb076ca96de:c0-2284"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "为何不是直接复用自回归attention mask",
+          "guide": "MLM控制输入中目标内容及预测损失，自回归因果mask控制可见方向，padding mask控制无效位置；三者不同。BERT希望双向利用上下文。仅屏蔽注意力对角线并未移除输入处目标token，残差与后续层也需考虑，这是结合原始残差结构得到的泄漏路径推论，不是额外模型实测。",
+          "evidence_ids": [
+            "paper-1810.04805:6bb076ca96de:c14307-16636",
+            "paper-1810.04805:6bb076ca96de:c0-2284",
+            "paper-1706.03762:eee8b5a0bcc2:c7110-8934"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    },
+    {
+      "page_id": "alibi",
+      "title": "ALiBi与相对位置偏置",
+      "aliases": [
+        "ALiBi",
+        "线性位置偏置",
+        "relative position bias",
+        "T5相对位置"
+      ],
+      "guide": "按位置注入位置、参数形式、范围及实验条件比较，避免将可计算任意位置等同可靠外推。",
+      "source_ids": [
+        "foundation-2108.12409",
+        "paper-1910.10683"
+      ],
+      "evidence_ids": [
+        "foundation-2108.12409:cf6a3d07cc4d:c15367-17283",
+        "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+        "foundation-2108.12409:cf6a3d07cc4d:c18966-21650",
+        "paper-1910.10683:7aa53b0ecc3b:c12742-15676"
+      ],
+      "related": [
+        "position",
+        "rope",
+        "self-attention"
+      ],
+      "review_status": "AI_EDITORIAL_DRAFT_NOT_GROUND_TRUTH",
+      "provenance": "primary-source-foundations-editorial-v1",
+      "navigation_kind": "topic",
+      "reading_sections": [
+        {
+          "heading": "在attention logit上加入距离偏置",
+          "guide": "ALiBi在注意力分数中加入按头设置的线性距离偏置，而不是给输入token加位置向量；对因果有效位置可写作−m_h(i−j)，m_h为头的斜率。与RoPE旋转Q/K、正弦/学习式绝对PE输入相加区分。公式需同时核对原PDF，避免提取符号失真。",
+          "evidence_ids": [
+            "foundation-2108.12409:cf6a3d07cc4d:c15367-17283",
+            "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+            "foundation-2108.12409:cf6a3d07cc4d:c18966-21650"
+          ],
+          "navigation_kind": "section"
+        },
+        {
+          "heading": "T5分桶相对偏置与外推限制",
+          "guide": "T5将相对key-query偏移映射为加到logit的标量偏置；论文设置32项、距离范围逐渐变大、128以外共享范围，并跨层共享参数而各头不同。这些是其设置而非相对位置编码的定义。ALiBi的外推收益限论文任务、长度和基线，不能承诺任意超长上下文质量。",
+          "evidence_ids": [
+            "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+            "foundation-2108.12409:cf6a3d07cc4d:c15367-17283",
+            "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+            "foundation-2108.12409:cf6a3d07cc4d:c18966-21650"
+          ],
+          "navigation_kind": "section"
+        }
+      ],
+      "coverage_notes": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "transformer",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "transformer",
+      "to": "cross-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "transformer",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "transformer",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "transformer",
+      "to": "residual",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "transformer",
+      "to": "layernorm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "transformer",
+      "to": "bert-mlm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "self-attention",
+      "to": "causal-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "self-attention",
+      "to": "cross-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "self-attention",
+      "to": "mha",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "self-attention",
+      "to": "attention-scoring",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "self-attention",
+      "to": "padding-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "cross-attention",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "cross-attention",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "cross-attention",
+      "to": "transformer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "causal-mask",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "causal-mask",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "causal-mask",
+      "to": "position",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "causal-mask",
+      "to": "padding-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "causal-mask",
+      "to": "bert-mlm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gpt",
+      "to": "position",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gpt",
+      "to": "mlp",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gpt",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gpt",
+      "to": "training",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gpt",
+      "to": "tokenizer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gpt",
+      "to": "embedding",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "position",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "position",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "position",
+      "to": "rope",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "position",
+      "to": "embedding",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "position",
+      "to": "alibi",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mlp",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mlp",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mlp",
+      "to": "activations",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mlp",
+      "to": "residual",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "normalization",
+      "to": "training",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "normalization",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "normalization",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "normalization",
+      "to": "pre-ln",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "normalization",
+      "to": "batchnorm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "normalization",
+      "to": "layernorm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "kv-cache",
+      "to": "prefill-decode",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "kv-cache",
+      "to": "gqa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "kv-cache",
+      "to": "paged-kv",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "kv-cache",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "prefill-decode",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "prefill-decode",
+      "to": "causal-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "prefill-decode",
+      "to": "paged-kv",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "prefill-decode",
+      "to": "continuous-batching",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mha",
+      "to": "gqa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mha",
+      "to": "mqa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mha",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gqa",
+      "to": "mha",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gqa",
+      "to": "mqa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "gqa",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mqa",
+      "to": "mha",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mqa",
+      "to": "gqa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "mqa",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "sdpa",
+      "to": "flash-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "sdpa",
+      "to": "online-softmax",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "sdpa",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "flash-attention",
+      "to": "sdpa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "flash-attention",
+      "to": "online-softmax",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "flash-attention",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "online-softmax",
+      "to": "flash-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "online-softmax",
+      "to": "sdpa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "paged-kv",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "paged-kv",
+      "to": "prefill-decode",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "paged-kv",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "paged-kv",
+      "to": "continuous-batching",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "training",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "training",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "training",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "training",
+      "to": "dropout",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "training",
+      "to": "batchnorm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "measurement",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "measurement",
+      "to": "sdpa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "measurement",
+      "to": "paged-kv",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "measurement",
+      "to": "training",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "speculative",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "speculative",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "rope",
+      "to": "position",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "rope",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "rope",
+      "to": "kv-cache",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "pre-ln",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "pre-ln",
+      "to": "training",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "pre-ln",
+      "to": "transformer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "activations",
+      "to": "mlp",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "activations",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "activations",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "tokenizer",
+      "to": "embedding",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "tokenizer",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "tokenizer",
+      "to": "training",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "embedding",
+      "to": "tokenizer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "embedding",
+      "to": "position",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "embedding",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "embedding",
+      "to": "mlp",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "continuous-batching",
+      "to": "paged-kv",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "continuous-batching",
+      "to": "prefill-decode",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "continuous-batching",
+      "to": "measurement",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "transformer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "tokenizer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "embedding",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "position",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "mlp",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "gpt",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "forward-flow",
+      "to": "pre-ln",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "batchnorm",
+      "to": "layernorm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "batchnorm",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "batchnorm",
+      "to": "training",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "layernorm",
+      "to": "batchnorm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "layernorm",
+      "to": "normalization",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "layernorm",
+      "to": "pre-ln",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "layernorm",
+      "to": "residual",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "residual",
+      "to": "forward-flow",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "residual",
+      "to": "pre-ln",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "residual",
+      "to": "layernorm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "residual",
+      "to": "mlp",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "padding-mask",
+      "to": "causal-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "padding-mask",
+      "to": "sdpa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "padding-mask",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "padding-mask",
+      "to": "bert-mlm",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "dropout",
+      "to": "training",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "dropout",
+      "to": "sdpa",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "dropout",
+      "to": "forward-flow",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "attention-scoring",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "attention-scoring",
+      "to": "mha",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "attention-scoring",
+      "to": "cross-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "attention-scoring",
+      "to": "padding-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "bert-mlm",
+      "to": "padding-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "bert-mlm",
+      "to": "causal-mask",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "bert-mlm",
+      "to": "tokenizer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "bert-mlm",
+      "to": "transformer",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "alibi",
+      "to": "position",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "alibi",
+      "to": "rope",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    },
+    {
+      "from": "alibi",
+      "to": "self-attention",
+      "relation": "RELATED_TOPIC",
+      "role": "navigation_not_semantic_evidence"
+    }
+  ],
+  "generation_calls": 0,
+  "factual_certification": false,
+  "learning_paths": [
+    {
+      "path_id": "architecture",
+      "title": "1. 整体架构与输入输出",
+      "guide": "先看全流程，再分清架构类别、分词、向量和位置表示。",
+      "page_ids": [
+        "transformer",
+        "forward-flow",
+        "tokenizer",
+        "embedding",
+        "gpt"
+      ],
+      "role": "editorial_reading_order_not_evidence"
+    },
+    {
+      "path_id": "attention",
+      "title": "2. 注意力、投影与掩码",
+      "guide": "从Q/K/V到评分、多头、跨序列交互，再区分因果和填充掩码。",
+      "page_ids": [
+        "self-attention",
+        "attention-scoring",
+        "mha",
+        "cross-attention",
+        "causal-mask",
+        "padding-mask"
+      ],
+      "role": "editorial_reading_order_not_evidence"
+    },
+    {
+      "path_id": "blocks",
+      "title": "3. FFN、残差与归一化",
+      "guide": "先理解子层，再区分归一化函数与放置位置；BN作为对照。",
+      "page_ids": [
+        "mlp",
+        "activations",
+        "residual",
+        "normalization",
+        "layernorm",
+        "batchnorm",
+        "pre-ln"
+      ],
+      "role": "editorial_reading_order_not_evidence"
+    },
+    {
+      "path_id": "position",
+      "title": "4. 位置表示与距离偏置",
+      "guide": "比较输入相加、Q/K旋转和logit偏置；可计算长度不等于可靠外推。",
+      "page_ids": [
+        "position",
+        "rope",
+        "alibi"
+      ],
+      "role": "editorial_reading_order_not_evidence"
+    },
+    {
+      "path_id": "training",
+      "title": "5. 训练目标与正则化",
+      "guide": "区分语言模型目标、MLM输入替换、优化器配置和推理时行为。",
+      "page_ids": [
+        "training",
+        "bert-mlm",
+        "dropout"
+      ],
+      "role": "editorial_reading_order_not_evidence"
+    },
+    {
+      "path_id": "inference",
+      "title": "6. 推理缓存、内核与服务调度",
+      "guide": "沿prefill/decode理解缓存，再看头组织、IO、内存和调度，最后核对测量。",
+      "page_ids": [
+        "prefill-decode",
+        "kv-cache",
+        "gqa",
+        "mqa",
+        "sdpa",
+        "online-softmax",
+        "flash-attention",
+        "paged-kv",
+        "continuous-batching",
+        "speculative",
+        "measurement"
+      ],
+      "role": "editorial_reading_order_not_evidence"
+    }
+  ]
+}

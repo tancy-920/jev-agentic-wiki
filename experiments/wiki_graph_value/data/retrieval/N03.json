@@ -1,0 +1,1024 @@
+{
+  "status": "complete",
+  "provider_calls": 0,
+  "plan_queries": [
+    "original Transformer encoder-decoder cross-attention encoder output decoder right-shifted target causal masking position-wise feed-forward network",
+    "decoder-only model training forward pass versus autoregressive generation loop KV cache inference optimization"
+  ],
+  "runtime_original_query": "From the original Transformer to decoder-only, explain how a single training forward pass differs from the autoregressive generation loop: where do encoder outputs and cross-attention, right-shifted targets and causal visibility, position-wise FFN, and KV cache each play a role? Distinguish architectural facts from inference optimizations.",
+  "contexts": {
+    "source": {
+      "evidence": [
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 5,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "Exploring the Limits of Transfer Learning\nmechanism after each self-attention layer that attends to the output of the encoder. The\nself-attention mechanism in the decoder also uses a form of autoregressive or causal self-\nattention, which only allows the model to attend to past outputs. The output of the final\ndecoder block is fed into a dense layer with a softmax output, whose weights are shared with\nthe input embedding matrix. All attention mechanisms in the Transformer are split up into\nindependent “heads” whose outputs are concatenated before being further processed.\nSince self-attention is order-independent (i.e. it is an operation on sets), it is common\nto provide an explicit position signal to the Transformer. While the original Transformer\nused a sinusoidal position signal or learned position embeddings, it has recently become\nmore common to use relative position embeddings (Shaw et al., 2018; Huang et al., 2018a).\nInstead of using a fixed embedding for each position, relative position embeddings produce\na different learned embedding according to the offset between the “key” and “query” being\ncompared in the self-attention mechanism. We use a simplified form of position embeddings\nwhere each “embedding” is simply a scalar that is added to the corresponding logit used\nfor computing the attention weights. For efficiency, we also share the position embedding\nparameters across all layers in our model, though within a given layer each attention head\nuses a different learned position embedding. Typically, a fixed number of embeddings are\nlearned, each corresponding to a range of possible key-query offsets. In this work, we use32\nembeddings for all of our models with ranges that increase in size logarithmically up to an\noffset of 128 beyond which we assign all relative positions to the same embedding. Note\nthat a given layer is insensitive to relative position beyond128 tokens, but subsequent layers\ncan build a sensitivity to larger offsets by combining local information from previous layers.\nTo summarize, our model is roughly equivalent to the original Transformer proposed by\nVaswani et al. (2017) with the exception of removing the Layer Norm bias, placing the layer\nnormalization outside the residual path, and using a different position embedding scheme.\nSince these architectural changes are orthogonal to the experimental factors we consider in\nour empirical survey of transfer learning, we leave the ablation of their impact for future\nwork.\nAs part of our study, we experiment with the scalability of these models, i.e. how their\nperformance changes as they are made to have more parameters or layers. Training large\nmodels can be non-trivial since they might not fit on a single machine and require a great deal\nof computation. As a result, we use a combination of model and data parallelism and train\nmodels on “slices” of Cloud TPU Pods.5 TPU pods are are multi-rack ML supercomputers\n",
+          "token_count": 599,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 5",
+          "start_char": 12742,
+          "end_char": 15676
+        },
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 11,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "Exploring the Limits of Transfer Learning\nSection 3.3 and we consider a model architecture that behaves similarly to BERT on text\nclassification tasks in Section 3.2.\nAfter outlining our baseline experimental setup in the following subsection, we undertake\nan empirical comparison of model architectures (Section 3.2), unsupervised objectives\n(Section 3.3), pre-training data sets (Section 3.4), transfer approaches (Section 3.5), and\nscaling (Section 3.6). At the culmination of this section, we combine insights from our study\nwith scale to obtain state-of-the-art results in many tasks we consider (Section 3.7).\n3.1 Baseline\nOur goal for our baseline is to reflect typical, modern practice. We pre-train a standard\nTransformer (described in Section 2.1) using a simple denoising objective and then separately\nfine-tune on each of our downstream tasks. We describe the details of this experimental\nsetup in the following subsections.\n3.1.1 Model\nFor our model, we use a standard encoder-decoder Transformer as proposed by Vaswani et al.\n(2017). While many modern approaches to transfer learning for NLP use a Transformer\narchitecture consisting of only a single “stack” (e.g. for language modeling (Radford et al.,\n2018; Dong et al., 2019) or classification and span prediction (Devlin et al., 2018; Yang et al.,\n2019)), we found that using a standard encoder-decoder structure achieved good results\non both generative and classification tasks. We explore the performance of different model\narchitectures in Section 3.2.\nOur baseline model is designed so that the encoder and decoder are each similar in\nsize and configuration to a “BERTBASE” (Devlin et al., 2018) stack. Specifically, both the\nencoder and decoder consist of12 blocks (each block comprising self-attention, optional\nencoder-decoder attention, and a feed-forward network). The feed-forward networks in each\nblock consist of a dense layer with an output dimensionality ofdff = 3072 followed by a\nReLU nonlinearity and another dense layer. The “key” and “value” matrices of all attention\nmechanisms have an inner dimensionality ofdkv = 64 and all attention mechanisms have12\nheads. All other sub-layers and embeddings have a dimensionality ofdmodel = 768. In total,\nthis results in a model with about220 million parameters. This is roughly twice the number\nof parameters of BERTBASE since our baseline model contains two layer stacks instead of\none. For regularization, we use a dropout probability of0.1 everywhere dropout is applied\nin the model.\n3.1.2 Training\n",
+          "token_count": 584,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 11",
+          "start_char": 33101,
+          "end_char": 35632
+        },
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 37,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c117215-119641",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "Exploring the Limits of Transfer Learning\n• Large. Since our baseline uses a BERTBASE-sized encoder and decoder, we\nalso consider a variant where the encoder and decoder are both similar in size\nand structure to BERTLARGE. Specifically, this variant uses dmodel = 1,024,\ndff = 4,096, dkv = 64, 16-headed attention, and24 layers each in the encoder and\ndecoder, resulting in around770 million parameters.\n• 3B and 11B.To further explore what kind of performance is possible when\nusing larger models, we consider two additional variants. In both cases, we use\ndmodel = 1024, a 24 layer encoder and decoder, anddkv = 128. For the “3B”\nvariant, we usedff = 16,384 with 32-headed attention, which results in around\n2.8 billion parameters; for “11B” we usedff = 65,536 with 128-headed attention\nproducing a model with about11 billion parameters. We chose to scale updff\nspecifically because modern accelerators (such as the TPUs we train our models\non) are most efficient for large dense matrix multiplications like those in the\nTransformer’s feed-forward networks.\nMulti-task pre-training In Section 3.5.3, we showed that pre-training on a multi-task\nmixture of unsupervised and supervised tasks before fine-tuning worked as well as\npre-training on the unsupervised task alone. This is the approach advocated by the\n“MT-DNN” (Liu et al., 2015, 2019b). It also has the practical benefit of being able to\nmonitor “downstream” performance for the entire duration of training, rather than\njust during fine-tuning. We therefore used multi-task pre-training in our final set of\nexperiments. We hypothesize that larger models trained for longer might benefit from\na larger proportion of unlabeled data because they are more likely to overfit to smaller\ntraining data sets. However, we also note that the results of Section 3.5.3 suggest that\nfine-tuning after multi-task pre-training can mitigate some of the issues that might\narise from choosing a suboptimal proportion of unlabeled data. Based on these ideas,\nwe substitute the following artificial data set sizes for our unlabeled data before using\nstandard example-proportional mixing (described in Section 3.5.2):710,000 for Small,\n2,620,000 for Base, 8,660,000 for Large, 33,500,000 for 3B, and133,000,000 for 11B.\nFor all model variants, we also capped the effective data set size of the WMT English\nto French and WMT English to German data sets to1M examples during pre-training.\n",
+          "token_count": 598,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 37",
+          "start_char": 117215,
+          "end_char": 119641
+        },
+        {
+          "paper_id": "2309.06180",
+          "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+          "authors": [],
+          "year": 2023,
+          "section": "captured public-source excerpt",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "paper-2309.06180:7ba2ff703be1:c7362-9520",
+          "source_url": "https://arxiv.org/html/2309.06180v1",
+          "text": "L130: Large KV cache. The KV Cache size grows quickly with the number of requests. As an example, for the 13B parameter OPT model (cite59†Zhang et al., 2022 ), the KV cache of a single token demands 800 KB of space, calculated as $2$ (key and value vectors) $\\times\\ 5120$ (hidden state size) $\\times\\ 40$ (number of layers) $\\times\\ 2$ (bytes per FP16). Since OPT can generate sequences up to 2048 tokens, the memory required to store the KV cache of one request can be as much as 1.6 GB.\nL131: Concurrent GPUs have memory capacities in the tens of GBs. Even if all available memory was allocated to KV cache, only a few tens of requests could be accommodated. Moreover, inefficient memory management can further decrease the batch size, as shown in Fig. cite58†2 . Additionally, given the current trends, the GPU’s computation speed grows faster than the memory capacity (cite68†Gholami et al., 2021 ).\nL132: For example, from NVIDIA A100 to H100, The FLOPS increases by more than 2x, but the GPU memory stays at 80GB maximum. Therefore, we believe the memory will become an increasingly significant bottleneck.\nL133: Complex decoding algorithms. LLM services offer a range of decoding algorithms for users to select from, each with varying implications for memory management complexity. For example, when users request multiple random samples from a single input prompt, a typical use case in program suggestion (cite43†Github, 2022 ), the KV cache of the prompt part, which accounts for 12% of the total KV cache memory in our experiment (§cite26†6.3 ), can be shared to minimize memory usage.\nL134: On the other hand, the KV cache during the autoregressive generation phase should remain unshared due to the different sample results and their dependence on context and position. The extent of KV cache sharing depends on the specific decoding algorithm employed.\nL135: In more sophisticated algorithms like beam search (cite69†Sutskever et al., 2014 ), different request beams can share larger portions (up to 55% memory saving, see §cite26†6.3 ) of their KV cache, and the sharing pattern evolves as the decoding process advances.\n",
+          "token_count": 569,
+          "source_id": "paper-2309.06180",
+          "source_kind": "web_excerpt",
+          "source_version": "2309.06180v1:sha256:cf5095755c39d005",
+          "source_sha256": "7ba2ff703be16ec6f0591696af42e12e662d5f26eecc95dcc057896ca3f7c244",
+          "locator": "L35–L40",
+          "start_char": 7362,
+          "end_char": 9520
+        },
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 4,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "Raffel, Shazeer, Roberts, Lee, Narang, Matena, Zhou, Li and Liu\n2. Setup\nBefore presenting the results from our large-scale empirical study, we review the necessary\nbackground topics required to understand our results, including the Transformer model\narchitecture and the downstream tasks we evaluate on. We also introduce our approach\nfor treating every problem as a text-to-text task and describe our “Colossal Clean Crawled\nCorpus” (C4), the Common Crawl-based data set we created as a source of unlabeled text\ndata. We refer to our model and framework as the “Text-to-Text Transfer Transformer”\n(T5).\n2.1 Model\nEarly results on transfer learning for NLP leveraged recurrent neural networks (Peters\net al., 2018; Howard and Ruder, 2018), but it has recently become more common to use\nmodels based on the “Transformer” architecture (Vaswani et al., 2017). The Transformer\nwas initially shown to be effective for machine translation, but it has subsequently been\nused in a wide variety of NLP settings (Radford et al., 2018; Devlin et al., 2018; McCann\net al., 2018; Yu et al., 2018). Due to its increasing ubiquity, all of the models we study are\nbased on the Transformer architecture. Apart from the details mentioned below and the\nvariants we explore in Section 3.2, we do not deviate significantly from this architecture as\noriginally proposed. Instead of providing a comprehensive definition of this model, we refer\nthe interested reader to the original paper (Vaswani et al., 2017) or follow-up tutorials3,4 for\na more detailed introduction.\nThe primary building block of the Transformer is self-attention (Cheng et al., 2016).\nSelf-attention is a variant of attention (Graves, 2013; Bahdanau et al., 2015) that processes\na sequence by replacing each element by a weighted average of the rest of the sequence.\nThe original Transformer consisted of an encoder-decoder architecture and was intended\nfor sequence-to-sequence (Sutskever et al., 2014; Kalchbrenner et al., 2014) tasks. It has\nrecently also become common to use models consisting of a single Transformer layer stack,\nwith varying forms of self-attention used to produce architectures appropriate for language\nmodeling (Radford et al., 2018; Al-Rfou et al., 2019) or classification and span prediction\ntasks (Devlin et al., 2018; Yang et al., 2019). We empirically explore these architectural\nvariants in Section 3.2.\nOverall, our encoder-decoder Transformer implementation closely follows its originally-\n",
+          "token_count": 594,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 4",
+          "start_char": 9253,
+          "end_char": 11726
+        },
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 20,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c61496-63183",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "Raffel, Shazeer, Roberts, Lee, Narang, Matena, Zhou, Li and Liu\nArchitecture Objective Params Cost GLUE CNNDM SQuAD SGLUE EnDe EnFr EnRo\n⋆Encoder-decoder Denoising 2P M 83.28 19 .24 80 .88 71 .36 26 .98 39 .82 27 .65\nEnc-dec, shared Denoising P M 82.81 18 .78 80.63 70 .73 26.72 39 .03 27.46\nEnc-dec, 6 layers Denoising P M/ 2 80 .88 18 .97 77 .59 68 .42 26 .38 38 .40 26 .95\nLanguage model Denoising P M 74.70 17 .93 61 .14 55 .02 25 .09 35 .28 25 .86\nPrefix LM Denoising P M 81.82 18 .61 78 .94 68 .11 26 .43 37 .98 27 .39\nEncoder-decoder LM 2P M 79.56 18 .59 76 .02 64 .29 26 .27 39 .17 26 .86\nEnc-dec, shared LM P M 79.60 18 .13 76 .35 63 .50 26 .62 39 .17 27 .05\nEnc-dec, 6 layers LM P M/ 2 78 .67 18 .26 75 .32 64 .06 26 .13 38 .42 26 .89\nLanguage model LM P M 73.78 17 .54 53 .81 56 .51 25 .23 34 .31 25 .38\nPrefix LM LM P M 79.68 17 .84 76 .87 64 .86 26 .28 37 .51 26 .76\nTable 2: Performance of the different architectural variants described in Section 3.2.2. We\nuse P to refer to the number of parameters in a 12-layer base Transformer layer\nstack andM to refer to the FLOPs required to process a sequence using the encoder-\ndecoder model. We evaluate each architectural variant using a denoising objective\n(described in Section 3.1.4) and an autoregressive objective (as is commonly used\nto train language models).\nthe encoder and decoder stacks significantly hurt performance. Concurrent work (Lan et al.,\n2019) also found that sharing parameters across Transformer blocks can be an effective means\nof lowering the total parameter count without sacrificing much performance. XLNet also\nbears some resemblance to the shared encoder-decoder approach with a denoising objective\n",
+          "token_count": 596,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 20",
+          "start_char": 61496,
+          "end_char": 63183
+        },
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 16,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c49392-51825",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "Raffel, Shazeer, Roberts, Lee, Narang, Matena, Zhou, Li and Liu\nx1 x2 x3 x4 x5\ny5\ny4\ny3\ny2\ny1\nx1 x2 x3 x4 x5\ny5\ny4\ny3\ny2\ny1\nx1 x2 x3 x4 x5\ny5\ny4\ny3\ny2\ny1\nFigure 3: Matrices representing different attention mask patterns. The input and output\nof the self-attention mechanism are denotedx and y respectively. A dark cell\nat rowi and columnj indicates that the self-attention mechanism is allowed to\nattend to input elementj at output timestepi. A light cell indicates that the\nself-attention mechanism isnot allowed to attend to the correspondingi and j\ncombination. Left: A fully-visible mask allows the self-attention mechanism to\nattend to the full input at every output timestep. Middle: A causal mask prevents\nthe ith output element from depending on any input elements from “the future”.\nRight: Causal masking with a prefix allows the self-attention mechanism to use\nfully-visible masking on a portion of the input sequence.\nat the timestep corresponding to the classification token is then used to make a prediction\nfor classifying the input sequence.\nThe self-attention operations in the Transformer’s decoder use a “causal” masking pattern.\nWhen producing theith entry of the output sequence, causal masking prevents the model\nfrom attending to thejth entry of the input sequence forj >i. This is used during training\nso that the model can’t “see into the future” as it produces its output. An attention matrix\nfor this masking pattern is shown in Figure 3, middle.\nThe decoder in an encoder-decoder Transformer is used to autoregressively produce an\noutput sequence. That is, at each output timestep, a token is sampled from the model’s\npredicted distribution and the sample is fed back into the model to produce a prediction for\nthe next output timestep, and so on. As such, a Transformer decoder (without an encoder)\ncan be used as a language model (LM), i.e. a model trained solely for next-step prediction\n(Liu et al., 2018; Radford et al., 2018; Al-Rfou et al., 2019). This constitutes the second\nmodel structure we consider. A schematic of this architecture is shown in Figure 4, middle.\nIn fact, early work on transfer learning for NLP used this architecture with a language\nmodeling objective as a pre-training method (Radford et al., 2018).\nLanguage models are typically used for compression or sequence generation (Graves,\n2013). However, they can also be used in the text-to-text framework simply by concatenating\n",
+          "token_count": 600,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 16",
+          "start_char": 49392,
+          "end_char": 51825
+        },
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 4,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c11430-12742",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "modeling (Radford et al., 2018; Al-Rfou et al., 2019) or classification and span prediction\ntasks (Devlin et al., 2018; Yang et al., 2019). We empirically explore these architectural\nvariants in Section 3.2.\nOverall, our encoder-decoder Transformer implementation closely follows its originally-\nproposed form (Vaswani et al., 2017). First, an input sequence of tokens is mapped to\na sequence of embeddings, which is then passed into the encoder. The encoder consists\nof a stack of “blocks”, each of which comprises two subcomponents: a self-attention layer\nfollowed by a small feed-forward network. Layer normalization (Ba et al., 2016) is applied to\nthe input of each subcomponent. We use a simplified version of layer normalization where\nthe activations are only rescaled and no additive bias is applied. After layer normalization,\na residual skip connection (He et al., 2016) adds each subcomponent’s input to its output.\nDropout (Srivastava et al., 2014) is applied within the feed-forward network, on the skip\nconnection, on the attention weights, and at the input and output of the entire stack. The\ndecoder is similar in structure to the encoder except that it includes a standard attention\n3. http://nlp.seas.harvard.edu/2018/04/03/attention.html\n4. http://jalammar.github.io/illustrated-transformer/\n4\n",
+          "token_count": 322,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 4",
+          "start_char": 11430,
+          "end_char": 12742
+        },
+        {
+          "paper_id": "1910.10683v4",
+          "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+          "authors": [
+            "Colin Raffel",
+            "Noam Shazeer",
+            "Adam Roberts",
+            "Katherine Lee",
+            "Sharan Narang",
+            "Michael Matena",
+            "Yanqi Zhou",
+            "Wei Li",
+            "Peter J. Liu"
+          ],
+          "year": 2019,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 15,
+          "chunk_id": "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+          "source_url": "https://arxiv.org/abs/1910.10683v4",
+          "text": "Exploring the Limits of Transfer Learning\nenough data set that gains from pre-training tend to be marginal. We include this task in\nour experiments to test the behavior of transfer learning in the high-resource regime. Since\nwe perform early stopping by selecting the best-performing checkpoint, the large disparity\nbetween our baseline and “no pre-training” emphasize how much pre-training improves\nperformance on tasks with limited data. While we do not explicitly measure improvements\nin data efficiency in this paper, we emphasize that this is one of the primary benefits of the\ntransfer learning paradigm.\nAs for inter-run variance, we find that for most tasks the standard deviation across runs\nis smaller than1% of the task’s baseline score. Exceptions to this rule include CoLA, CB,\nand COPA, which are all low-resource tasks from the GLUE and SuperGLUE benchmarks.\nFor example, on CB our baseline model had an average F1 score of91.22 with a standard\ndeviation of 3.237 (see Table 16), which may be partly due to the fact that CB’s validation\nset contains only56 examples. Note that the GLUE and SuperGLUE scores are computed\nas the average of scores across the tasks comprising each benchmark. As a result, we caution\nthat the high inter-run variance of CoLA, CB, and COPA can make it harder to compare\nmodels using the GLUE and SuperGLUE scores alone.\n3.2 Architectures\nWhile the Transformer was originally introduced with an encoder-decoder architecture, much\nmodern work on transfer learning for NLP uses alternative architectures. In this section, we\nreview and compare these architectural variants.\n3.2.1 Model Structures\nA major distinguishing factor for different architectures is the “mask” used by different\nattention mechanisms in the model. Recall that the self-attention operation in a Transformer\ntakes a sequence as input and outputs a new sequence of the same length. Each entry of\nthe output sequence is produced by computing a weighted average of entries of the input\nsequence. Specifically, letyi refer to theith element of the output sequence andxj refer to\nthe jth entry of the input sequence.yi is computed as∑\njwi,jxj, wherewi,j is the scalar\nweight produced by the self-attention mechanism as a function ofxi and xj. The attention\nmask is then used to zero out certain weights in order to constrain which entries of the input\ncan be attended to at a given output timestep. Diagrams of the masks we will consider are\nshown in Figure 3. For example, the causal mask (Figure 3, middle) sets anywi,j to zero if\nj >i.\nThe first model structure we consider is an an encoder-decoder Transformer, which\nconsists of two layer stacks: The encoder, which is fed an input sequence, and the decoder,\n",
+          "token_count": 597,
+          "source_id": "paper-1910.10683",
+          "source_kind": "pdf",
+          "source_version": "1910.10683v4:sha256:ad07e47cedf437a4",
+          "source_sha256": "7aa53b0ecc3be75a1832a575baaf1e4738e322f6044693cb530a20e14fff03c6",
+          "locator": "PDF file p. 15",
+          "start_char": 46017,
+          "end_char": 48737
+        },
+        {
+          "paper_id": "1706.03762v7",
+          "title": "Attention Is All You Need",
+          "authors": [
+            "Ashish Vaswani",
+            "Noam Shazeer",
+            "Niki Parmar",
+            "Jakob Uszkoreit",
+            "Llion Jones",
+            "Aidan N. Gomez",
+            "Lukasz Kaiser",
+            "Illia Polosukhin"
+          ],
+          "year": 2017,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 10,
+          "chunk_id": "paper-1706.03762:eee8b5a0bcc2:c27513-29798",
+          "source_url": "https://arxiv.org/abs/1706.03762v7",
+          "text": "Table 4: The Transformer generalizes well to English constituency parsing (Results are on Section 23\nof WSJ)\nParser Training WSJ 23 F1\nVinyals & Kaiser el al. (2014) [37] WSJ only, discriminative 88.3\nPetrov et al. (2006) [29] WSJ only, discriminative 90.4\nZhu et al. (2013) [40] WSJ only, discriminative 90.4\nDyer et al. (2016) [8] WSJ only, discriminative 91.7\nTransformer (4 layers) WSJ only, discriminative 91.3\nZhu et al. (2013) [40] semi-supervised 91.3\nHuang & Harper (2009) [14] semi-supervised 91.3\nMcClosky et al. (2006) [26] semi-supervised 92.1\nVinyals & Kaiser el al. (2014) [37] semi-supervised 92.1\nTransformer (4 layers) semi-supervised 92.7\nLuong et al. (2015) [23] multi-task 93.0\nDyer et al. (2016) [8] generative 93.3\nincreased the maximum output length to input length + 300. We used a beam size of 21 andα = 0.3\nfor both WSJ only and the semi-supervised setting.\nOur results in Table 4 show that despite the lack of task-specific tuning our model performs sur-\nprisingly well, yielding better results than all previously reported models with the exception of the\nRecurrent Neural Network Grammar [8].\nIn contrast to RNN sequence-to-sequence models [37], the Transformer outperforms the Berkeley-\nParser [29] even when training only on the WSJ training set of 40K sentences.\n7 Conclusion\nIn this work, we presented the Transformer, the first sequence transduction model based entirely on\nattention, replacing the recurrent layers most commonly used in encoder-decoder architectures with\nmulti-headed self-attention.\nFor translation tasks, the Transformer can be trained significantly faster than architectures based\non recurrent or convolutional layers. On both WMT 2014 English-to-German and WMT 2014\nEnglish-to-French translation tasks, we achieve a new state of the art. In the former task our best\nmodel outperforms even all previously reported ensembles.\nWe are excited about the future of attention-based models and plan to apply them to other tasks. We\nplan to extend the Transformer to problems involving input and output modalities other than text and\nto investigate local, restricted attention mechanisms to efficiently handle large inputs and outputs\nsuch as images, audio and video. Making generation less sequential is another research goals of ours.\n",
+          "token_count": 598,
+          "source_id": "paper-1706.03762",
+          "source_kind": "pdf",
+          "source_version": "1706.03762v7:sha256:bdfaa68d8984f0dc",
+          "source_sha256": "eee8b5a0bcc2828a6f69c4dd8e054c8bb3dc2d3ed174fee3871932fda2d450df",
+          "locator": "PDF file p. 10",
+          "start_char": 27513,
+          "end_char": 29798
+        }
+      ],
+      "omitted_whole": [
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "depth-2002.05202:2f0b42e51459:c2216-3968",
+        "paper-1910.10683:7aa53b0ecc3b:c52189-54691",
+        "paper-1910.10683:7aa53b0ecc3b:c130789-133277",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "hf-transformers-cache-4.57.0:50131d48d593:c8458-10927",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c0-2564",
+        "depth-2309.06180:4e592d02d9a3:c11315-13256"
+      ],
+      "characters": 22959
+    },
+    "llm_wiki": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "交叉注意力与架构分类（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:cross-attention",
+          "source_url": "",
+          "text": "# 交叉注意力与架构分类\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n交叉注意力的query与key/value来自不同序列表示。原始Transformer用它把解码器状态连接到编码器输出。\n\n## 工作机制\n\nQ来自解码器上一子层，K、V来自编码器最终输出；分数矩阵形状为T_query×T_memory，两个长度可以不同。编码器自注意力、解码器因果自注意力和交叉注意力是不同子层，不能只看矩阵公式相同就混为一谈。\n\n## 适用条件与易混淆点\n\nDecoder-only模型不必包含独立交叉注意力。Q/K输入来源不同不等于可以随意共享投影参数；改变参数共享就是模型约束变化。\n\n## 关联知识\n\n自注意力与 Q/K/V、Decoder-only架构与mygpt实现、Transformer 架构\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-1706.03762:eee8b5a0bcc2:c11426-13973` — [Attention Is All You Need, full page context, PDF file p. 5]\n- `author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993` — [Tensor2Tensor v1.2.0 transformer.py, author-t2t-v1.2.0-transformer.py: top-level definition, L213–L265]\n- `foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426` — [PyTorch v2.11.0 transformer, foundation-pytorch-transformer-2.11.py, L1113–L1201]\n- `paper-1910.10683:7aa53b0ecc3b:c52189-54691` — [Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer, full page context, PDF file p. 17]\n- `paper-1706.03762:eee8b5a0bcc2:c7110-8934` — [Attention Is All You Need, full page context, PDF file p. 3]\n- `paper-1910.10683:7aa53b0ecc3b:c33101-35632` — [Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer, full page context, PDF file p. 11]\n- `paper-1810.04805:6bb076ca96de:c6145-8482` — [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, full page context, PDF file p. 2]\n- `paper-1810.04805:6bb076ca96de:c14307-16636` — [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, full page context, PDF file p. 4]\n- `hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911` — [Hugging Face Transformers v4.57.0 / KV cache strategies, Encoder-decoder cache, L198–L203]\n- `hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c0-752` — [Hugging Face Transformers v4.57.0 / KV cache strategies, Document preamble, L1–L16]\n- `author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383` — [Tensor2Tensor v1.2.0 common_attention.py, author-t2t-v1.2.0-common-attention.py: top-level definition, L686–L749]\n",
+          "token_count": 2699,
+          "source_id": "wiki-article:cross-attention",
+          "source_kind": "wiki_article",
+          "source_version": "aad37facc15cdc7b6b45444e84656e9bab8a70d4021bb49c8f0bd8d76d1aeb1e",
+          "source_sha256": "aad37facc15cdc7b6b45444e84656e9bab8a70d4021bb49c8f0bd8d76d1aeb1e",
+          "locator": "cross-attention.md"
+        },
+        {
+          "paper_id": null,
+          "title": "Decoder-only架构与mygpt实现（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:gpt",
+          "source_url": "",
+          "text": "# Decoder-only架构与mygpt实现\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nGPT式Decoder-only语言模型通过因果自注意力预测下一个token。mygpt是本地字符级受控实验实现，不代表完整生产推理系统。\n\n## 工作机制\n\nmygpt使用token与可学习位置嵌入相加，再经过重复的归一化、因果注意力、残差和MLP模块，最后投影到词表。代码可配置RMSNorm、KV Cache、KV头数和注意力实现等开关。训练可并行计算已知序列各位置，生成则逐步追加token。\n\n## 适用条件与易混淆点\n\n本地实现的层数、上下文和性能数字只适用于对应配置与原始JSON。不能把其他优化、推测解码或生产级连续批处理说成已经实现，也不能把小模型速度外推到大模型。\n\n## 关联知识\n\n位置表示总览：绝对PE、RoPE与偏置、逐位置FFN / MLP：投影、激活与宽度、归一化总览与RMSNorm、训练：优化器、学习率与数值精度、Tokenizer：BPE、WordPiece、Unigram与SentencePiece、Token Embedding、位置嵌入与输出权重共享\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-1910.10683:7aa53b0ecc3b:c130789-133277` — [Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer, full page context, PDF file p. 41]\n- `mygpt-readme.md:2d20f1a5d663:c0-2086` — [mygpt / README.md, mygpt-readme.md.md, L1–L41]\n- `mygpt-model.py:e05006957de4:c12523-14451` — [mygpt / model.py, mygpt-model.py.py, L319–L369]\n- `mygpt-model.py:e05006957de4:c14266-16158` — [mygpt / model.py, mygpt-model.py.py, L366–L411]\n- `mygpt-readme.md:2d20f1a5d663:c12397-14611` — [mygpt / README.md, mygpt-readme.md.md, L193–L244]\n- `mygpt-model.py:e05006957de4:c0-1426` — [mygpt / model.py, mygpt-model.py.py, L1–L42]\n",
+          "token_count": 1940,
+          "source_id": "wiki-article:gpt",
+          "source_kind": "wiki_article",
+          "source_version": "1262f77370fc93c736a91d4b34064f0c583147ed21901f63eae879ba7dfb2231",
+          "source_sha256": "1262f77370fc93c736a91d4b34064f0c583147ed21901f63eae879ba7dfb2231",
+          "locator": "gpt.md"
+        },
+        {
+          "paper_id": null,
+          "title": "Transformer前向流程：输入、层堆叠与输出概率（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:forward-flow",
+          "source_url": "",
+          "text": "# Transformer前向流程：输入、层堆叠与输出概率\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n前向流程把token ID变为上下文化表示，再变为输出分布。需先区分编码器—解码器与Decoder-only。\n\n## 工作机制\n\n原始编码器输入为缩放token嵌入加位置编码，经N层自注意力和FFN，每个子层残差后LN。解码器接收右移目标嵌入，依次经过因果自注意力、读取encoder输出的交叉注意力和FFN，再经线性词表投影及softmax。Decoder-only省去encoder与独立交叉注意力，以因果堆叠预测下一token。\n\n## 适用条件与易混淆点\n\n一次前向计算与生成循环不同：训练序列可并行计算多个位置，生成要逐步选择token、追加输入并维护缓存。原论文Post-LN与mygpt Pre-LN不能用同一个位置顺序描述。\n\n## 关联知识\n\nTransformer 架构、Tokenizer：BPE、WordPiece、Unigram与SentencePiece、Token Embedding、位置嵌入与输出权重共享、位置表示总览：绝对PE、RoPE与偏置、自注意力与 Q/K/V、逐位置FFN / MLP：投影、激活与宽度、Decoder-only架构与mygpt实现、Pre-LN与Post-LN\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-1706.03762:eee8b5a0bcc2:c13665-14608` — [Attention Is All You Need, full page context, PDF file p. 5]\n- `paper-1706.03762:eee8b5a0bcc2:c14608-17145` — [Attention Is All You Need, full page context, PDF file p. 6]\n- `paper-1706.03762:eee8b5a0bcc2:c7110-8934` — [Attention Is All You Need, full page context, PDF file p. 3]\n- `mygpt-readme.md:2d20f1a5d663:c0-2086` — [mygpt / README.md, mygpt-readme.md.md, L1–L41]\n- `mygpt-model.py:e05006957de4:c12523-14451` — [mygpt / model.py, mygpt-model.py.py, L319–L369]\n",
+          "token_count": 1883,
+          "source_id": "wiki-article:forward-flow",
+          "source_kind": "wiki_article",
+          "source_version": "824c692b229b995765a6d4efac3f44fcf18cfb88c7459f269bef2618989c178b",
+          "source_sha256": "824c692b229b995765a6d4efac3f44fcf18cfb88c7459f269bef2618989c178b",
+          "locator": "forward-flow.md"
+        },
+        {
+          "paper_id": null,
+          "title": "因果掩码与位置（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:causal-mask",
+          "source_url": "",
+          "text": "# 因果掩码与位置\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n因果掩码使自回归位置不能读取未来token。它约束注意力可见性，不提供位置向量本身。\n\n## 工作机制\n\n在方形训练序列中，位置i通常只允许j≤i。可以在未来位置logit加−∞后再softmax，使其权重为0。原始解码器还将目标输入右移，使预测目标不直接泄露。绝对位置、RoPE或相对偏置负责顺序信号，不能用因果mask完全代替。\n\n## 适用条件与易混淆点\n\nKV Cache中T_query与T_key可能不同，不能直接假定任意接口的非方形causal对齐方式。布尔True的含义依API而异：MultiheadAttention的布尔mask表示屏蔽，SDPA布尔attn_mask表示允许。\n\n## 关联知识\n\n自注意力与 Q/K/V、KV Cache 增量解码、位置表示总览：绝对PE、RoPE与偏置、Padding Mask：形状、布尔语义与输出边界、BERT MLM：输入遮盖与注意力可见性\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367` — [PyTorch v2.11.0 canonical mask and MHA implementation, _canonical_mask, L6192–L6218]\n- `author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239` — [PyTorch v2.11.0 canonical mask and MHA implementation, multi_head_attention_forward, L6607–L6668]\n- `paper-1706.03762:eee8b5a0bcc2:c8934-11426` — [Attention Is All You Need, full page context, PDF file p. 4]\n- `paper-1706.03762:eee8b5a0bcc2:c11426-13973` — [Attention Is All You Need, full page context, PDF file p. 5]\n- `mygpt-model.py:e05006957de4:c6488-7889` — [mygpt / model.py, mygpt-model.py.py, L181–L216]\n- `mygpt-model.py:e05006957de4:c7739-9025` — [mygpt / model.py, mygpt-model.py.py, L212–L242]\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `pytorch-sdpa-2.11:42a07d742f7e:c0-2094` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3134–L3170; snapshot L1–L37]\n- `hf-transformers-cache-4.57.0:50131d48d593:c0-2563` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L1–L43]\n- `hf-transformers-cache-4.57.0:50131d48d593:c2433-4394` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L40–L75]\n- `paper-1706.03762:eee8b5a0bcc2:c7110-8934` — [Attention Is All You Need, full page context, PDF file p. 3]\n- `pytorch-sdpa-2.11:42a07d742f7e:c1869-3693` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3167–L3207; snapshot L34–L74]\n",
+          "token_count": 2827,
+          "source_id": "wiki-article:causal-mask",
+          "source_kind": "wiki_article",
+          "source_version": "b97fe09479690cb6261c85bee3ee1aa0160da2f1cbfee29436fc2d2950e52e2b",
+          "source_sha256": "b97fe09479690cb6261c85bee3ee1aa0160da2f1cbfee29436fc2d2950e52e2b",
+          "locator": "causal-mask.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 6606
+    }
+  },
+  "timing_rows": [
+    {
+      "mode": "llm_wiki",
+      "repeat": 0,
+      "seconds": 0.0015205999952740967
+    },
+    {
+      "mode": "source",
+      "repeat": 0,
+      "seconds": 0.633479600015562
+    },
+    {
+      "mode": "source",
+      "repeat": 1,
+      "seconds": 0.6518592000356875
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 1,
+      "seconds": 0.0017115999944508076
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 2,
+      "seconds": 0.001430200005415827
+    },
+    {
+      "mode": "source",
+      "repeat": 2,
+      "seconds": 0.653332399961073
+    },
+    {
+      "mode": "source",
+      "repeat": 3,
+      "seconds": 0.6683255999814719
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 3,
+      "seconds": 0.001733599987346679
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 4,
+      "seconds": 0.0015026000328361988
+    },
+    {
+      "mode": "source",
+      "repeat": 4,
+      "seconds": 0.6909855999983847
+    },
+    {
+      "mode": "source",
+      "repeat": 5,
+      "seconds": 0.6492568000103347
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 5,
+      "seconds": 0.0017054000054486096
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 6,
+      "seconds": 0.0014333000290207565
+    },
+    {
+      "mode": "source",
+      "repeat": 6,
+      "seconds": 0.6485286999959499
+    },
+    {
+      "mode": "source",
+      "repeat": 7,
+      "seconds": 0.6406890000216663
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 7,
+      "seconds": 0.0017251000390388072
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 8,
+      "seconds": 0.0016906000091694295
+    },
+    {
+      "mode": "source",
+      "repeat": 8,
+      "seconds": 0.634245400025975
+    },
+    {
+      "mode": "source",
+      "repeat": 9,
+      "seconds": 0.6396515999804251
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 9,
+      "seconds": 0.0015796000370755792
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 10,
+      "seconds": 0.0025513999862596393
+    },
+    {
+      "mode": "source",
+      "repeat": 10,
+      "seconds": 0.6415558999869972
+    },
+    {
+      "mode": "source",
+      "repeat": 11,
+      "seconds": 0.6341587000060827
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 11,
+      "seconds": 0.001691300014499575
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 12,
+      "seconds": 0.0015507999924011528
+    },
+    {
+      "mode": "source",
+      "repeat": 12,
+      "seconds": 0.6359000999946147
+    },
+    {
+      "mode": "source",
+      "repeat": 13,
+      "seconds": 0.6274820000398904
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 13,
+      "seconds": 0.00165200000628829
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 14,
+      "seconds": 0.0015143000055104494
+    },
+    {
+      "mode": "source",
+      "repeat": 14,
+      "seconds": 0.6292890000040643
+    },
+    {
+      "mode": "source",
+      "repeat": 15,
+      "seconds": 0.6303070000139996
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 15,
+      "seconds": 0.0016236999654211104
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 16,
+      "seconds": 0.0014817999908700585
+    },
+    {
+      "mode": "source",
+      "repeat": 16,
+      "seconds": 0.6454793000011705
+    },
+    {
+      "mode": "source",
+      "repeat": 17,
+      "seconds": 0.6715421000262722
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 17,
+      "seconds": 0.001705200003925711
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 18,
+      "seconds": 0.0015552000259049237
+    },
+    {
+      "mode": "source",
+      "repeat": 18,
+      "seconds": 0.6729864999651909
+    },
+    {
+      "mode": "source",
+      "repeat": 19,
+      "seconds": 0.6415121000027284
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 19,
+      "seconds": 0.001687200041487813
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 20,
+      "seconds": 0.0015175000298768282
+    },
+    {
+      "mode": "source",
+      "repeat": 20,
+      "seconds": 0.6503808000124991
+    },
+    {
+      "mode": "source",
+      "repeat": 21,
+      "seconds": 0.6535920000169426
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 21,
+      "seconds": 0.0022865000064484775
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 22,
+      "seconds": 0.0017488999874331057
+    },
+    {
+      "mode": "source",
+      "repeat": 22,
+      "seconds": 0.6461749000009149
+    },
+    {
+      "mode": "source",
+      "repeat": 23,
+      "seconds": 0.6392223999719135
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 23,
+      "seconds": 0.0016607999568805099
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 24,
+      "seconds": 0.0015434999950230122
+    },
+    {
+      "mode": "source",
+      "repeat": 24,
+      "seconds": 0.6364507999969646
+    },
+    {
+      "mode": "source",
+      "repeat": 25,
+      "seconds": 0.6302214999450371
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 25,
+      "seconds": 0.0017207000055350363
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 26,
+      "seconds": 0.0015465999604202807
+    },
+    {
+      "mode": "source",
+      "repeat": 26,
+      "seconds": 0.6407574000186287
+    },
+    {
+      "mode": "source",
+      "repeat": 27,
+      "seconds": 0.6322103999555111
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 27,
+      "seconds": 0.0017917000222951174
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 28,
+      "seconds": 0.0014525000005960464
+    },
+    {
+      "mode": "source",
+      "repeat": 28,
+      "seconds": 0.6480454999837093
+    },
+    {
+      "mode": "source",
+      "repeat": 29,
+      "seconds": 0.6584359999978915
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 29,
+      "seconds": 0.0017036999925039709
+    }
+  ],
+  "median_seconds": {
+    "source": 0.6415339999948628,
+    "llm_wiki": 0.0016563999815844
+  },
+  "actual_routing_traces": {
+    "source": [
+      {
+        "stage": "wiki_source_navigation",
+        "mode": "source",
+        "rerank_original_query": "From the original Transformer to decoder-only, explain how a single training forward pass differs from the autoregressive generation loop: where do encoder outputs and cross-attention, right-shifted targets and causal visibility, position-wise FFN, and KV cache each play a role? Distinguish architectural facts from inference optimizations.",
+        "effective_search_queries": [
+          "original Transformer encoder-decoder cross-attention encoder output decoder right-shifted target causal masking position-wise feed-forward network",
+          "decoder-only model training forward pass versus autoregressive generation loop KV cache inference optimization",
+          "From the original Transformer to decoder-only, explain how a single training forward pass differs from the autoregressive generation loop: where do encoder outputs and cross-attention, right-shifted targets and causal visibility, position-wise FFN, and KV cache each play a role? Distinguish architectural facts from inference optimizations.",
+          "从原始Transformer到Decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。"
+        ],
+        "effective_rerank_query": "From the original Transformer to decoder-only, explain how a single training forward pass differs from the autoregressive generation loop: where do encoder outputs and cross-attention, right-shifted targets and causal visibility, position-wise FFN, and KV cache each play a role? Distinguish architectural facts from inference optimizations.",
+        "term_corrections": [
+          {
+            "original": "Decoder-only",
+            "source_alias": "decoder-only",
+            "role": "retrieval_suggestion_not_ground_truth"
+          }
+        ],
+        "query_terminology": {
+          "original_query": "从原始Transformer到Decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。",
+          "expanded_query": "从原始Transformer到decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。",
+          "corrections": [
+            {
+              "original": "Decoder-only",
+              "source_alias": "decoder-only",
+              "role": "retrieval_suggestion_not_ground_truth"
+            }
+          ],
+          "rejected_choices": [],
+          "suggestions": [
+            {
+              "original": "Transformer",
+              "candidates": [
+                {
+                  "canonical": "Transformer",
+                  "wiki_pages": [
+                    "transformer"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1706.03762:eee8b5a0bcc2:c0-2632",
+                    "paper-1706.03762:eee8b5a0bcc2:c2858-5920"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "Decoder-only",
+              "candidates": [
+                {
+                  "canonical": "decoder-only",
+                  "wiki_pages": [
+                    "gpt"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1910.10683:7aa53b0ecc3b:c58510-61047",
+                    "paper-1910.10683:7aa53b0ecc3b:c60710-61496"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "训练",
+              "candidates": [
+                {
+                  "canonical": "训练",
+                  "wiki_pages": [
+                    "training"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c0-1426",
+                    "mygpt-model.py:e05006957de4:c3941-5197"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "FFN",
+              "candidates": [
+                {
+                  "canonical": "FFN",
+                  "wiki_pages": [
+                    "mlp"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+                    "paper-1706.03762:eee8b5a0bcc2:c13665-14608"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "KV缓存",
+              "candidates": [
+                {
+                  "canonical": "KV缓存",
+                  "wiki_pages": [
+                    "kv-cache"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c5047-6681",
+                    "mygpt-model.py:e05006957de4:c6488-7889"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            }
+          ],
+          "policy": "source-vocabulary-one-edit-v1",
+          "new_provider_calls": 0
+        },
+        "rerank_search_context_used": false,
+        "rerank_context_rankings": [],
+        "authoritative_original_reranker_ids": [
+          "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+          "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+          "paper-1910.10683:7aa53b0ecc3b:c117215-119641",
+          "paper-2309.06180:7ba2ff703be1:c7362-9520",
+          "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+          "paper-1910.10683:7aa53b0ecc3b:c61496-63183",
+          "paper-1910.10683:7aa53b0ecc3b:c49392-51825",
+          "paper-1910.10683:7aa53b0ecc3b:c11430-12742",
+          "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+          "paper-1706.03762:eee8b5a0bcc2:c27513-29798",
+          "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+          "depth-2002.05202:2f0b42e51459:c2216-3968",
+          "paper-1910.10683:7aa53b0ecc3b:c52189-54691",
+          "paper-1910.10683:7aa53b0ecc3b:c130789-133277",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "hf-transformers-cache-4.57.0:50131d48d593:c8458-10927",
+          "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c0-2564",
+          "depth-2309.06180:4e592d02d9a3:c11315-13256",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c3979-6531",
+          "depth-2002.04745:8e1c3e3564f6:c61160-63300",
+          "depth-orca-osdi22:b0b993441062:c46344-48757",
+          "paper-2309.06180:7ba2ff703be1:c1628-3279",
+          "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911",
+          "author-t2t-v1.2.0-transformer:3ceeacf80adf:c3228-3894",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c21306-22016",
+          "depth-2104.09864:abd4e80aae4d:c37647-39623",
+          "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c11650-14543",
+          "paper-1910.10683:7aa53b0ecc3b:c58510-61047",
+          "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+          "depth-2307.08691:f917fc544aae:c19905-21985",
+          "paper-1910.10683:7aa53b0ecc3b:c54691-57362",
+          "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+          "paper-1706.03762:eee8b5a0bcc2:c0-2632",
+          "paper-1911.02150:292091205298:c0-1731",
+          "paper-2205.14135:b86de4ee5c52:c29913-31797",
+          "paper-1706.03762:eee8b5a0bcc2:c2858-5920",
+          "depth-2002.04745:8e1c3e3564f6:c0-2433",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c2305-4848",
+          "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+          "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c4528-6908",
+          "foundation-2108.12409:cf6a3d07cc4d:c8881-10903",
+          "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+          "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+          "hf-transformers-cache-4.57.0:50131d48d593:c6454-8713",
+          "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+          "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c15633-16838",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c21520-24554",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c26503-29461",
+          "depth-2104.09864:abd4e80aae4d:c0-2644",
+          "depth-2309.06180:4e592d02d9a3:c66623-68892",
+          "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+          "mygpt-bench.py:4ab37b20b5e7:c17046-18649",
+          "mygpt-model.py:e05006957de4:c6488-7889"
+        ],
+        "wiki_pages": [],
+        "graph_neighbors": [],
+        "source_pointer_ids": [],
+        "final_ids": [
+          "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+          "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+          "paper-1910.10683:7aa53b0ecc3b:c117215-119641",
+          "paper-2309.06180:7ba2ff703be1:c7362-9520",
+          "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+          "paper-1910.10683:7aa53b0ecc3b:c61496-63183",
+          "paper-1910.10683:7aa53b0ecc3b:c49392-51825",
+          "paper-1910.10683:7aa53b0ecc3b:c11430-12742",
+          "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+          "paper-1706.03762:eee8b5a0bcc2:c27513-29798",
+          "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+          "depth-2002.05202:2f0b42e51459:c2216-3968",
+          "paper-1910.10683:7aa53b0ecc3b:c52189-54691",
+          "paper-1910.10683:7aa53b0ecc3b:c130789-133277",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "hf-transformers-cache-4.57.0:50131d48d593:c8458-10927",
+          "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c0-2564",
+          "depth-2309.06180:4e592d02d9a3:c11315-13256"
+        ],
+        "overview_anchor_ids": [],
+        "overview_anchor_policy": "protected-reranker-head8;bounded-tail-topic-coverage-v2;no-forced-neighbors",
+        "navigation_selection": {
+          "protected_reranker_ids": [
+            "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+            "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+            "paper-1910.10683:7aa53b0ecc3b:c117215-119641",
+            "paper-2309.06180:7ba2ff703be1:c7362-9520",
+            "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+            "paper-1910.10683:7aa53b0ecc3b:c61496-63183",
+            "paper-1910.10683:7aa53b0ecc3b:c49392-51825",
+            "paper-1910.10683:7aa53b0ecc3b:c11430-12742"
+          ],
+          "admitted_anchor_ids": [],
+          "omitted_anchor_ids": [],
+          "displaced_reranker_ids": [],
+          "semantic_support_certified": false,
+          "additional_provider_calls": 0
+        },
+        "topic_entry_ids": {},
+        "original_reranker_ids": [
+          "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+          "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+          "paper-1910.10683:7aa53b0ecc3b:c117215-119641",
+          "paper-2309.06180:7ba2ff703be1:c7362-9520",
+          "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+          "paper-1910.10683:7aa53b0ecc3b:c61496-63183",
+          "paper-1910.10683:7aa53b0ecc3b:c49392-51825",
+          "paper-1910.10683:7aa53b0ecc3b:c11430-12742",
+          "paper-1910.10683:7aa53b0ecc3b:c46017-48737",
+          "paper-1706.03762:eee8b5a0bcc2:c27513-29798",
+          "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+          "depth-2002.05202:2f0b42e51459:c2216-3968",
+          "paper-1910.10683:7aa53b0ecc3b:c52189-54691",
+          "paper-1910.10683:7aa53b0ecc3b:c130789-133277",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "hf-transformers-cache-4.57.0:50131d48d593:c8458-10927",
+          "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c0-2564",
+          "depth-2309.06180:4e592d02d9a3:c11315-13256",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c3979-6531",
+          "depth-2002.04745:8e1c3e3564f6:c61160-63300",
+          "depth-orca-osdi22:b0b993441062:c46344-48757",
+          "paper-2309.06180:7ba2ff703be1:c1628-3279",
+          "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911",
+          "author-t2t-v1.2.0-transformer:3ceeacf80adf:c3228-3894",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c21306-22016",
+          "depth-2104.09864:abd4e80aae4d:c37647-39623",
+          "depth-2002.04745:8e1c3e3564f6:c50803-52303",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c11650-14543",
+          "paper-1910.10683:7aa53b0ecc3b:c58510-61047",
+          "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+          "depth-2307.08691:f917fc544aae:c19905-21985",
+          "paper-1910.10683:7aa53b0ecc3b:c54691-57362",
+          "depth-2002.04745:8e1c3e3564f6:c49026-51145",
+          "paper-1706.03762:eee8b5a0bcc2:c0-2632",
+          "paper-1911.02150:292091205298:c0-1731",
+          "paper-2205.14135:b86de4ee5c52:c29913-31797",
+          "paper-1706.03762:eee8b5a0bcc2:c2858-5920",
+          "depth-2002.04745:8e1c3e3564f6:c0-2433",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c2305-4848",
+          "depth-2002.04745:8e1c3e3564f6:c11413-13548",
+          "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c4528-6908",
+          "foundation-2108.12409:cf6a3d07cc4d:c8881-10903",
+          "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+          "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+          "hf-transformers-cache-4.57.0:50131d48d593:c6454-8713",
+          "depth-2002.04745:8e1c3e3564f6:c9529-11690",
+          "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c15633-16838",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c21520-24554",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c26503-29461",
+          "depth-2104.09864:abd4e80aae4d:c0-2644",
+          "depth-2309.06180:4e592d02d9a3:c66623-68892",
+          "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+          "mygpt-bench.py:4ab37b20b5e7:c17046-18649",
+          "mygpt-model.py:e05006957de4:c6488-7889"
+        ],
+        "latency_ms": 812.5841000000946,
+        "editorial_content_used_as_evidence": false,
+        "new_provider_calls": 0
+      }
+    ],
+    "llm_wiki": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki",
+        "seeds": [
+          "cross-attention",
+          "gpt",
+          "forward-flow",
+          "causal-mask"
+        ],
+        "graph_neighbors": [],
+        "selected": [
+          "cross-attention",
+          "gpt",
+          "forward-flow",
+          "causal-mask"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [],
+        "complete_articles": true,
+        "article_characters": 6606,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 1.7182999872602522,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ]
+  }
+}

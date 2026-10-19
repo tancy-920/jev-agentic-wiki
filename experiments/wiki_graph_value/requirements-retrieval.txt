@@ -1,0 +1,5 @@
+-r requirements-live.txt
+sentence-transformers==5.7.0
+torch==2.13.0
+transformers==5.18.0
+huggingface-hub==1.33.0

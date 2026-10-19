@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "artifact": "Wiki and light graph value development experiments",
+  "historical_study": "79e8fb08-04b0-4be9-bed8-5e66c36dcad7",
+  "fresh_provider_calls": 0,
+  "human_attested": false,
+  "frozen_source_binding": {
+    "sources.jsonl": "2f0df305904f2236492a476a881d2436d419ee1af4e2b8d8045af1cf0b1a1682",
+    "chunks.jsonl": "0bf63b2c00efb98d266eb0a8e4db04295d1d5e00069a2c6bded8264d63016045",
+    "wiki.json": "82c088ba8bac7ae6859ea28f7f9aed9683cbaea39667d41107afe60d773cb3f0",
+    "index.json": "fc90476d88428625197cda29e5ff15b67ee2f23f01676b86c3d84d7cb5de0445"
+  },
+  "request_slots": 14,
+  "unique_generation_requests": 13,
+  "original_physical_calls": 18,
+  "source_redistribution": "Attributed normalized excerpts and local technical material; original PDFs and weights omitted",
+  "review_provenance": "Source-grounded nonblind AI judgments; human confirmation not given",
+  "original_input_bindings_preserved": true
+}

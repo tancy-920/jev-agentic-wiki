@@ -1,0 +1,1344 @@
+{
+  "status": "complete",
+  "provider_calls": 0,
+  "plan_queries": [
+    "PyTorch SDPA backend selection how to check which backend is used flash attention memory efficient math",
+    "SDPA numerical correctness verification reference attention comparison reproducible benchmark prefill decode GPU asynchronous timing allocated reserved memory JSON records"
+  ],
+  "runtime_original_query": "Someone reports that after calling PyTorch SDPA memory usage dropped and single-run timing got faster, and claims all decode scenarios will speed up. How would you determine the actual backend, verify numerical correctness, and design reproducible measurements? Please distinguish the applicable scope of prefill/decode, GPU asynchronous timing, allocated/reserved, and existing JSON records.",
+  "contexts": {
+    "source": {
+      "evidence": [
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 30,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c92804-94371",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "Figure 8: Speedup over standard PyTorch attention at diﬀerent sequence lengths, on T4.Top: Combined\nforward pass + backward pass.Bottom: Forward pass only.\nE.6 Full Benchmarking Results\nWe report the full benchmarking results and experimental details on A100.\nBaselines We compare against reference implementations for exact attention from PyTorch/HuggingFace\nand Megatron, approximate attention, and sparse attention. For approximate attention, we compare against\nreference implementations of Reformer [51], Local Attention [68], Linformer Attention [84], Smyrf [19], and\nLongShortFormer (LSFormer) [94]. For sparse attention, we compare against reference implementations of\nBlock-Sparse Attention form OpenAI [11], Longformer[3], and BigBird Attention [92]. For the approximate\nand sparse attention, we use a compression ratio of 1/8, or a compressed sequence length of 256, whichever is\nsmaller.\nSetup We measure runtime and memory usage of the attention computation with 8 heads of dimension 64,\nand batch size 16 on a machine with one A100 GPU with 40 GB of GPU HBM. We vary sequence length\nin our experiments. We compute attention on random vectors forQ, K, and V (we do not measure the\nprojection from the hidden layer). For dropout, we use dropout 0.1; for masking, we use a padding mask\nwith uniformly-random mask lengths between the total sequence length and the total sequence length minus\n20. To measure runtime, we take the average of 100 measurements of the attention call. We only measure\nmemory footprint once, since it does not vary between runs.\n30\n",
+          "token_count": 353,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 30",
+          "start_char": 92804,
+          "end_char": 94371
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch 2.11 scaled_dot_product_attention",
+          "authors": [
+            "PyTorch"
+          ],
+          "year": 2026,
+          "section": "captured public-source excerpt",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+          "source_url": "https://docs.pytorch.org/docs/2.11/generated/torch.nn.functional.scaled_dot_product_attention.html",
+          "text": "L3203: >\nL3204: >   * cite2733†Memory-Efficient Attention†github.com\nL3205: >\nL3206: >   * A PyTorch implementation defined in C++ matching the above formulation\nL3207: \nL3208: The function may call optimized kernels for improved performance when using the CUDA backend. For all other backends, the PyTorch implementation will be used.\nL3209: All implementations are enabled by default. Scaled dot product attention attempts to automatically select the most optimal implementation based on the inputs. In order to provide more fine-grained control over what implementation is used, the following functions are provided for enabling and disabling implementations. The context manager is the preferred mechanism:\nL3210: >   * cite2734†`torch.nn.attention.sdpa_kernel()` : A context manager used to enable or disable any of the implementations.\nL3211: >\nL3212: >   * cite2735†`torch.backends.cuda.enable_flash_sdp()` : Globally enables or disables FlashAttention.\nL3213: >\nL3214: >   * cite2736†`torch.backends.cuda.enable_mem_efficient_sdp()` : Globally enables or disables Memory-Efficient Attention.\nL3215: >\nL3216: >   * cite2737†`torch.backends.cuda.enable_math_sdp()` : Globally enables or disables the PyTorch C++ implementation.\nL3217: Each of the fused kernels has specific input limitations. If the user requires the use of a specific fused implementation, disable the PyTorch C++ implementation using cite2734†`torch.nn.attention.sdpa_kernel()` . In the event that a fused implementation is not available, a warning will be raised with the reasons why the fused implementation cannot run.\nL3218: Due to the nature of fusing floating point operations, the output of this function may be different depending on what backend kernel is chosen. The c++ implementation supports torch.float64 and can be used when higher precision is required. For math backend, all intermediates are kept in torch.float if inputs are in torch.half or torch.bfloat16.\nL3219: \nL3220: For more information please see cite108†Numerical accuracy\nL3221: > Grouped Query Attention (GQA) is an experimental feature. It currently works only for Flash_attention and math kernel on CUDA tensor, and does not support Nested tensor. Constraints for GQA:\nL3222: >\n",
+          "token_count": 588,
+          "source_id": "pytorch-sdpa-2.11",
+          "source_kind": "web_excerpt",
+          "source_version": "2.11-excerpt:sha256:bb2c316d435a3bd9",
+          "source_sha256": "42a07d742f7ef06e58c9cb9531cdebb32af2d05c4929900575cbb5ecedc0de8d",
+          "locator": "L70–L89",
+          "start_char": 3520,
+          "end_char": 5776
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 10,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c33318-36119",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "Runtime. Figure 3 (left) reports the runtime in milliseconds of the forward + backward pass ofFlashAt-\ntention and block-sparse FlashAttentioncompared to the baselines in exact, approximate, and sparse\nattention (exact numbers in Appendix E). Runtime grows quadratically with sequence length, butFlashAt-\ntention runs signiﬁcantly faster thanexact attention baselines, up to 3\u0002 faster than the PyTorch\nimplementation. The runtimes of many approximate/sparse attention mechanisms grow linearly with se-\nquence length, but FlashAttention still runs faster than approximate and sparse attention for short\nsequences due to fewer memory accesses. Theapproximate attentionruntimes begin to cross over with\nFlashAttention at sequences between 512 and 1024. On the other hand, block-sparseFlashAttention\nis faster than all implementations of exact, sparse, and approximate attention that we know of, across all\nsequence lengths.\nMemory Footprint. Figure 3 (right) shows the memory footprint ofFlashAttention and block-sparse\nFlashAttentioncompared to various exact, approximate, and sparse attention baselines.FlashAttention\nand block-sparse FlashAttentionhave the same memory footprint, which grows linearly with sequence\nlength. FlashAttention is up to 20\u0002 more memory eﬃcient thanexact attentionbaselines, and is more\nmemory-eﬃcient than theapproximate attentionbaselines. All other algorithms except for Linformer run\nout of memory on an A100 GPU before 64K, andFlashAttention is still 2\u0002 more eﬃcient than Linformer.\n5 Limitations and Future Directions\nWe discuss limitations of our approach and future directions. Related work is given in Appendix A.\nCompiling to CUDA.Our current approach to building IO-aware implementations of attention requires\nwriting a new CUDA kernel for each new attention implementation. This requires writing the attention\nalgorithm in a considerably lower-level language than PyTorch, and requires signiﬁcant engineering eﬀort.\nImplementations may also not be transferrable across GPU architectures. These limitations suggest the\nneed for a method that supports writing attention algorithms in a high-level language (e.g., PyTorch), and\ncompiling to IO-aware implementations in CUDA—similar to eﬀorts such as Halide in image processing [70].\nIO-Aware Deep Learning. We believe that the IO-aware approach can extend beyond attention.\nAttention is the most memory-intensive computation in Transformers, but every layer in a deep network\ntouches GPU HBM. We hope our work inspires IO-aware implementations of additional modules. We discuss\nthese potential extensions in Appendix D.\nMulti-GPU IO-Aware Methods.Our IO-aware implementation of attention is optimal within con-\nstants for computing attention on a single GPU. However, the attention computation may be parallelizable\n",
+          "token_count": 588,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 10",
+          "start_char": 33318,
+          "end_char": 36119
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / README.md",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-readme.md.md",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/README.md",
+          "text": "\n### D — Fused attention (SDPA)\n\nThe baseline materializes the full Tq × Tk score matrix before softmax; at T=2048, batch 8, 4 heads this matrix alone is `8 × 4 × 2048 × 2048`. `F.scaled_dot_product_attention` (SDPA) fuses the computation so the full matrix is never written out.\n\nMeasured on a full forward pass (batch 8, bf16, 4 layers / 4 heads / 256 dims):\n\n| n_kv_head | impl | T=128 | T=512 | T=2048 | peak mem (T=2048) |\n|---|---|---|---|---|---|\n| 4 | baseline (full matrix) | 3.73 ms | 4.63 ms | 53.91 ms | 604.3 MB |\n| 4 | **fused (SDPA)** | 3.40 ms | 3.19 ms | 19.28 ms | 144.3 MB |\n| 4 | chunked (online softmax) | 6.26 ms | 14.31 ms | 131.66 ms | 185.3 MB |\n| 1 | baseline (full matrix) | 3.33 ms | 4.45 ms | 51.09 ms | 607.6 MB |\n| 1 | **fused (SDPA)** | 3.09 ms | 3.03 ms | **13.88 ms** | **143.6 MB** |\n| 1 | chunked (online softmax) | 6.12 ms | 13.65 ms | 129.37 ms | 188.6 MB |\n\nAt T=2048 the fused path is 3.68× faster (n_kv_head=1) with peak memory 607.6 → 143.6 MB. The gap grows with sequence length; at T=128 both paths are in the fixed-overhead regime and show no difference.\n\nThree points worth noting:\n\n- This is PyTorch's fused entry point, not the FlashAttention kernel itself. On this machine the backend that actually runs is cuDNN (`FLASH_ATTENTION` is not built, `is_flash_attention_available()` returns `False`), and the speedup holds only in bf16 — in fp32 the fused backends are mostly unavailable for grouped-query shapes.\n- The default dispatcher silently selects `MATH` for grouped-query shapes (21.73 ms / 1257.3 MB); pinning the fused backend explicitly gives 1.292 ms / 41.25 MB (16.8×). The code therefore pins the backend list rather than relying on the dispatcher.\n",
+          "token_count": 568,
+          "source_id": "mygpt-readme.md",
+          "source_kind": "markdown",
+          "source_version": "local-content-snapshot:sha256:2d20f1a5d663fd6c",
+          "source_sha256": "2d20f1a5d663fd6cbc0fc0d0c4f4a3a5a0d93c454a5417cd3253a00a5ca2a295",
+          "locator": "L128–L149",
+          "start_char": 6983,
+          "end_char": 8692
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / bench.py",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-bench.py.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/bench.py",
+          "text": "\"\"\"\nbench.py —— 推理性能对照实验\n=============================\n\n跑出 README 里引用的全部推理数据：\n\n    python bench.py          # 五组实验全跑\n    python bench.py 4 5      # 只跑第 4、5 组（避免重跑覆盖已有 JSON）\n\n五组实验：\n  实验 1  改进 B：KV cache 的加速比随 batch 变化\n          结论：batch=1 时几乎没有收益（CPU 调度主导）；batch 越大收益越大（GPU 计算主导）\n  实验 2  改进 B：单次 forward 的耗时 vs 序列长度\n          用于解释实验 1 —— 为什么 batch=1 时看不出加速\n  实验 3  改进 C：GQA 把 KV cache 显存压缩多少（公式估算 + 真实张量形状双重验证）\n  实验 4  改进 D：三种注意力实现（baseline / sdpa / chunked）的耗时与峰值显存，附数值等价性\n  实验 5  改进 E：分页 KV cache 的显存浪费率与前缀共享，附 token 逐字一致性检查\n\n结果写入 results/bench_*.json 与 results/bench_*_*.json，随仓库提交，便于事后核对。\n\"\"\"\n\nimport json\nimport sys\nimport time\nimport warnings\nfrom pathlib import Path\n\nimport torch\nimport torch.nn.functional as F\n\nfrom model import GPT, GPTConfig, _SDPA_FUSED_BACKENDS\nfrom paged_kv import PagedKVCache, bytes_per_block, generate_paged, reserved_bytes_naive\n\ntry:                                    # 老版本 PyTorch 没有这个接口，缺了也能跑\n    from torch.nn.attention import sdpa_kernel\nexcept ImportError:                     # pragma: no cover\n    sdpa_kernel = None\n\nRESULTS_DIR = Path(__file__).resolve().parent / \"results\"\nRESULTS_DIR.mkdir(exist_ok=True)\n\nDEVICE = \"cuda\" if torch.cuda.is_available() else \"cpu\"\n\n\ndef time_generate(model, prompt, max_new_tokens, use_cache, repeats=2):\n",
+          "token_count": 564,
+          "source_id": "mygpt-bench.py",
+          "source_kind": "code",
+          "source_version": "local-content-snapshot:sha256:4ab37b20b5e7574c",
+          "source_sha256": "4ab37b20b5e7574c9db2cd898dd5d7e1136433fabecfca714362a977016d358a",
+          "locator": "L1–L45",
+          "start_char": 0,
+          "end_char": 1284
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / model.py",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-model.py.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-model.py:e05006957de4:c7739-9025",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/model.py",
+          "text": "        return self.resid_dropout(self.c_proj(y)), new_kv\n\n    def _expand_kv(self, k, v):\n        \"\"\"改进 C：k/v 头数少于 q 头数时，把每个 k/v 头复制若干份，各自服务一组 q 头。\n\n        效果：KV cache 的显存占用按 n_kv_head / n_head 缩小。\n        \"\"\"\n        if self.n_kv_head == self.n_head:\n            return k, v\n        rep = self.n_head // self.n_kv_head\n        return k.repeat_interleave(rep, dim=1), v.repeat_interleave(rep, dim=1)\n\n    def _attn_baseline(self, q, k, v, mask):\n        \"\"\"基线实现：先把完整的 Tq×Tk 分数矩阵算出来，再 softmax、加权求和。\n\n        最直白的做法，显存占用随 Tk 线性增长（B=8、4 头、T=2048 实测峰值 532 MiB）。\n        \"\"\"\n        k, v = self._expand_kv(k, v)\n        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))   # (B, nh, Tq, Tk)\n        att = att.masked_fill(mask == 0, float(\"-inf\"))\n        att = self.attn_dropout(F.softmax(att, dim=-1))\n        return att @ v                                                       # (B, nh, Tq, hd)\n\n    def _attn_sdpa(self, q, k, v, mask):\n        \"\"\"交给 PyTorch 的融合注意力内核（scaled_dot_product_attention）计算。\n\n        两个容易踩错的地方，都是实测确认过的，写在这里避免以后改错：\n          1. 掩码用 bool 张量显式传入，不要用 is_causal=True。SDPA 的 is_causal 是\n             「左上对齐」：Tq=1、Tk=64 时它只让当前这个 query 看到第 0 个 key，而基线实现\n             允许它看到全部 64 个，两者输出相差 3.2（不是舍入误差）。显式传掩码则与基线\n             实现逐元素一致（差值 2.9e-3，bf16 精度量级）。\n",
+          "token_count": 589,
+          "source_id": "mygpt-model.py",
+          "source_kind": "code",
+          "source_version": "local-content-snapshot:sha256:e05006957de4bf18",
+          "source_sha256": "e05006957de4bf18a947ac6c0eb02f00a7f75a7b8518e4f657eda9f29ad2e412",
+          "locator": "L212–L242",
+          "start_char": 7739,
+          "end_char": 9025
+        },
+        {
+          "paper_id": "2205.14135v2",
+          "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          "authors": [
+            "Tri Dao",
+            "Daniel Y. Fu",
+            "Stefano Ermon",
+            "Atri Rudra",
+            "Christopher Ré"
+          ],
+          "year": 2022,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 2,
+          "chunk_id": "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "source_url": "https://arxiv.org/abs/2205.14135v2",
+          "text": "FlashAttention\nMemory Hierarchy with\nBandwidth & Memory Size\nAttention on GPT-2\nFlashAttentionPyTorch\nTime (ms)\nMatmul\nMask\nSoftmax\nDropout\nMatmul\nFused\nKernel\nQ: N x d V: N X d\nKT: d x N\nQKT: N x N\nsm(QKT)V: N x d\nOuter Loop\nCopy Block to SRAM\nCopy\nOuter Loop\nCopy\nInner Loop\nCompute Block\non SRAM\nOutput to HBM\nInner Loop\nInner Loop\nOuter Loop\nGPU\nSRAM\nGPU\nHBM\nMain Memory\n(CPU DRAM)\nSRAM: 19 TB/s (20 MB)\nHBM: 1.5 TB/s (40 GB)\nDRAM: 12.8 GB/s\n                (>1 TB)\n0\n5\n10\n15\nFigure 1: Left: FlashAttention uses tiling to prevent materialization of the large𝑁\u0002𝑁 attention matrix\n(dotted box) on (relatively) slow GPU HBM. In the outer loop (red arrows),FlashAttentionloops through\nblocks of theK and V matrices and loads them to fast on-chip SRAM. In each block,FlashAttention\nloops over blocks ofQ matrix (blue arrows), loading them to SRAM, and writing the output of the attention\ncomputation back to HBM.Right: Speedup over the PyTorch implementation of attention on GPT-2.\nFlashAttentiondoes not read and write the large𝑁\u0002𝑁 attention matrix to HBM, resulting in an 7.6\u0002\nspeedup on the attention computation.\nGPUs, compute speed has out-paced memory speed [61, 62, 63], and most operations in Transformers are\nbottlenecked by memory accesses [43]. IO-aware algorithms have been critical for similar memory-bound\noperations, when reading and writing data can account for a large portion of the runtime—such as database\njoins [71], image processing [70], numerical linear algebra [4], and more [40, 85]. However, common Python\ninterfaces to deep learning such as PyTorch and Tensorﬂow do not allow ﬁne-grained control of memory\naccess.\nWe propose FlashAttention, a new attention algorithm that computes exact attention with far fewer\nmemory accesses. Our main goal is to avoid reading and writing the attention matrix to and from HBM.\nThis requires (i) computing the softmax reduction without access to the whole input (ii) not storing the large\nintermediate attention matrix for the backward pass. We apply two well-established techniques to address\nthese challenges. (i) We restructure the attention computation to split the input into blocks and make several\n",
+          "token_count": 580,
+          "source_id": "paper-2205.14135",
+          "source_kind": "pdf",
+          "source_version": "2205.14135v2:sha256:ca7f9fda10b90fc0",
+          "source_sha256": "b86de4ee5c525b59d6e3384b388ee1f294afe6c606784a480cf5ac8d2e2bff7b",
+          "locator": "PDF file p. 2",
+          "start_char": 3556,
+          "end_char": 5723
+        },
+        {
+          "paper_id": "2307.08691v1",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [],
+          "year": 2023,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 11,
+          "chunk_id": "depth-2307.08691:f917fc544aae:c29079-30756",
+          "source_url": "https://arxiv.org/pdf/2307.08691v1",
+          "text": "Attention forward speed (A100 80GB SXM4)\nPytorch\nFlashAttention\nxformers\nFlashAttention Triton\nFlashAttention-2 (d) With causal mask, head dimension 128\nFigure 5: Attention forward speed on A100 GPU\nJust running the same implementation on H100 GPUs (using no special instructions to make use of new\nfeatures such as TMA and 4th-gen Tensor Cores), we obtain up to 335 TFLOPs/s (Fig. 7). We expect that by\nusing new instructions, we can obtain another 1.5x-2x speedup on H100 GPUs. We leave that to future work.\n4.2 End-to-end Performance\nWe measure the training throughput of GPT-style models with either 1.3B or 2.7B parameters, on 8×A100\n80GB SXM. As shown in Table 1,FlashAttention-2 yields 2.8× speedup compared to a baseline without\nFlashAttention and 1.3× speedup compared toFlashAttention-2, reaching up to 225 TFLOPs/s per A100\nGPU.\nNote that we calculate the FLOPs by the formula, following Megatron-LM [16] (and many other papers\nand libraries):\n6·seqlen·number of params+ 12·number of layers·hidden dim·seqlen2.\nThe first term accounts for the FLOPs due to weight–input multiplication, and the second term accounts for\nthe FLOPs due to attention. However, one can argue that the second term should be halved, as with causal\nmask we only need to compute approximately half the number of elements in attention. We choose to follow\nthe formula from the literature (without dividing the attention FLOPs by 2) for consistency.\n5 Discussion and Future Directions\nFlashAttention-2is 2× faster than FlashAttention, which means that we can train models with 16k\nlonger context for the same price as previously training a 8k context model. We are excited about how this can\n11\n",
+          "token_count": 444,
+          "source_id": "depth-2307.08691",
+          "source_kind": "pdf",
+          "source_version": "2307.08691v1",
+          "source_sha256": "f917fc544aaea881528fa3934a8930c125641f5eadcf924877e2a442bf80a818",
+          "locator": "PDF file p. 11",
+          "start_char": 29079,
+          "end_char": 30756
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / bench.py",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-bench.py.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/bench.py",
+          "text": "    for n_kv_head in (4, 1):\n        for T in (128, 512, 2048):\n            d = {r[\"impl\"]: r for r in rows if r[\"n_kv_head\"] == n_kv_head and r[\"seq_len\"] == T}\n            b = d[\"baseline\"]\n            print(f\"  n_kv_head={n_kv_head} T={T:<5} \"\n                  f\"baseline {b['ms']:>7.2f} ms/{b['peak_MB']:>7.1f} MB  ｜ \"\n                  f\"sdpa {d['sdpa']['ms']:>7.2f} ms/{d['sdpa']['peak_MB']:>7.1f} MB\"\n                  f\"（{b['ms'] / d['sdpa']['ms']:.2f}×） ｜ \"\n                  f\"chunked {d['chunked']['ms']:>7.2f} ms/{d['chunked']['peak_MB']:>7.1f} MB\"\n                  f\"（{b['ms'] / d['chunked']['ms']:.2f}×）\")\n\n    # ---- 为什么 _attn_sdpa 要显式列出融合内核：默认分发器会挑中 MATH ----\n    print(\"\\n默认分发器 vs 显式指定融合内核（GQA 形状，单独调 scaled_dot_product_attention）：\")\n    dispatcher_check = _sdpa_dispatcher_vs_forced()\n    if dispatcher_check:\n        s = dispatcher_check\n        print(f\"  输入：batch={s['shape']['batch']}, n_head={s['shape']['n_head']}, \"\n              f\"n_kv_head={s['shape']['n_kv_head']}, T={s['shape']['seq_len']}, \"\n              f\"head_dim={s['shape']['head_dim']}, dtype=bfloat16\")\n        print(f\"  默认分发器  {s['default_ms']:>8.3f} ms   峰值 {s['default_peak_MB']:>8.1f} MB\")\n        print(f\"  显式融合    {s['forced_ms']:>8.3f} ms   峰值 {s['forced_peak_MB']:>8.1f} MB\")\n        print(f\"  速比 {s['speed_ratio']}×；显式指定的后端：{s['forced_backends']}\")\n    else:\n        print(\"  跳过（没有 CUDA，或当前 PyTorch 不支持 sdpa_kernel）\")\n\n    # ---- 数值等价性：三种实现算的是不是同一件事 ----\n",
+          "token_count": 596,
+          "source_id": "mygpt-bench.py",
+          "source_kind": "code",
+          "source_version": "local-content-snapshot:sha256:4ab37b20b5e7574c",
+          "source_sha256": "4ab37b20b5e7574c9db2cd898dd5d7e1136433fabecfca714362a977016d358a",
+          "locator": "L361–L386",
+          "start_char": 12377,
+          "end_char": 13830
+        },
+        {
+          "paper_id": "2307.08691v1",
+          "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+          "authors": [],
+          "year": 2023,
+          "section": "full page context",
+          "section_source": "source_segment_v1",
+          "page": 12,
+          "chunk_id": "depth-2307.08691:f917fc544aae:c31921-33440",
+          "source_url": "https://arxiv.org/pdf/2307.08691v1",
+          "text": "Pytorch\nFlashAttention\nxformers\nFlashAttention Triton\nFlashAttention-2 (d) With causal mask, head dimension 128\nFigure 6: Attention backward speed on A100 GPU\nTable 1: Training speed (TFLOPs/s/GPU) of GPT-style models on 8×A100 GPUs. FlashAttention-2\nreaches up to 225 TFLOPs/s (72% model FLOPs utilization). We compare against a baseline running without\nFlashAttention.\nModel Without FlashAttention FlashAttention FlashAttention-2\nGPT3-1.3B 2k context 142 TFLOPs/s 189 TFLOPs/s 196 TFLOPs/s\nGPT3-1.3B 8k context 72 TFLOPS/s 170 TFLOPs/s 220 TFLOPs/s\nGPT3-2.7B 2k context 149 TFLOPs/s 189 TFLOPs/s 205 TFLOPs/s\nGPT3-2.7B 8k context 80 TFLOPs/s 175 TFLOPs/s 225 TFLOPs/s\nbe used to understand long books and reports, high resolution images, audio and video.FlashAttention-2\nwill also speed up training, finetuning, and inference of existing models.\nIn the near future, we plan to collaborate with researchers and engineers to make FlashAttention widely\napplicable in different kinds of devices (e.g., H100 GPUs, AMD GPUs), as well as new data types such as\nFP8. As an immediate next step, we plan to optimize FlashAttention-2 for H100 GPUs to use new hardware\nfeatures (TMA, 4th-gen Tensor Cores, fp8). Combining the low-level optimizations in FlashAttention-2 with\nhigh-level algorithmic changes (e.g., local, dilated, block-sparse attention) could allow us to train AI models\nwith much longer context. We are also excited to work with compiler researchers to make these optimization\ntechniques easily programmable.\n12\n",
+          "token_count": 433,
+          "source_id": "depth-2307.08691",
+          "source_kind": "pdf",
+          "source_version": "2307.08691v1",
+          "source_sha256": "f917fc544aaea881528fa3934a8930c125641f5eadcf924877e2a442bf80a818",
+          "locator": "PDF file p. 12",
+          "start_char": 31921,
+          "end_char": 33440
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / model.py",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-model.py.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-model.py:e05006957de4:c1194-2694",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/model.py",
+          "text": "\ntry:                                    # 老版本 PyTorch 没有这个接口，缺了也能跑（退回默认分发器）\n    from torch.nn.attention import SDPBackend, sdpa_kernel\nexcept ImportError:                     # pragma: no cover\n    SDPBackend = sdpa_kernel = None\n\n# 真正\"融合\"的注意力内核；MATH 是按定义逐步骤算的参考实现，又慢又吃显存，所以排除在外。\n_SDPA_FUSED_BACKENDS = (\n    [SDPBackend.FLASH_ATTENTION, SDPBackend.CUDNN_ATTENTION, SDPBackend.EFFICIENT_ATTENTION]\n    if SDPBackend is not None else None\n)\n\n\n# ============================================================\n# 配置\n# ============================================================\n@dataclass\nclass GPTConfig:\n    \"\"\"模型超参数集中在此处。\"\"\"\n\n    block_size: int = 128      # 上下文长度：一次最多看 128 个字符\n    vocab_size: int = 65       # 字符种类数（tinyshakespeare 为 65 种）\n    n_layer: int = 4           # 堆叠多少个 Block\n    n_head: int = 4            # 注意力划分为几个 Query 头\n    n_kv_head: int = 4         # 改进 C：KV 头数；等于 n_head 即标准多头注意力，小于 n_head 即 GQA\n    n_embd: int = 256          # 每个字符用多少维向量表示\n    dropout: float = 0.0       # 小数据集设 0（更快）\n    bias: bool = True          # 线性层是否带 bias\n    norm: str = \"layernorm\"    # 改进 A 的开关：\"layernorm\" 或 \"rmsnorm\"\n    attn: str = \"baseline\"     # 改进 D 的开关：\"baseline\" / \"sdpa\" / \"chunked\"\n\n\n# ============================================================\n# 归一化\n# ============================================================\nclass LayerNorm(nn.Module):\n    \"\"\"逐位置归一化：减均值 → 除标准差 → 缩放 + 平移。\n\n    「减均值」与「平移」这最后一步是 RMSNorm 省掉的，两者对照看即知差异：\n        mean = x.mean(-1, keepdim=True)            # RMSNorm 不算均值\n",
+          "token_count": 586,
+          "source_id": "mygpt-model.py",
+          "source_kind": "code",
+          "source_version": "local-content-snapshot:sha256:e05006957de4bf18",
+          "source_sha256": "e05006957de4bf18a947ac6c0eb02f00a7f75a7b8518e4f657eda9f29ad2e412",
+          "locator": "L37–L76",
+          "start_char": 1194,
+          "end_char": 2694
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / README.md",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-readme.md.md",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/README.md",
+          "text": "# mygpt\n\nA character-level GPT (3.2M parameters) used as a controlled testbed for measuring the effect of five common training/inference optimizations. Each optimization is implemented as an independent switch: the baseline and the modified run differ by exactly one flag, so any difference between them can be attributed to that single change. Every number in this document is backed by raw measurements committed under `results/*.json`.\n\n## Results at a glance\n\n| # | Optimization | Measured effect |\n|---|---|---|\n| A | LayerNorm → RMSNorm | Parameters −2,304; peak training memory 365.7 → 329.6 MB (−10%); step time unchanged |\n| B | KV cache | Generation 30.5× faster at batch 32; 0.98× (no gain) at batch 1 |\n| C | GQA / MQA | Per-sequence KV cache 12.0 → 6.0 → 3.0 → 1.5 MB (−87.5% for MQA) |\n| D | Fused attention (SDPA) | 3.68× faster at T=2048; peak memory 607.6 → 143.6 MB |\n| E | Paged KV cache | Reserved-memory waste 93.8% → 16.45%; shared prefix 2.0 → 0.25 MB |\n\n## Purpose\n\nThe primary goal is to quantify, through controlled before/after experiments, how much each of five widely used optimizations actually improves a Transformer model, and at what cost. The emphasis is on the measurements and their interpretation rather than on building a language model or a training stack.\n\nA secondary goal is understanding the Transformer architecture itself: causal self-attention, multi-head attention, the MLP, residual connections, normalization, and positional embeddings.\n\n## Model and setup\n\n```\ninput \"F\" \"i\" \"r\" \"s\" \"t\"  →  token ids (B, T)\n  │\n  ├─ wte  token embedding     (65 × 256)\n  └─ wpe  position embedding  (128 × 256)   →  summed to (B, T, 256)\n  │\n  ▼   repeated 4× (each Block)\n  ├─ normalization              ← A switch: LayerNorm / RMSNorm\n  ├─ causal self-attention      ← B (KV cache) / C (GQA) / D (attention path)\n  ├─ residual add\n  ├─ normalization\n  ├─ MLP  256 → 1024 → 256\n  └─ residual add\n  │\n  ▼\n  final normalization → Linear(256 → 65)  →  scores over 65 characters\n                                             (weights shared with wte)\n```\n\n",
+          "token_count": 587,
+          "source_id": "mygpt-readme.md",
+          "source_kind": "markdown",
+          "source_version": "local-content-snapshot:sha256:2d20f1a5d663fd6c",
+          "source_sha256": "2d20f1a5d663fd6cbc0fc0d0c4f4a3a5a0d93c454a5417cd3253a00a5ca2a295",
+          "locator": "L1–L41",
+          "start_char": 0,
+          "end_char": 2086
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / README.md",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-readme.md.md",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/README.md",
+          "text": "\n`out/` (model weights, ~13 MB each) is excluded by `.gitignore`; `results/` (JSON, a few KB) is committed.\n\n## Limitations\n\n- This is not a usable language model: 3.2M parameters, character-level, 1.1 MB of text, 3,000 steps. It is a measurement vehicle.\n- Single run, single seed, single laptop GPU. Validation-loss differences around 0.005 are noise.\n- The 30.5× is not a universal constant; it is the intersection of O(T²) vs O(T) generation on this hardware at batch 32.\n- The architecture is GPT-2 style (no RoPE, no SwiGLU, no gradient checkpointing). The five optimizations are introduced in isolation.\n- Attention runs through PyTorch's fused entry point, not the FlashAttention kernel; the speedup is bf16-only.\n- The paged KV cache is a Python-level proof of concept (no copy-on-write, no scheduler, attention still gathers blocks back into a contiguous tensor).\n- The default KV cache remains the plainest `torch.cat` version; the paged path coexists in `paged_kv.py`.\n- Repeated measurements vary by 1.6%–7.7%, and timing is taken on a thermally-throttling laptop.\n\n## References\n\n**Code and data**\n\n- [karpathy/nanoGPT](https://github.com/karpathy/nanoGPT) — architecture, weight initialization, and residual scaling follow its approach. This repository differs in five ways: attention split into three projections (required for GQA), switchable normalization, KV-cache generation (absent in upstream nanoGPT), three switchable attention paths, and an additional paged KV-cache implementation.\n- [karpathy/char-rnn](https://github.com/karpathy/char-rnn) — the TinyShakespeare dataset (≈1.1 MB).\n\n**Papers**\n\n| Topic | Reference |\n|---|---|\n| Transformer | Vaswani et al., *Attention Is All You Need*, 2017 · [1706.03762](https://arxiv.org/abs/1706.03762) |\n| GPT-2 | Radford et al., *Language Models are Unsupervised Multitask Learners*, 2019 |\n| RMSNorm | Zhang & Sennrich, *Root Mean Square Layer Normalization*, 2019 · [1910.07467](https://arxiv.org/abs/1910.07467) |\n| MQA | Shazeer, *Fast Transformer Decoding: One Write-Head is All You Need*, 2019 · [1911.02150](https://arxiv.org/abs/1911.02150) |\n",
+          "token_count": 589,
+          "source_id": "mygpt-readme.md",
+          "source_kind": "markdown",
+          "source_version": "local-content-snapshot:sha256:2d20f1a5d663fd6c",
+          "source_sha256": "2d20f1a5d663fd6cbc0fc0d0c4f4a3a5a0d93c454a5417cd3253a00a5ca2a295",
+          "locator": "L239–L267",
+          "start_char": 14355,
+          "end_char": 16474
+        }
+      ],
+      "omitted_whole": [
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+        "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+        "mygpt-model.py:e05006957de4:c0-1426",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "depth-2309.06180:4e592d02d9a3:c15583-18158",
+        "paper-2205.14135:b86de4ee5c52:c95525-96757",
+        "mygpt-bench.py:4ab37b20b5e7:c13724-15781"
+      ],
+      "characters": 23424
+    },
+    "llm_wiki": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "PyTorch SDPA 与后端选择（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:sdpa",
+          "source_url": "",
+          "text": "# PyTorch SDPA 与后端选择\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nPyTorch scaled_dot_product_attention是注意力算子的接口，具体后端由设备、dtype、形状和支持条件等决定，不是FlashAttention的同义词。\n\n## 工作机制\n\n概念计算为softmax(QK^T*scale+bias)V，默认scale为1/√d_k。接口可选择math或可用融合后端；sdpa_kernel等控制可用实现。布尔attn_mask中True表示参与注意力，浮点mask作为logit偏置。dropout_p由调用者传入，评估时应显式传0。\n\n## 适用条件与易混淆点\n\n自动fallback不意味着必然发warning。文档所述无法运行融合实现的warning与用户禁用math、要求融合内核的情境有关。性能必须注明实际后端、硬件、dtype、batch、头数及Tq/Tk，不能把某次3.68倍当成接口保证。\n\n## 关联知识\n\nFlashAttention 与 IO 优化、分块注意力与在线 Softmax、性能测量、正确性与适用条件\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `pytorch-sdpa-2.11:42a07d742f7e:c0-2094` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3134–L3170; snapshot L1–L37]\n- `mygpt-model.py:e05006957de4:c1194-2694` — [mygpt / model.py, mygpt-model.py.py, L37–L76]\n- `mygpt-model.py:e05006957de4:c8927-10267` — [mygpt / model.py, mygpt-model.py.py, L241–L267]\n- `mygpt-bench.py:4ab37b20b5e7:c7703-9607` — [mygpt / bench.py, mygpt-bench.py.py, L243–L288]\n- `mygpt-bench.py:4ab37b20b5e7:c9306-11043` — [mygpt / bench.py, mygpt-bench.py.py, L281–L329]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c4113-5673` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L214–L286]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L143–L224]\n",
+          "token_count": 2243,
+          "source_id": "wiki-article:sdpa",
+          "source_kind": "wiki_article",
+          "source_version": "6d1f0de4d6bc0a8084d9a38be1f1651da63ff2e6b1d2a28c57379b9af60a97dc",
+          "source_sha256": "6d1f0de4d6bc0a8084d9a38be1f1651da63ff2e6b1d2a28c57379b9af60a97dc",
+          "locator": "sdpa.md"
+        },
+        {
+          "paper_id": null,
+          "title": "Prefill 与 Decode（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:prefill-decode",
+          "source_url": "",
+          "text": "# Prefill 与 Decode\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n自回归服务常分为prefill和decode：前者建立提示前缀状态，后者逐token延长输出。二者的并行度和瓶颈不同。\n\n## 工作机制\n\nprefill同时处理多个已知token并写入KV；decode通常每条请求每轮只有一个新query，需要读取已有K/V。提示长度、输出长度、batch和KV布局共同影响吞吐与单token延迟。TTFT侧重首token到达前的等待，后续token延迟与总吞吐反映不同体验。\n\n## 适用条件与易混淆点\n\n不能用prefill长序列SDPA测量直接解释batch1增量decode的收益。比较必须分开阶段，并计入队列、调度和缓存分配等系统成本；本文不提供通用加速倍数。\n\n## 关联知识\n\nKV Cache 增量解码、因果掩码与位置、分页 KV Cache 与前缀共享、Continuous Batching与迭代级调度\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `hf-transformers-cache-4.57.0:50131d48d593:c2433-4394` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L40–L75]\n- `hf-transformers-cache-4.57.0:50131d48d593:c4136-6760` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L68–L96]\n- `hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c3979-6531` — [Hugging Face Transformers v4.49.0 / Best Practices for Generation with Cache, What is Cache and why we should care?, L43–L79]\n- `hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618` — [Hugging Face Transformers v4.49.0 / Best Practices for Generation with Cache, Generate with Cache, L98–L117]\n- `hf-transformers-cache-4.57.0:50131d48d593:c0-2563` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L1–L43]\n- `paper-1911.02150:292091205298:c0-1731` — [Fast Transformer Decoding: One Write-Head is All You Need, captured public-source excerpt, captured excerpt L38–L43; snapshot L1–L6]\n- `mygpt-model.py:e05006957de4:c15869-17957` — [mygpt / model.py, mygpt-model.py.py, L403–L455]\n- `mygpt-model.py:e05006957de4:c0-1426` — [mygpt / model.py, mygpt-model.py.py, L1–L42]\n- `mygpt-paged_kv.py:4453b1b84e0f:c0-1099` — [mygpt / paged_kv.py, mygpt-paged_kv.py.py, L1–L38]\n- `mygpt-paged_kv.py:4453b1b84e0f:c6418-8055` — [mygpt / paged_kv.py, mygpt-paged_kv.py.py, L180–L225]\n",
+          "token_count": 2488,
+          "source_id": "wiki-article:prefill-decode",
+          "source_kind": "wiki_article",
+          "source_version": "5855d543d2e2257ff86b51fc452e915a1ab597d2aa9738b6b1cc1932d5bc1729",
+          "source_sha256": "5855d543d2e2257ff86b51fc452e915a1ab597d2aa9738b6b1cc1932d5bc1729",
+          "locator": "prefill-decode.md"
+        },
+        {
+          "paper_id": null,
+          "title": "性能测量、正确性与适用条件（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:measurement",
+          "source_url": "",
+          "text": "# 性能测量、正确性与适用条件\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n性能结果必须与测量任务、硬件和配置绑定。正确性、延迟、吞吐、已分配显存和预留显存是不同指标。\n\n## 工作机制\n\n比较注意力实现时固定输入、权重、dtype、batch、头数与Tq/Tk，先核对输出容差，再做预热、GPU同步和重复计时，报告统计量及环境。推理需区分prefill/decode，服务需说明排队是否计入。torch.cuda的allocated与reserved含义不同，峰值统计应在明确边界重置。\n\n## 适用条件与易混淆点\n\n本库旧mygpt JSON不是当前硬件新测量。缺失硬件/重复次数/实际后端时应写未知，不能补造。缓存复用缩短实验时间也不能作为算法部署速度。\n\n## 关联知识\n\nKV Cache 增量解码、PyTorch SDPA 与后端选择、分页 KV Cache 与前缀共享、训练：优化器、学习率与数值精度\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `mygpt-bench.py:4ab37b20b5e7:c979-2847` — [mygpt / bench.py, mygpt-bench.py.py, L36–L89]\n- `mygpt-bench.py:4ab37b20b5e7:c7703-9607` — [mygpt / bench.py, mygpt-bench.py.py, L243–L288]\n- `mygpt-readme.md:2d20f1a5d663:c10199-12641` — [mygpt / README.md, mygpt-readme.md.md, L171–L195]\n- `mygpt-readme.md:2d20f1a5d663:c6983-8692` — [mygpt / README.md, mygpt-readme.md.md, L128–L149]\n- `mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376` — [mygpt / results/bench_speedup_vs_batch.json, mygpt-results-bench_speedup_vs_batch.json.json, L1–L23]\n- `mygpt-results-bench_forward_cost.json:f3529c0f7798:c0-284` — [mygpt / results/bench_forward_cost.json, mygpt-results-bench_forward_cost.json.json, L1–L22]\n- `mygpt-requirements.txt:7d5067774196:c0-202` — [mygpt / requirements.txt, mygpt-requirements.txt.txt, L1–L7]\n",
+          "token_count": 1974,
+          "source_id": "wiki-article:measurement",
+          "source_kind": "wiki_article",
+          "source_version": "d26c2bb66a9049138bd937ba3140e7b02919606af0fab317cbaa3b299678df37",
+          "source_sha256": "d26c2bb66a9049138bd937ba3140e7b02919606af0fab317cbaa3b299678df37",
+          "locator": "measurement.md"
+        },
+        {
+          "paper_id": null,
+          "title": "FlashAttention 与 IO 优化（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:flash-attention",
+          "source_url": "",
+          "text": "# FlashAttention 与 IO 优化\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nFlashAttention针对精确注意力的数据搬运开销进行优化，利用分块和片上存储减少HBM读写及中间矩阵物化。\n\n## 工作机制\n\n普通实现可能将T×T分数和概率写入显存。FlashAttention按Q/K/V块计算，结合在线softmax更新中间统计与输出，避免保存完整概率矩阵。原算法是精确注意力的IO优化，不是通过稀疏化或近似softmax省略任意关系。\n\n## 适用条件与易混淆点\n\n浮点累加顺序不同可产生容差内数值差异，精确算法不等于逐bit相同。二次注意力算术未因省去矩阵物化而自动变成线性；收益依序列长度、硬件与内核限制而变。\n\n## 关联知识\n\nPyTorch SDPA 与后端选择、分块注意力与在线 Softmax、性能测量、正确性与适用条件\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-2205.14135:b86de4ee5c52:c0-2471` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 1]\n- `paper-2205.14135:b86de4ee5c52:c3556-5723` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 2]\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `depth-2307.08691:f917fc544aae:c3449-6144` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 2]\n- `depth-2307.08691:f917fc544aae:c21985-24558` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 9]\n- `pytorch-sdpa-2.11:42a07d742f7e:c1869-3693` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3167–L3207; snapshot L34–L74]\n- `mygpt-readme.md:2d20f1a5d663:c6983-8692` — [mygpt / README.md, mygpt-readme.md.md, L128–L149]\n- `mygpt-readme.md:2d20f1a5d663:c8442-10433` — [mygpt / README.md, mygpt-readme.md.md, L149–L175]\n",
+          "token_count": 2268,
+          "source_id": "wiki-article:flash-attention",
+          "source_kind": "wiki_article",
+          "source_version": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "source_sha256": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "locator": "flash-attention.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 6406
+    },
+    "llm_wiki_graph": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "PyTorch SDPA 与后端选择（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:sdpa",
+          "source_url": "",
+          "text": "# PyTorch SDPA 与后端选择\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nPyTorch scaled_dot_product_attention是注意力算子的接口，具体后端由设备、dtype、形状和支持条件等决定，不是FlashAttention的同义词。\n\n## 工作机制\n\n概念计算为softmax(QK^T*scale+bias)V，默认scale为1/√d_k。接口可选择math或可用融合后端；sdpa_kernel等控制可用实现。布尔attn_mask中True表示参与注意力，浮点mask作为logit偏置。dropout_p由调用者传入，评估时应显式传0。\n\n## 适用条件与易混淆点\n\n自动fallback不意味着必然发warning。文档所述无法运行融合实现的warning与用户禁用math、要求融合内核的情境有关。性能必须注明实际后端、硬件、dtype、batch、头数及Tq/Tk，不能把某次3.68倍当成接口保证。\n\n## 关联知识\n\nFlashAttention 与 IO 优化、分块注意力与在线 Softmax、性能测量、正确性与适用条件\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `pytorch-sdpa-2.11:42a07d742f7e:c0-2094` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3134–L3170; snapshot L1–L37]\n- `mygpt-model.py:e05006957de4:c1194-2694` — [mygpt / model.py, mygpt-model.py.py, L37–L76]\n- `mygpt-model.py:e05006957de4:c8927-10267` — [mygpt / model.py, mygpt-model.py.py, L241–L267]\n- `mygpt-bench.py:4ab37b20b5e7:c7703-9607` — [mygpt / bench.py, mygpt-bench.py.py, L243–L288]\n- `mygpt-bench.py:4ab37b20b5e7:c9306-11043` — [mygpt / bench.py, mygpt-bench.py.py, L281–L329]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c4113-5673` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L214–L286]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L143–L224]\n",
+          "token_count": 2243,
+          "source_id": "wiki-article:sdpa",
+          "source_kind": "wiki_article",
+          "source_version": "6d1f0de4d6bc0a8084d9a38be1f1651da63ff2e6b1d2a28c57379b9af60a97dc",
+          "source_sha256": "6d1f0de4d6bc0a8084d9a38be1f1651da63ff2e6b1d2a28c57379b9af60a97dc",
+          "locator": "sdpa.md"
+        },
+        {
+          "paper_id": null,
+          "title": "Prefill 与 Decode（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:prefill-decode",
+          "source_url": "",
+          "text": "# Prefill 与 Decode\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n自回归服务常分为prefill和decode：前者建立提示前缀状态，后者逐token延长输出。二者的并行度和瓶颈不同。\n\n## 工作机制\n\nprefill同时处理多个已知token并写入KV；decode通常每条请求每轮只有一个新query，需要读取已有K/V。提示长度、输出长度、batch和KV布局共同影响吞吐与单token延迟。TTFT侧重首token到达前的等待，后续token延迟与总吞吐反映不同体验。\n\n## 适用条件与易混淆点\n\n不能用prefill长序列SDPA测量直接解释batch1增量decode的收益。比较必须分开阶段，并计入队列、调度和缓存分配等系统成本；本文不提供通用加速倍数。\n\n## 关联知识\n\nKV Cache 增量解码、因果掩码与位置、分页 KV Cache 与前缀共享、Continuous Batching与迭代级调度\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `hf-transformers-cache-4.57.0:50131d48d593:c2433-4394` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L40–L75]\n- `hf-transformers-cache-4.57.0:50131d48d593:c4136-6760` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L68–L96]\n- `hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c3979-6531` — [Hugging Face Transformers v4.49.0 / Best Practices for Generation with Cache, What is Cache and why we should care?, L43–L79]\n- `hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618` — [Hugging Face Transformers v4.49.0 / Best Practices for Generation with Cache, Generate with Cache, L98–L117]\n- `hf-transformers-cache-4.57.0:50131d48d593:c0-2563` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L1–L43]\n- `paper-1911.02150:292091205298:c0-1731` — [Fast Transformer Decoding: One Write-Head is All You Need, captured public-source excerpt, captured excerpt L38–L43; snapshot L1–L6]\n- `mygpt-model.py:e05006957de4:c15869-17957` — [mygpt / model.py, mygpt-model.py.py, L403–L455]\n- `mygpt-model.py:e05006957de4:c0-1426` — [mygpt / model.py, mygpt-model.py.py, L1–L42]\n- `mygpt-paged_kv.py:4453b1b84e0f:c0-1099` — [mygpt / paged_kv.py, mygpt-paged_kv.py.py, L1–L38]\n- `mygpt-paged_kv.py:4453b1b84e0f:c6418-8055` — [mygpt / paged_kv.py, mygpt-paged_kv.py.py, L180–L225]\n",
+          "token_count": 2488,
+          "source_id": "wiki-article:prefill-decode",
+          "source_kind": "wiki_article",
+          "source_version": "5855d543d2e2257ff86b51fc452e915a1ab597d2aa9738b6b1cc1932d5bc1729",
+          "source_sha256": "5855d543d2e2257ff86b51fc452e915a1ab597d2aa9738b6b1cc1932d5bc1729",
+          "locator": "prefill-decode.md"
+        },
+        {
+          "paper_id": null,
+          "title": "性能测量、正确性与适用条件（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:measurement",
+          "source_url": "",
+          "text": "# 性能测量、正确性与适用条件\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n性能结果必须与测量任务、硬件和配置绑定。正确性、延迟、吞吐、已分配显存和预留显存是不同指标。\n\n## 工作机制\n\n比较注意力实现时固定输入、权重、dtype、batch、头数与Tq/Tk，先核对输出容差，再做预热、GPU同步和重复计时，报告统计量及环境。推理需区分prefill/decode，服务需说明排队是否计入。torch.cuda的allocated与reserved含义不同，峰值统计应在明确边界重置。\n\n## 适用条件与易混淆点\n\n本库旧mygpt JSON不是当前硬件新测量。缺失硬件/重复次数/实际后端时应写未知，不能补造。缓存复用缩短实验时间也不能作为算法部署速度。\n\n## 关联知识\n\nKV Cache 增量解码、PyTorch SDPA 与后端选择、分页 KV Cache 与前缀共享、训练：优化器、学习率与数值精度\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `mygpt-bench.py:4ab37b20b5e7:c979-2847` — [mygpt / bench.py, mygpt-bench.py.py, L36–L89]\n- `mygpt-bench.py:4ab37b20b5e7:c7703-9607` — [mygpt / bench.py, mygpt-bench.py.py, L243–L288]\n- `mygpt-readme.md:2d20f1a5d663:c10199-12641` — [mygpt / README.md, mygpt-readme.md.md, L171–L195]\n- `mygpt-readme.md:2d20f1a5d663:c6983-8692` — [mygpt / README.md, mygpt-readme.md.md, L128–L149]\n- `mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376` — [mygpt / results/bench_speedup_vs_batch.json, mygpt-results-bench_speedup_vs_batch.json.json, L1–L23]\n- `mygpt-results-bench_forward_cost.json:f3529c0f7798:c0-284` — [mygpt / results/bench_forward_cost.json, mygpt-results-bench_forward_cost.json.json, L1–L22]\n- `mygpt-requirements.txt:7d5067774196:c0-202` — [mygpt / requirements.txt, mygpt-requirements.txt.txt, L1–L7]\n",
+          "token_count": 1974,
+          "source_id": "wiki-article:measurement",
+          "source_kind": "wiki_article",
+          "source_version": "d26c2bb66a9049138bd937ba3140e7b02919606af0fab317cbaa3b299678df37",
+          "source_sha256": "d26c2bb66a9049138bd937ba3140e7b02919606af0fab317cbaa3b299678df37",
+          "locator": "measurement.md"
+        },
+        {
+          "paper_id": null,
+          "title": "FlashAttention 与 IO 优化（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:flash-attention",
+          "source_url": "",
+          "text": "# FlashAttention 与 IO 优化\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nFlashAttention针对精确注意力的数据搬运开销进行优化，利用分块和片上存储减少HBM读写及中间矩阵物化。\n\n## 工作机制\n\n普通实现可能将T×T分数和概率写入显存。FlashAttention按Q/K/V块计算，结合在线softmax更新中间统计与输出，避免保存完整概率矩阵。原算法是精确注意力的IO优化，不是通过稀疏化或近似softmax省略任意关系。\n\n## 适用条件与易混淆点\n\n浮点累加顺序不同可产生容差内数值差异，精确算法不等于逐bit相同。二次注意力算术未因省去矩阵物化而自动变成线性；收益依序列长度、硬件与内核限制而变。\n\n## 关联知识\n\nPyTorch SDPA 与后端选择、分块注意力与在线 Softmax、性能测量、正确性与适用条件\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-2205.14135:b86de4ee5c52:c0-2471` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 1]\n- `paper-2205.14135:b86de4ee5c52:c3556-5723` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 2]\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `depth-2307.08691:f917fc544aae:c3449-6144` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 2]\n- `depth-2307.08691:f917fc544aae:c21985-24558` — [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning, full page context, PDF file p. 9]\n- `pytorch-sdpa-2.11:42a07d742f7e:c1869-3693` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3167–L3207; snapshot L34–L74]\n- `mygpt-readme.md:2d20f1a5d663:c6983-8692` — [mygpt / README.md, mygpt-readme.md.md, L128–L149]\n- `mygpt-readme.md:2d20f1a5d663:c8442-10433` — [mygpt / README.md, mygpt-readme.md.md, L149–L175]\n",
+          "token_count": 2268,
+          "source_id": "wiki-article:flash-attention",
+          "source_kind": "wiki_article",
+          "source_version": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "source_sha256": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+          "locator": "flash-attention.md"
+        },
+        {
+          "paper_id": null,
+          "title": "分块注意力与在线 Softmax（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:online-softmax",
+          "source_url": "",
+          "text": "# 分块注意力与在线 Softmax\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\n在线softmax用运行中的最大值和归一化量合并分块结果，使注意力不必保存完整分数矩阵。它不是逐块独立softmax后直接平均。\n\n## 工作机制\n\n已处理分块保留最大值m、指数和l、未归一化加权和o。新块最大值m_b、指数和l_b、加权和o_b到来时，m'=max(m,m_b)，l'=exp(m−m')l+exp(m_b−m')l_b，o'=exp(m−m')o+exp(m_b−m')o_b，最终输出o'/l'。旧块必须按新最大值重缩放。\n\n## 适用条件与易混淆点\n\n掩码和空块需专门处理，不能对全−∞行机械使用上述式子。Python教学分块代码不等同于融合GPU内核；减少峰值中间存储也不保证端到端更快。\n\n## 关联知识\n\nFlashAttention 与 IO 优化、PyTorch SDPA 与后端选择\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-2205.14135:b86de4ee5c52:c13633-15122` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 4]\n- `paper-2205.14135:b86de4ee5c52:c15122-16331` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 5]\n- `paper-2205.14135:b86de4ee5c52:c11869-13995` — [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, full page context, PDF file p. 4]\n- `mygpt-model.py:e05006957de4:c10000-11173` — [mygpt / model.py, mygpt-model.py.py, L263–L289]\n- `mygpt-model.py:e05006957de4:c3941-5197` — [mygpt / model.py, mygpt-model.py.py, L119–L153]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c1321-2882` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L67–L154]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L1–L78]\n",
+          "token_count": 2057,
+          "source_id": "wiki-article:online-softmax",
+          "source_kind": "wiki_article",
+          "source_version": "9b5f22fae0b68a8b63fca00268bdb88ec79157c13274a0ecf85ffdea47dc6e53",
+          "source_sha256": "9b5f22fae0b68a8b63fca00268bdb88ec79157c13274a0ecf85ffdea47dc6e53",
+          "locator": "online-softmax.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 7887
+    }
+  },
+  "timing_rows": [
+    {
+      "mode": "source",
+      "repeat": 0,
+      "seconds": 0.6797630999935791
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 0,
+      "seconds": 0.0018479999853298068
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 0,
+      "seconds": 0.0018054000101983547
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 1,
+      "seconds": 0.0017986000166274607
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 1,
+      "seconds": 0.0017961999983526766
+    },
+    {
+      "mode": "source",
+      "repeat": 1,
+      "seconds": 0.6957620999892242
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 2,
+      "seconds": 0.001992999983485788
+    },
+    {
+      "mode": "source",
+      "repeat": 2,
+      "seconds": 0.6826027000206523
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 2,
+      "seconds": 0.0016688000177964568
+    },
+    {
+      "mode": "source",
+      "repeat": 3,
+      "seconds": 0.6808053000131622
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 3,
+      "seconds": 0.001797500008251518
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 3,
+      "seconds": 0.00178829999640584
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 4,
+      "seconds": 0.0016645999858155847
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 4,
+      "seconds": 0.001777399971615523
+    },
+    {
+      "mode": "source",
+      "repeat": 4,
+      "seconds": 0.7069906999822706
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 5,
+      "seconds": 0.0019674000213854015
+    },
+    {
+      "mode": "source",
+      "repeat": 5,
+      "seconds": 0.6702902000397444
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 5,
+      "seconds": 0.0017509000026620924
+    },
+    {
+      "mode": "source",
+      "repeat": 6,
+      "seconds": 0.6812362999771722
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 6,
+      "seconds": 0.0018972000107169151
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 6,
+      "seconds": 0.0017903000116348267
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 7,
+      "seconds": 0.0016692000208422542
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 7,
+      "seconds": 0.001770599978044629
+    },
+    {
+      "mode": "source",
+      "repeat": 7,
+      "seconds": 0.6615636999486014
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 8,
+      "seconds": 0.0022099000052548945
+    },
+    {
+      "mode": "source",
+      "repeat": 8,
+      "seconds": 0.6804088000208139
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 8,
+      "seconds": 0.0018366000149399042
+    },
+    {
+      "mode": "source",
+      "repeat": 9,
+      "seconds": 0.6695000999607146
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 9,
+      "seconds": 0.0016681000124663115
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 9,
+      "seconds": 0.002165700017940253
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 10,
+      "seconds": 0.00196749996393919
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 10,
+      "seconds": 0.0018363000126555562
+    },
+    {
+      "mode": "source",
+      "repeat": 10,
+      "seconds": 0.6639053999679163
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 11,
+      "seconds": 0.001855500042438507
+    },
+    {
+      "mode": "source",
+      "repeat": 11,
+      "seconds": 0.6954892000067048
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 11,
+      "seconds": 0.0018094000406563282
+    },
+    {
+      "mode": "source",
+      "repeat": 12,
+      "seconds": 0.6935797999612987
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 12,
+      "seconds": 0.0018820000113919377
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 12,
+      "seconds": 0.0023071999894455075
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 13,
+      "seconds": 0.0017936999793164432
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 13,
+      "seconds": 0.0018613999709486961
+    },
+    {
+      "mode": "source",
+      "repeat": 13,
+      "seconds": 0.684594799997285
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 14,
+      "seconds": 0.0021081999875605106
+    },
+    {
+      "mode": "source",
+      "repeat": 14,
+      "seconds": 0.7374370999750681
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 14,
+      "seconds": 0.0019522999646142125
+    },
+    {
+      "mode": "source",
+      "repeat": 15,
+      "seconds": 0.6913208000478335
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 15,
+      "seconds": 0.00209060002816841
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 15,
+      "seconds": 0.001950099947862327
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 16,
+      "seconds": 0.0017727999947965145
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 16,
+      "seconds": 0.0020339000038802624
+    },
+    {
+      "mode": "source",
+      "repeat": 16,
+      "seconds": 0.6881911999662407
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 17,
+      "seconds": 0.0025639000232331455
+    },
+    {
+      "mode": "source",
+      "repeat": 17,
+      "seconds": 0.7231933999573812
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 17,
+      "seconds": 0.002035300014540553
+    },
+    {
+      "mode": "source",
+      "repeat": 18,
+      "seconds": 0.7483520000241697
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 18,
+      "seconds": 0.0021254000021144748
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 18,
+      "seconds": 0.0023855999461375177
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 19,
+      "seconds": 0.002055999997537583
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 19,
+      "seconds": 0.002121299970895052
+    },
+    {
+      "mode": "source",
+      "repeat": 19,
+      "seconds": 0.6879153999616392
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 20,
+      "seconds": 0.0020222000312060118
+    },
+    {
+      "mode": "source",
+      "repeat": 20,
+      "seconds": 0.6838101000175811
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 20,
+      "seconds": 0.00196610001148656
+    },
+    {
+      "mode": "source",
+      "repeat": 21,
+      "seconds": 0.7042522999690846
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 21,
+      "seconds": 0.0020428000134415925
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 21,
+      "seconds": 0.0018836999661289155
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 22,
+      "seconds": 0.0017176999826915562
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 22,
+      "seconds": 0.001983800029847771
+    },
+    {
+      "mode": "source",
+      "repeat": 22,
+      "seconds": 0.663007800001651
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 23,
+      "seconds": 0.001954799983650446
+    },
+    {
+      "mode": "source",
+      "repeat": 23,
+      "seconds": 0.6661945999949239
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 23,
+      "seconds": 0.0023234999971464276
+    },
+    {
+      "mode": "source",
+      "repeat": 24,
+      "seconds": 0.6696058999514207
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 24,
+      "seconds": 0.0017952999914996326
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 24,
+      "seconds": 0.0018363999552093446
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 25,
+      "seconds": 0.0019019999890588224
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 25,
+      "seconds": 0.001957800006493926
+    },
+    {
+      "mode": "source",
+      "repeat": 25,
+      "seconds": 0.7324079999816604
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 26,
+      "seconds": 0.0022859000018797815
+    },
+    {
+      "mode": "source",
+      "repeat": 26,
+      "seconds": 0.7683810000307858
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 26,
+      "seconds": 0.002549299970269203
+    },
+    {
+      "mode": "source",
+      "repeat": 27,
+      "seconds": 0.6924666000413708
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 27,
+      "seconds": 0.0017709999810904264
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 27,
+      "seconds": 0.0029325999785214663
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 28,
+      "seconds": 0.0016586999990977347
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 28,
+      "seconds": 0.0019276999519206583
+    },
+    {
+      "mode": "source",
+      "repeat": 28,
+      "seconds": 0.696963099995628
+    },
+    {
+      "mode": "llm_wiki_graph",
+      "repeat": 29,
+      "seconds": 0.002164800011087209
+    },
+    {
+      "mode": "source",
+      "repeat": 29,
+      "seconds": 0.6669571999809705
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 29,
+      "seconds": 0.0026029000291600823
+    }
+  ],
+  "median_seconds": {
+    "source": 0.6862550999794621,
+    "llm_wiki": 0.0018423000001348555,
+    "llm_wiki_graph": 0.0019626000139396638
+  },
+  "actual_routing_traces": {
+    "source": [
+      {
+        "stage": "wiki_source_navigation",
+        "mode": "source",
+        "rerank_original_query": "Someone reports that after calling PyTorch SDPA memory usage dropped and single-run timing got faster, and claims all decode scenarios will speed up. How would you determine the actual backend, verify numerical correctness, and design reproducible measurements? Please distinguish the applicable scope of prefill/decode, GPU asynchronous timing, allocated/reserved, and existing JSON records.",
+        "effective_search_queries": [
+          "PyTorch SDPA backend selection how to check which backend is used flash attention memory efficient math",
+          "SDPA numerical correctness verification reference attention comparison reproducible benchmark prefill decode GPU asynchronous timing allocated reserved memory JSON records",
+          "Someone reports that after calling PyTorch SDPA memory usage dropped and single-run timing got faster, and claims all decode scenarios will speed up. How would you determine the actual backend, verify numerical correctness, and design reproducible measurements? Please distinguish the applicable scope of prefill/decode, GPU asynchronous timing, allocated/reserved, and existing JSON records.",
+          "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。"
+        ],
+        "effective_rerank_query": "Someone reports that after calling PyTorch SDPA memory usage dropped and single-run timing got faster, and claims all decode scenarios will speed up. How would you determine the actual backend, verify numerical correctness, and design reproducible measurements? Please distinguish the applicable scope of prefill/decode, GPU asynchronous timing, allocated/reserved, and existing JSON records.",
+        "term_corrections": [],
+        "query_terminology": {
+          "original_query": "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。",
+          "expanded_query": "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。",
+          "corrections": [],
+          "rejected_choices": [],
+          "suggestions": [
+            {
+              "original": "SDPA",
+              "candidates": [
+                {
+                  "canonical": "SDPA",
+                  "wiki_pages": [
+                    "sdpa"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-readme.md:2d20f1a5d663:c0-2086",
+                    "mygpt-readme.md:2d20f1a5d663:c6983-8692"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "显存",
+              "candidates": [
+                {
+                  "canonical": "显存",
+                  "wiki_pages": [
+                    "measurement"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c0-1426",
+                    "mygpt-model.py:e05006957de4:c1194-2694"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "prefill",
+              "candidates": [
+                {
+                  "canonical": "prefill",
+                  "wiki_pages": [
+                    "prefill-decode"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-2309.06180:7ba2ff703be1:c17264-19250",
+                    "mygpt-readme.md:2d20f1a5d663:c8442-10433"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "decode",
+              "candidates": [
+                {
+                  "canonical": "decode",
+                  "wiki_pages": [
+                    "prefill-decode"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1911.02150:292091205298:c0-1731",
+                    "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c14264-16346"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            }
+          ],
+          "policy": "source-vocabulary-one-edit-v1",
+          "new_provider_calls": 0
+        },
+        "rerank_search_context_used": false,
+        "rerank_context_rankings": [],
+        "authoritative_original_reranker_ids": [
+          "paper-2205.14135:b86de4ee5c52:c92804-94371",
+          "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+          "paper-2205.14135:b86de4ee5c52:c33318-36119",
+          "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "depth-2307.08691:f917fc544aae:c29079-30756",
+          "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+          "depth-2307.08691:f917fc544aae:c31921-33440",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+          "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "depth-2309.06180:4e592d02d9a3:c15583-18158",
+          "paper-2205.14135:b86de4ee5c52:c95525-96757",
+          "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+          "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "paper-2205.14135:b86de4ee5c52:c7564-10050",
+          "mygpt-model.py:e05006957de4:c8927-10267",
+          "mygpt-bench.py:4ab37b20b5e7:c15612-17277",
+          "depth-2309.06180:4e592d02d9a3:c29692-31560",
+          "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+          "mygpt-bench.py:4ab37b20b5e7:c9306-11043",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "depth-2309.06180:4e592d02d9a3:c41683-43123",
+          "depth-2309.06180:4e592d02d9a3:c17783-20623",
+          "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+          "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331",
+          "paper-2205.14135:b86de4ee5c52:c82939-85311",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c21520-24554",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528",
+          "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c10932-13356",
+          "paper-1911.02150:292091205298:c0-1731",
+          "depth-2309.06180:4e592d02d9a3:c43123-45689",
+          "depth-2309.06180:4e592d02d9a3:c4681-7058",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c11650-14543",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c5440-5898",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c9618-11993",
+          "depth-2309.06180:4e592d02d9a3:c61159-63604",
+          "depth-orca-osdi22:b0b993441062:c43507-44517",
+          "mygpt-readme.md:2d20f1a5d663:c5055-6984",
+          "mygpt-bench.py:4ab37b20b5e7:c17046-18649",
+          "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+          "paper-2309.06180:7ba2ff703be1:c17264-19250",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "depth-2309.06180:4e592d02d9a3:c25943-27981",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-bench.py:4ab37b20b5e7:c21671-23291",
+          "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+          "mygpt-bench.py:4ab37b20b5e7:c19958-21805",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c26026-28326",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c26869-29138",
+          "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c33103-36261",
+          "mygpt-bench.py:4ab37b20b5e7:c5261-6745"
+        ],
+        "wiki_pages": [],
+        "graph_neighbors": [],
+        "source_pointer_ids": [],
+        "final_ids": [
+          "paper-2205.14135:b86de4ee5c52:c92804-94371",
+          "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+          "paper-2205.14135:b86de4ee5c52:c33318-36119",
+          "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "depth-2307.08691:f917fc544aae:c29079-30756",
+          "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+          "depth-2307.08691:f917fc544aae:c31921-33440",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+          "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "depth-2309.06180:4e592d02d9a3:c15583-18158",
+          "paper-2205.14135:b86de4ee5c52:c95525-96757",
+          "mygpt-bench.py:4ab37b20b5e7:c13724-15781"
+        ],
+        "overview_anchor_ids": [],
+        "overview_anchor_policy": "protected-reranker-head8;bounded-tail-topic-coverage-v2;no-forced-neighbors",
+        "navigation_selection": {
+          "protected_reranker_ids": [
+            "paper-2205.14135:b86de4ee5c52:c92804-94371",
+            "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+            "paper-2205.14135:b86de4ee5c52:c33318-36119",
+            "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+            "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+            "mygpt-model.py:e05006957de4:c7739-9025",
+            "paper-2205.14135:b86de4ee5c52:c3556-5723",
+            "depth-2307.08691:f917fc544aae:c29079-30756"
+          ],
+          "admitted_anchor_ids": [],
+          "omitted_anchor_ids": [],
+          "displaced_reranker_ids": [],
+          "semantic_support_certified": false,
+          "additional_provider_calls": 0
+        },
+        "topic_entry_ids": {},
+        "original_reranker_ids": [
+          "paper-2205.14135:b86de4ee5c52:c92804-94371",
+          "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+          "paper-2205.14135:b86de4ee5c52:c33318-36119",
+          "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "paper-2205.14135:b86de4ee5c52:c3556-5723",
+          "depth-2307.08691:f917fc544aae:c29079-30756",
+          "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+          "depth-2307.08691:f917fc544aae:c31921-33440",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+          "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "depth-2309.06180:4e592d02d9a3:c15583-18158",
+          "paper-2205.14135:b86de4ee5c52:c95525-96757",
+          "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+          "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "paper-2205.14135:b86de4ee5c52:c7564-10050",
+          "mygpt-model.py:e05006957de4:c8927-10267",
+          "mygpt-bench.py:4ab37b20b5e7:c15612-17277",
+          "depth-2309.06180:4e592d02d9a3:c29692-31560",
+          "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c28807-31335",
+          "mygpt-bench.py:4ab37b20b5e7:c9306-11043",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "depth-2309.06180:4e592d02d9a3:c41683-43123",
+          "depth-2309.06180:4e592d02d9a3:c17783-20623",
+          "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+          "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331",
+          "paper-2205.14135:b86de4ee5c52:c82939-85311",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c21520-24554",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528",
+          "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c10932-13356",
+          "paper-1911.02150:292091205298:c0-1731",
+          "depth-2309.06180:4e592d02d9a3:c43123-45689",
+          "depth-2309.06180:4e592d02d9a3:c4681-7058",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c11650-14543",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c5440-5898",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c9618-11993",
+          "depth-2309.06180:4e592d02d9a3:c61159-63604",
+          "depth-orca-osdi22:b0b993441062:c43507-44517",
+          "mygpt-readme.md:2d20f1a5d663:c5055-6984",
+          "mygpt-bench.py:4ab37b20b5e7:c17046-18649",
+          "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+          "paper-2309.06180:7ba2ff703be1:c17264-19250",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "depth-2309.06180:4e592d02d9a3:c25943-27981",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "mygpt-bench.py:4ab37b20b5e7:c21671-23291",
+          "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+          "mygpt-bench.py:4ab37b20b5e7:c19958-21805",
+          "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c26026-28326",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c26869-29138",
+          "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c33103-36261",
+          "mygpt-bench.py:4ab37b20b5e7:c5261-6745"
+        ],
+        "latency_ms": 856.7926000105217,
+        "editorial_content_used_as_evidence": false,
+        "new_provider_calls": 0
+      }
+    ],
+    "llm_wiki": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki",
+        "seeds": [
+          "sdpa",
+          "prefill-decode",
+          "measurement",
+          "flash-attention"
+        ],
+        "graph_neighbors": [],
+        "selected": [
+          "sdpa",
+          "prefill-decode",
+          "measurement",
+          "flash-attention"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [],
+        "complete_articles": true,
+        "article_characters": 6406,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 1.9119000062346458,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ],
+    "llm_wiki_graph": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki_graph",
+        "seeds": [
+          "sdpa",
+          "prefill-decode",
+          "measurement",
+          "flash-attention"
+        ],
+        "graph_neighbors": [
+          "online-softmax"
+        ],
+        "selected": [
+          "sdpa",
+          "prefill-decode",
+          "measurement",
+          "flash-attention",
+          "online-softmax"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [
+          {
+            "article_id": "online-softmax",
+            "score": 15.233843226349656,
+            "parents": [
+              "sdpa",
+              "flash-attention"
+            ],
+            "matched_facets": [
+              "gpu"
+            ],
+            "eligible": true,
+            "reason": "query_match"
+          },
+          {
+            "article_id": "causal-mask",
+            "score": 13.382359405603586,
+            "parents": [
+              "prefill-decode"
+            ],
+            "matched_facets": [],
+            "eligible": false,
+            "reason": "no_new_query_facet"
+          },
+          {
+            "article_id": "kv-cache",
+            "score": 6.831801855029267,
+            "parents": [
+              "prefill-decode",
+              "measurement"
+            ],
+            "matched_facets": [],
+            "eligible": false,
+            "reason": "no_new_query_facet"
+          },
+          {
+            "article_id": "continuous-batching",
+            "score": 0,
+            "parents": [
+              "prefill-decode"
+            ],
+            "matched_facets": [],
+            "eligible": false,
+            "reason": "no_new_query_facet"
+          },
+          {
+            "article_id": "paged-kv",
+            "score": 0,
+            "parents": [
+              "prefill-decode",
+              "measurement"
+            ],
+            "matched_facets": [],
+            "eligible": false,
+            "reason": "no_new_query_facet"
+          },
+          {
+            "article_id": "training",
+            "score": 0,
+            "parents": [
+              "measurement"
+            ],
+            "matched_facets": [],
+            "eligible": false,
+            "reason": "no_new_query_facet"
+          }
+        ],
+        "complete_articles": true,
+        "article_characters": 7887,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 1.865800004452467,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ]
+  }
+}

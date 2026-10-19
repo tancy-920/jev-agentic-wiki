@@ -1,0 +1,177 @@
+arXiv:2002.05202v1  [cs.LG]  12 Feb 2020
+GLU Variants Improve Transformer
+Noam Shazeer
+Google
+noam@google.com
+February 14, 2020
+Abstract
+Gated Linear Units [ Dauphin et al. , 2016] consist of the component-wise product of two linear pro-
+jections, one of which is ﬁrst passed through a sigmoid funct ion. Variations on GLU are possible, using
+diﬀerent nonlinear (or even linear) functions in place of si gmoid. We test these variants in the feed-
+forward sublayers of the Transformer [ Vaswani et al. , 2017] sequence-to-sequence model, and ﬁnd that
+some of them yield quality improvements over the typically- used ReLU or GELU activations.
+1 Introduction
+The Transformer [Vaswani et al. , 2017] sequence-to-sequence model alternates between multi-he ad attention,
+and what it calls "position-wise feed-forward networks" (F FN). The FFN takes a vector x (the hidden repre-
+sentation at a particular position in the sequence) and pass es it through two learned linear transformations,
+(represented by the matrices W1 and W2 and bias vectors b1 and b2). A rectiﬁed-linear (ReLU) [ Glorot et al. ,
+2011] activation function applied between the two linear transf ormations.
+FFN(x, W1, W2, b1, b2) = max(0 , xW1 + b1)W2 + b2 (1)
+Following the T5 codebase [ Raﬀel et al. , 2019] 1, we use a version with no bias:
+FFNReLU(x, W1, W2) = max( xW1, 0)W2 (2)
+Subsequent work has proposed replacing the ReLU with other n onlinear activation functions such as
+Gaussian Error Linear Units, GELU( x) = xΦ(x) [ Hendrycks and Gimpel , 2016], and Swish β(x) = xσ(βx)
+[Ramachandran et al. , 2017].
+FFNGELU(x, W1, W2) = GELU( xW1)W2
+FFNSwish(x, W1, W2) = Swish 1(xW1)W2
+(3)
+2 Gated Linear Units (GLU) and Variants
+[Dauphin et al. , 2016] introduced Gated Linear Units (GLU), a neural network laye r deﬁned as the component-
+wise product of two linear transformations of the input, one of which is sigmoid-activated. They also suggest
+omitting the activation, which they call a "bilinear" layer and attribute to [ Mnih and Hinton , 2007].
+GLU(x, W, V, b, c) = σ(xW + b) ⊗ (xV + c)
+Bilinear(x, W, V, b, c) = ( xW + b) ⊗ (xV + c) (4)
+We can also deﬁne GLU variants using other activation functi ons:
+1Also in the interest of ML fairness.
+1
+ReGLU(x, W, V, b, c) = max(0 , xW + b) ⊗ (xV + c)
+GEGLU(x, W, V, b, c) = GELU( xW + b) ⊗ (xV + c)
+SwiGLU(x, W, V, b, c, β) = Swish β(xW + b) ⊗ (xV + c)
+(5)
+In this paper, we propose additional variations on the Trans former FFN layer which use GLU or one of
+its variants in place of the ﬁrst linear transformation and t he activation function. Again, we omit the bias
+terms.
+FFNGLU(x, W, V, W2) = ( σ(xW ) ⊗ xV )W2
+FFNBilinear(x, W, V, W2) = ( xW ⊗ xV )W2
+FFNReGLU(x, W, V, W2) = (max(0 , xW ) ⊗ xV )W2
+FFNGEGLU(x, W, V, W2) = (GELU( xW ) ⊗ xV )W2
+FFNSwiGLU(x, W, V, W2) = (Swish 1(xW ) ⊗ xV )W2
+(6)
+All of these layers have three weight matrices, as opposed to two for the original FFN. To keep the
+number of parameters and the amount of computation constant , we reduce the number of hidden units df f
+(the second dimension of W and V and the ﬁrst dimension of W2) by a factor of 2
+3 when comparing these
+layers to the original two-matrix version.
+3 Experiments on Text-to-Text Transfer Transformer (T5)
+We test the FFN variants we have described on the transfer-le arning setup from [ Raﬀel et al. , 2019]. An
+encoder-decoder transformer model [ Vaswani et al. , 2017] is trained on a denoising objective of predicting
+missing text segments, and subsequently ﬁne-tuned on vario us language understanding tasks.
+3.1 Model Architecture
+We use the same code base, model architecture, and training t ask as the base model from [ Raﬀel et al. ,
+2019]. The encoder and decoder each consist of 12 layers, with dmodel = 768. For the attention layers,
+h = 12 and dk = dv = 64. The FFN layers have hidden size df f = 3072. As we describe above, for the
+GLU-variant-based FFN layers, which have thee weight matri ces instead of two, we reduce the hidden layer
+to df f = 2048, so as to maintain the same parameter and operation cou nts as the base model.
+Table 1: Heldout-set log-perplexity for Transformer model s on the segment-ﬁlling task from [ Raﬀel et al. ,
+2019]. All models are matched for parameters and computation.
+Training Steps 65,536 524,288
+FFNReLU(baseline) 1.997 (0.005) 1.677
+FFNGELU 1.983 (0.005) 1.679
+FFNSwish 1.994 (0.003) 1.683
+FFNGLU 1.982 (0.006) 1.663
+FFNBilinear 1.960 (0.005) 1.648
+FFNGEGLU 1.942 (0.004) 1.633
+FFNSwiGLU 1.944 (0.010) 1.636
+FFNReGLU 1.953 (0.003) 1.645
+2
+3.2 Pre-Training and Perplexity Results
+Identically to [ Raﬀel et al. , 2019], we pre-train for 524,288 steps on the span-ﬁlling objecti ve on the C4
+dataset. Each training batch consists of 128 examples, each of which has an input of 512 tokens and an
+output of 114 tokens, the output containing multiple spans o f tokens which were deleted from the input 2.
+Similarly to [ Raﬀel et al. , 2019], we use the Adafactor optimizer [ Shazeer and Stern , 2018] and an inverse-
+square-root learning-rate schedule. We also decay the lear ning rate linearly for the ﬁnal 10 percent of the
+training steps. Our main departure from [ Raﬀel et al. , 2019] is that we use no dropout during pre-training.
+We ﬁnd this to produce superior results. We compute the log-p erplexity on the training objective on a
+heldout shard of C4, which we believe to be a good indicator of model quality. For each model architecture,
+we also trained four models for a shorter period (65,536 step s) to measure inter-run variability. The results
+are listed in table 1. The GEGLU and SwiGLU variants produce the best perplexitie s.
+3.3 Fine-Tuning
+We then ﬁne-tune each fully-trained model once on an example s-proportional mixture of the Stanford
+Question-Answering Dataset (SQuAD) [ Rajpurkar et al. , 2016] and all the language understanding tasks
+in the GLUE [ Wang et al. , 2018] and SuperGlue [ Wang et al. , 2019] benchmarks. 3 Fine-tuning consists of
+131072 steps with a learning rate of 10 − 3. As in training, the input sequences for each step have a comb ined
+length of approximately 65,536 tokens. Following [ Raﬀel et al. , 2019], we use a dropout rate of 0 .1 on the
+layer outputs, feed-forward hidden-layers and attention w eights. The embedding matrices are ﬁxed during
+ﬁne-tuning.
+Tables 2, 3 and 4 show results on the development sets. For each task, we repor t the best score of any
+of the checkpoints recorded during ﬁne-tuning. While the re sults are noisy, the new GLU-variants perform
+best on most of the tasks. For comparison, at the bottom of eac h of the tables we list the reuslts from
+[Raﬀel et al. , 2019]. The model is identical to our FFN ReLU model. Their results are notably worse, which
+we believe was caused by their use of dropout during pre-trai ning. Also listed are the inter-run standard
+deviations measured by [ Raﬀel et al. , 2019].
+Table 2: GLUE Language-Understanding Benchmark [ Wang et al. , 2018] (dev).
+Score CoLA SST-2 MRPC MRPC STSB STSB QQP QQP MNLIm MNLImm QNLI RTE
+A verage MCC Acc F1 Acc PCC SCC F1 Acc Acc Acc Acc Acc
+FFNReLU 83.80 51.32 94 .04 93.08 90.20 89.64 89 .42 89 .01 91 .75 85 .83 86 .42 92 .81 80 .14
+FFNGELU 83.86 53.48 94 .04 92 .81 90.20 89.69 89 .49 88 .63 91 .62 85 .89 86 .13 92 .39 80 .51
+FFNSwish 83.60 49.79 93 .69 92 .31 89 .46 89 .20 88 .98 88 .84 91 .67 85 .22 85 .02 92 .33 81 .23
+FFNGLU 84.20 49.16 94 .27 92 .39 89 .46 89 .46 89 .35 88 .79 91 .62 86 .36 86 .18 92 .92 84.12
+FFNGEGLU 84.12 53.65 93 .92 92 .68 89 .71 90 .26 90 .13 89 .11 91 .85 86 .15 86 .17 92 .81 79 .42
+FFNBilinear 83.79 51.02 94.38 92.28 89 .46 90 .06 89 .84 88 .95 91 .69 86.90 87.08 92.92 81 .95
+FFNSwiGLU 84.36 51.59 93 .92 92 .23 88 .97 90.32 90.13 89.14 91.87 86.45 86 .47 92.93 83.39
+FFNReGLU 84.67 56.16 94.38 92.06 89 .22 89 .97 89 .85 88 .86 91 .72 86 .20 86 .40 92 .68 81 .59
+[Raﬀel et al. , 2019] 83.28 53.84 92 .68 92 .07 88 .92 88 .02 87 .94 88 .67 91 .56 84 .24 84 .57 90 .48 76 .28
+ibid. stddev. 0.235 1.111 0 .569 0 .729 1 .019 0 .374 0 .418 0 .108 0 .070 0 .291 0 .231 0 .361 1 .393
+4 Conclusions
+We have extended the GLU family of layers and proposed their u se in Transformer. In a transfer-learning
+setup, the new variants seem to produce better perplexities for the de-noising objective used in pre-training,
+as well as better results on many downstream language-under standing tasks. These architectures are simple
+to implement, and have no apparent computational drawbacks . We oﬀer no explanation as to why these
+architectures seem to work; we attribute their success, as a ll else, to divine benevolence.
+2Each training step took approximately 0.15 seconds on a 32-c ore TPUv2 cluster.
+3This departs from [ Raﬀel et al. , 2019], who ﬁne-tuned separately on the diﬀerent tasks. W e chose o ne ﬁne-tuning run for
+simplicity.
+3
+Table 3: SuperGLUE Language-Understanding Benchmark [ Wang et al. , 2019] (dev).
+Score BoolQ CB CB CoPA MultiRC MultiRC ReCoRD ReCoRD RTE WiC WSC
+A verage Acc F1 Acc Acc F1 EM F1 EM Acc Acc Acc
+FFNReLU 72.76 80.15 83 .37 89 .29 70 .00 76 .93 39 .14 73 .73 72 .91 83 .39 67 .71 77 .88
+FFNGELU 72.98 80.64 86 .24 91.07 74.00 75 .93 38 .61 72 .96 72 .03 81 .59 68 .34 75 .96
+FFNSwish 72.40 80.43 77 .75 83 .93 67 .00 76 .34 39 .14 73 .34 72 .36 81 .95 68 .18 81 .73
+FFNGLU 73.95 80.95 77 .26 83 .93 73 .00 76 .07 39 .03 74 .22 73 .50 84 .12 67 .71 87.50
+FFNGEGLU 73.96 81.19 82 .09 87 .50 72 .00 77.43 41.03 75.28 74.60 83.39 67 .08 83 .65
+FFNBilinear 73.81 81.53 82.49 89 .29 76.00 76.04 40 .92 74 .97 74 .10 82 .67 69.28 78.85
+FFNSwiGLU 74.56 81.19 82 .39 89 .29 73 .00 75 .56 38 .72 75.35 74.55 85.20 67.24 86 .54
+FFNReGLU 73.66 80.89 86.37 91.07 67.00 75 .32 40 .50 75 .07 74 .18 84 .48 67 .40 79 .81
+[Raﬀel et al. , 2019] 71.36 76.62 91 .22 91 .96 66 .20 66 .13 25 .78 69 .05 68 .16 75 .34 68 .04 78 .56
+ibid. stddev. 0.416 0.365 3 .237 2 .560 2 .741 0 .716 1 .011 0 .370 0 .379 1 .228 0 .850 2 .029
+Table 4: SQuAD [ Rajpurkar et al. , 2016] v1.1 (dev).
+EM F1
+FFNReLU 83.18 90 .87
+FFNGELU 83.09 90 .79
+FFNSwish 83.25 90 .76
+FFNGLU 82.88 90 .69
+FFNGEGLU 83.55 91 .12
+FFNBilinear 83.82 91.06
+FFNSwiGLU 83.42 91 .03
+FFNReGLU 83.53 91.18
+[Raﬀel et al. , 2019] 80.88 88 .81
+ibid. Standard Deviation 0.343 0 .226
+References
+Yann N. Dauphin, Angela Fan, Michael Auli, and David Grangie r. Language modeling with gated convolu-
+tional networks. CoRR, abs/1612.08083, 2016. URL http://arxiv.org/abs/1612.08083.
+Xavier Glorot, Antoine Bordes, and Yoshua Bengio. Deep spar se rectiﬁer neural networks. In Proceedings
+of the fourteenth international conference on artiﬁcial in telligence and statistics , pages 315–323, 2011.
+Dan Hendrycks and Kevin Gimpel. Bridging nonlinearities an d stochastic regularizers with gaussian error
+linear units. CoRR, abs/1606.08415, 2016. URL http://arxiv.org/abs/1606.08415.
+Andriy Mnih and Geoﬀrey Hinton. Three new graphical models f or statistical language modelling. In
+Proceedings of the 24th international conference on Machin e learning , pages 641–648, 2007.
+Colin Raﬀel, Noam Shazeer, Adam Roberts, Katherine Lee, Sha ran Narang, Michael Matena, Yanqi Zhou,
+Wei Li, and Peter Liu. Exploring the limits of transfer learn ing with a uniﬁed text-to-text transformer.
+arXiv e-prints , 2019.
+Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Perc y Liang. Squad: 100,000+ questions for
+machine comprehension of text. arXiv preprint arXiv:1606.05250 , 2016.
+Prajit Ramachandran, Barret Zoph, and Quoc V Le. Searching f or activation functions. arXiv preprint
+arXiv:1710.05941, 2017.
+Noam Shazeer and Mitchell Stern. Adafactor: Adaptive learn ing rates with sublinear memory cost. arXiv
+preprint arXiv:1804.04235, 2018.
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit , Llion Jones, Aidan N. Gomez, Lukasz Kaiser,
+and Illia Polosukhin. Attention is all you need. In NIPS, 2017.
+4
+Alex Wang, Amapreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R. Bowman. GLUE:
+A multi-task benchmark and analysis platform for natural la nguage understanding. arXiv preprint
+arXiv:1804.07461, 2018.
+Alex Wang, Yada Pruksachatkun, Nikita Nangia, Amanpreet Si ngh, Julian Michael, Felix Hill, Omer Levy,
+and Samuel R. Bowman. Superglue: A stickier benchmark for ge neral-purpose language understanding
+systems. arXiv preprint arXiv:1905.00537 , 2019.
+5

@@ -1,0 +1,972 @@
+{
+  "status": "complete",
+  "provider_calls": 0,
+  "plan_queries": [
+    "mygpt/model.py _attn_baseline _attn_sdpa dropout mask implementation",
+    "mygpt/model.py _attn_sdpa dropout_p training eval is_causal=True SDPA"
+  ],
+  "runtime_original_query": "Verify the actual implementation in this repository's mygpt/model.py: where do _attn_baseline and _attn_sdpa respectively apply dropout and mask? What dropout_p is passed to SDPA during training and eval, and is is_causal=True used? Cite specific code locations and distinguish executable code from performance observations in comments.",
+  "contexts": {
+    "source": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "mygpt / README.md",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-readme.md.md",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/README.md",
+          "text": "\nThis is consistent with the other findings here — KV cache gives 0.98× at batch 1, SDPA is swamped at short sequences, and GQA shows no quality cost at this size — techniques whose benefit requires a much larger model or a much larger batch.\n\n## Reproducibility\n\n```bash\ngit clone https://github.com/tancy-920/mygpt.git\ncd mygpt\npip install -r requirements.txt    # RTX 50 series: use the cu128 index, see the file header\n\npython train.py --run_name base      # ~75 s on a laptop GPU\npython sample.py --prompt \"Shakespeare\"\npython bench.py                      # reproduces every inference number below\n```\n\nReproducing the comparison experiments:\n\n```bash\n# A — RMSNorm\npython train.py --run_name base    --norm layernorm\npython train.py --run_name rmsnorm --norm rmsnorm\n\n# B / C / D / E — inference side\npython bench.py                     # all five benchmark groups\npython bench.py 4 5                 # run only groups 4 and 5\n\n# C — training-side quality comparison\npython train.py --run_name gqa2 --n_kv_head 2\npython train.py --run_name gqa1 --n_kv_head 1\n```\n\n`train.py` writes `results/<run_name>_metrics.json`; `bench.py` writes `results/bench_*.json`. The switch for improvement D (`GPTConfig.attn`) is used only on the inference-side forward comparison and is not wired into `train.py`, so training always uses the baseline path.\n\n### Repository structure\n\n```\nmygpt/\n├── model.py      GPTConfig / LayerNorm / RMSNorm / CausalSelfAttention (three attention paths) / MLP / Block / GPT\n├── paged_kv.py   Paged KV cache: block pool + block table + reference counting + prefix sharing\n├── train.py      Training loop + metric logging\n├── sample.py     Load weights and generate (also the KV-cache equivalence check)\n├── bench.py      Five inference benchmarks producing the inference data in this README\n├── data/tinyshakespeare/input.txt\n├── results/      Raw measurements (committed, each number here can be re-derived)\n└── requirements.txt\n```\n\n`out/` (model weights, ~13 MB each) is excluded by `.gitignore`; `results/` (JSON, a few KB) is committed.\n\n## Limitations\n\n- This is not a usable language model: 3.2M parameters, character-level, 1.1 MB of text, 3,000 steps. It is a measurement vehicle.\n",
+          "token_count": 570,
+          "source_id": "mygpt-readme.md",
+          "source_kind": "markdown",
+          "source_version": "local-content-snapshot:sha256:2d20f1a5d663fd6c",
+          "source_sha256": "2d20f1a5d663fd6cbc0fc0d0c4f4a3a5a0d93c454a5417cd3253a00a5ca2a295",
+          "locator": "L193–L244",
+          "start_char": 12397,
+          "end_char": 14611
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / README.md",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-readme.md.md",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/README.md",
+          "text": "# mygpt\n\nA character-level GPT (3.2M parameters) used as a controlled testbed for measuring the effect of five common training/inference optimizations. Each optimization is implemented as an independent switch: the baseline and the modified run differ by exactly one flag, so any difference between them can be attributed to that single change. Every number in this document is backed by raw measurements committed under `results/*.json`.\n\n## Results at a glance\n\n| # | Optimization | Measured effect |\n|---|---|---|\n| A | LayerNorm → RMSNorm | Parameters −2,304; peak training memory 365.7 → 329.6 MB (−10%); step time unchanged |\n| B | KV cache | Generation 30.5× faster at batch 32; 0.98× (no gain) at batch 1 |\n| C | GQA / MQA | Per-sequence KV cache 12.0 → 6.0 → 3.0 → 1.5 MB (−87.5% for MQA) |\n| D | Fused attention (SDPA) | 3.68× faster at T=2048; peak memory 607.6 → 143.6 MB |\n| E | Paged KV cache | Reserved-memory waste 93.8% → 16.45%; shared prefix 2.0 → 0.25 MB |\n\n## Purpose\n\nThe primary goal is to quantify, through controlled before/after experiments, how much each of five widely used optimizations actually improves a Transformer model, and at what cost. The emphasis is on the measurements and their interpretation rather than on building a language model or a training stack.\n\nA secondary goal is understanding the Transformer architecture itself: causal self-attention, multi-head attention, the MLP, residual connections, normalization, and positional embeddings.\n\n## Model and setup\n\n```\ninput \"F\" \"i\" \"r\" \"s\" \"t\"  →  token ids (B, T)\n  │\n  ├─ wte  token embedding     (65 × 256)\n  └─ wpe  position embedding  (128 × 256)   →  summed to (B, T, 256)\n  │\n  ▼   repeated 4× (each Block)\n  ├─ normalization              ← A switch: LayerNorm / RMSNorm\n  ├─ causal self-attention      ← B (KV cache) / C (GQA) / D (attention path)\n  ├─ residual add\n  ├─ normalization\n  ├─ MLP  256 → 1024 → 256\n  └─ residual add\n  │\n  ▼\n  final normalization → Linear(256 → 65)  →  scores over 65 characters\n                                             (weights shared with wte)\n```\n\n",
+          "token_count": 587,
+          "source_id": "mygpt-readme.md",
+          "source_kind": "markdown",
+          "source_version": "local-content-snapshot:sha256:2d20f1a5d663fd6c",
+          "source_sha256": "2d20f1a5d663fd6cbc0fc0d0c4f4a3a5a0d93c454a5417cd3253a00a5ca2a295",
+          "locator": "L1–L41",
+          "start_char": 0,
+          "end_char": 2086
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch v2.11.0 activation",
+          "authors": [],
+          "year": 2026,
+          "section": "foundation-pytorch-activation-2.11.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+          "source_url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/nn/modules/activation.py",
+          "text": "    - inputs are batched (3D) with ``batch_first==True``\n    - Either autograd is disabled (using ``torch.inference_mode`` or ``torch.no_grad``) or no tensor argument ``requires_grad``\n    - training is disabled (using ``.eval()``)\n    - ``add_bias_kv`` is ``False``\n    - ``add_zero_attn`` is ``False``\n    - ``kdim`` and ``vdim`` are equal to ``embed_dim``\n    - if a `NestedTensor <https://pytorch.org/docs/stable/nested.html>`_ is passed, neither ``key_padding_mask``\n      nor ``attn_mask`` is passed\n    - autocast is disabled\n\n    If the optimized inference fastpath implementation is in use, a\n    `NestedTensor <https://pytorch.org/docs/stable/nested.html>`_ can be passed for\n    ``query``/``key``/``value`` to represent padding more efficiently than using a\n    padding mask. In this case, a `NestedTensor <https://pytorch.org/docs/stable/nested.html>`_\n    will be returned, and an additional speedup proportional to the fraction of the input\n    that is padding can be expected.\n\n    Args:\n        embed_dim: Total dimension of the model.\n        num_heads: Number of parallel attention heads. Note that ``embed_dim`` will be split\n            across ``num_heads`` (i.e. each head will have dimension ``embed_dim // num_heads``).\n        dropout: Dropout probability on ``attn_output_weights``. Default: ``0.0`` (no dropout).\n        bias: If specified, adds bias to input / output projection layers. Default: ``True``.\n        add_bias_kv: If specified, adds bias to the key and value sequences at dim=0. Default: ``False``.\n        add_zero_attn: If specified, adds a new batch of zeros to the key and value sequences at dim=1.\n            Default: ``False``.\n        kdim: Total number of features for keys. Default: ``None`` (uses ``kdim=embed_dim``).\n        vdim: Total number of features for values. Default: ``None`` (uses ``vdim=embed_dim``).\n        batch_first: If ``True``, then the input and output tensors are provided\n            as (batch, seq, feature). Default: ``False`` (seq, batch, feature).\n\n    Examples::\n\n        >>> # xdoctest: +SKIP\n        >>> multihead_attn = nn.MultiheadAttention(embed_dim, num_heads)\n        >>> attn_output, attn_output_weights = multihead_attn(query, key, value)\n\n    .. _`FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness`:\n         https://arxiv.org/abs/2205.14135\n",
+          "token_count": 595,
+          "source_id": "foundation-pytorch-activation-2.11",
+          "source_kind": "code",
+          "source_version": "v2.11.0",
+          "source_sha256": "8b8076c9383f8faea0800e5312e6df32b0829a6fd9a149ae4dc9620d2d6885fd",
+          "locator": "L1116–L1154",
+          "start_char": 31068,
+          "end_char": 33425
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch v2.11.0 transformer",
+          "authors": [],
+          "year": 2026,
+          "section": "foundation-pytorch-transformer-2.11.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "source_url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/nn/modules/transformer.py",
+          "text": "                self.norm1(x), src_mask, src_key_padding_mask, is_causal=is_causal\n            )\n            x = x + self._ff_block(self.norm2(x))\n        else:\n            x = self.norm1(\n                x\n                + self._sa_block(x, src_mask, src_key_padding_mask, is_causal=is_causal)\n            )\n            x = self.norm2(x + self._ff_block(x))\n\n        return x\n\n    # self-attention block\n    def _sa_block(\n        self,\n        x: Tensor,\n        attn_mask: Tensor | None,\n        key_padding_mask: Tensor | None,\n        is_causal: bool = False,\n    ) -> Tensor:\n        x = self.self_attn(\n            x,\n            x,\n            x,\n            attn_mask=attn_mask,\n            key_padding_mask=key_padding_mask,\n            need_weights=False,\n            is_causal=is_causal,\n        )[0]\n        return self.dropout1(x)\n\n    # feed forward block\n    def _ff_block(self, x: Tensor) -> Tensor:\n        x = self.linear2(self.dropout(self.activation(self.linear1(x))))\n        return self.dropout2(x)\n\n\nclass TransformerDecoderLayer(Module):\n    r\"\"\"TransformerDecoderLayer is made up of self-attn, multi-head-attn and feedforward network.\n\n    This TransformerDecoderLayer implements the original architecture described\n    in the `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_ paper. The\n    intent of this layer is as a reference implementation for foundational understanding\n    and thus it contains only limited features relative to newer Transformer architectures.\n    Given the fast pace of innovation in transformer-like architectures, we recommend\n    exploring this `tutorial <https://pytorch.org/tutorials/intermediate/transformer_building_blocks.html>`_\n    to build efficient layers from building blocks in core or using higher\n    level libraries from the `PyTorch Ecosystem <https://landscape.pytorch.org/>`_.\n\n    Args:\n        d_model: the number of expected features in the input (required).\n        nhead: the number of heads in the multiheadattention models (required).\n        dim_feedforward: the dimension of the feedforward network model (default=2048).\n        dropout: the dropout value (default=0.1).\n        activation: the activation function of the intermediate layer, can be a string\n            (\"relu\" or \"gelu\") or a unary callable. Default: relu\n        layer_norm_eps: the eps value in layer normalization components (default=1e-5).\n        batch_first: If ``True``, then the input and output tensors are provided\n            as (batch, seq, feature). Default: ``False`` (seq, batch, feature).\n",
+          "token_count": 575,
+          "source_id": "foundation-pytorch-transformer-2.11",
+          "source_kind": "code",
+          "source_version": "v2.11.0",
+          "source_sha256": "ebf4e5af7173d1d8cd2738a3b410843e162915e7a011b4d6f0886fb1fe5437ca",
+          "locator": "L948–L1006",
+          "start_char": 40996,
+          "end_char": 43565
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch 2.11 scaled_dot_product_attention",
+          "authors": [
+            "PyTorch"
+          ],
+          "year": 2026,
+          "section": "captured public-source excerpt",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+          "source_url": "https://docs.pytorch.org/docs/2.11/generated/torch.nn.functional.scaled_dot_product_attention.html",
+          "text": "L3167:         attn_weight += attn_bias\nL3168:         attn_weight = torch.softmax(attn_weight, dim=-1)\nL3169:         attn_weight = torch.dropout(attn_weight, dropout_p, train=True)\nL3170:         return attn_weight @ value\nL3171: Warning\nL3172: \nL3173: This function is beta and subject to change.\nL3174: \nL3175: Warning\nL3176: \nL3177: This function always applies dropout according to the specified `dropout_p` argument. To disable dropout during evaluation, be sure to pass a value of `0.0` when the module that makes the function call is not in training mode.\nL3178: For example:\nL3179: \nL3180:     class MyModel(nn.Module):\nL3181:         def __init__(self, p=0.5):\nL3182:             super().__init__()\nL3183:             self.p = p\nL3184: \nL3185:         def forward(self, ...):\nL3186:             return F.scaled_dot_product_attention(...,\nL3187:                 dropout_p=(self.p if self.training else 0.0))\nL3188: \nL3189: \nL3190: Note\nL3191: \nL3192: The boolean mask semantics for `attn_mask` are the inverse of cite2731†`MultiheadAttention` ’s `key_padding_mask`.\nL3193: In cite2730†`scaled_dot_product_attention()` , `True` indicates values to participate in attention.\nL3194: \nL3195: In cite2731†`MultiheadAttention` , `True` indicates values to be masked out (padding).\nL3196: \nL3197: If migrating from MHA, ensure you invert your boolean mask (e.g., using `~mask` or `mask.logical_not()`).\nL3198: \nL3199: Note\nL3200: \nL3201: There are currently three supported implementations of scaled dot product attention:\nL3202: >   * cite2732†FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning†arxiv.org\nL3203: >\nL3204: >   * cite2733†Memory-Efficient Attention†github.com\nL3205: >\nL3206: >   * A PyTorch implementation defined in C++ matching the above formulation\nL3207: \n",
+          "token_count": 578,
+          "source_id": "pytorch-sdpa-2.11",
+          "source_kind": "web_excerpt",
+          "source_version": "2.11-excerpt:sha256:bb2c316d435a3bd9",
+          "source_sha256": "42a07d742f7ef06e58c9cb9531cdebb32af2d05c4929900575cbb5ecedc0de8d",
+          "locator": "L34–L74",
+          "start_char": 1869,
+          "end_char": 3693
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch v2.11.0 transformer",
+          "authors": [],
+          "year": 2026,
+          "section": "foundation-pytorch-transformer-2.11.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "foundation-pytorch-transformer-2.11:ebf4e5af7173:c29080-31620",
+          "source_url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/nn/modules/transformer.py",
+          "text": "    supported by TransformerEncoderLayer while Nested Tensor is in prototype\n    state.)\n\n    If you are implementing a custom layer, you may derive it either from\n    the Module or TransformerEncoderLayer class.  If your custom layer\n    supports both torch.Tensors and Nested Tensors inputs, make its\n    implementation a derived class of TransformerEncoderLayer. If your custom\n    Layer supports only torch.Tensor inputs, derive its implementation from\n    Module.\n\n    Args:\n        d_model: the number of expected features in the input (required).\n        nhead: the number of heads in the multiheadattention models (required).\n        dim_feedforward: the dimension of the feedforward network model (default=2048).\n        dropout: the dropout value (default=0.1).\n        activation: the activation function of the intermediate layer, can be a string\n            (\"relu\" or \"gelu\") or a unary callable. Default: relu\n        layer_norm_eps: the eps value in layer normalization components (default=1e-5).\n        batch_first: If ``True``, then the input and output tensors are provided\n            as (batch, seq, feature). Default: ``False`` (seq, batch, feature).\n        norm_first: if ``True``, layer norm is done prior to attention and feedforward\n            operations, respectively. Otherwise it's done after. Default: ``False`` (after).\n        bias: If set to ``False``, ``Linear`` and ``LayerNorm`` layers will not learn an additive\n            bias. Default: ``True``.\n\n    Examples:\n        >>> encoder_layer = nn.TransformerEncoderLayer(d_model=512, nhead=8)\n        >>> src = torch.rand(10, 32, 512)\n        >>> out = encoder_layer(src)\n\n    Alternatively, when ``batch_first`` is ``True``:\n        >>> encoder_layer = nn.TransformerEncoderLayer(\n        ...     d_model=512, nhead=8, batch_first=True\n        ... )\n        >>> src = torch.rand(32, 10, 512)\n        >>> out = encoder_layer(src)\n\n    Fast path:\n        forward() will use a special optimized implementation described in\n        `FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness`_ if all of the following\n        conditions are met:\n\n        - Either autograd is disabled (using ``torch.inference_mode`` or ``torch.no_grad``) or no tensor\n          argument ``requires_grad``\n        - training is disabled (using ``.eval()``)\n        - batch_first is ``True`` and the input is batched (i.e., ``src.dim() == 3``)\n        - activation is one of: ``\"relu\"``, ``\"gelu\"``, ``torch.functional.relu``, or ``torch.functional.gelu``\n",
+          "token_count": 584,
+          "source_id": "foundation-pytorch-transformer-2.11",
+          "source_kind": "code",
+          "source_version": "v2.11.0",
+          "source_sha256": "ebf4e5af7173d1d8cd2738a3b410843e162915e7a011b4d6f0886fb1fe5437ca",
+          "locator": "L676–L722",
+          "start_char": 29080,
+          "end_char": 31620
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch v2.11.0 canonical mask and MHA implementation",
+          "authors": [
+            "PyTorch contributors"
+          ],
+          "year": 2026,
+          "section": "multi_head_attention_forward",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+          "source_url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/nn/functional.py",
+          "text": "    # merge key padding and attention masks\n    if key_padding_mask is not None:\n        if not torch.jit.is_scripting() and not torch.jit.is_tracing():\n            _check_key_padding_mask(key_padding_mask, src_len, bsz)\n\n        key_padding_mask = (\n            key_padding_mask.view(bsz, 1, 1, src_len)\n            .expand(-1, num_heads, -1, -1)\n            .reshape(bsz * num_heads, 1, src_len)\n        )\n        if attn_mask is None:\n            attn_mask = key_padding_mask\n        else:\n            attn_mask = attn_mask + key_padding_mask\n\n    # adjust dropout probability\n    if not training:\n        dropout_p = 0.0\n\n    #\n    # (deep breath) calculate attention and out projection\n    #\n\n    if need_weights:\n        _B, _Nt, E = q.shape\n        q_scaled = q * math.sqrt(1.0 / float(E))\n\n        if is_causal and attn_mask is None:\n            raise AssertionError(\"FIXME: is_causal not implemented for need_weights\")\n\n        if attn_mask is not None:\n            attn_output_weights = torch.baddbmm(\n                attn_mask, q_scaled, k.transpose(-2, -1)\n            )\n        else:\n            attn_output_weights = torch.bmm(q_scaled, k.transpose(-2, -1))\n        attn_output_weights = softmax(attn_output_weights, dim=-1)\n        if dropout_p > 0.0:\n            attn_output_weights = dropout(attn_output_weights, p=dropout_p)\n\n        attn_output = torch.bmm(attn_output_weights, v)\n\n        attn_output = (\n            # pyrefly: ignore [no-matching-overload]\n            attn_output.transpose(0, 1).contiguous().view(tgt_len * bsz, embed_dim)\n        )\n        attn_output = linear(attn_output, out_proj_weight, out_proj_bias)\n        attn_output = attn_output.view(tgt_len, bsz, attn_output.size(1))\n\n        # optionally average attention weights over heads\n        attn_output_weights = attn_output_weights.view(bsz, num_heads, tgt_len, src_len)\n        if average_attn_weights:\n            attn_output_weights = attn_output_weights.mean(dim=1)\n\n        if not is_batched:\n            # squeeze the output if input was unbatched\n            attn_output = attn_output.squeeze(1)\n            attn_output_weights = attn_output_weights.squeeze(0)\n        return attn_output, attn_output_weights\n    else:\n        # attn_mask can be either (L,S) or (N*num_heads, L, S)\n        # if attn_mask's shape is (1, L, S) we need to unsqueeze to (1, 1, L, S)\n",
+          "token_count": 583,
+          "source_id": "author-pytorch-v2.11.0-functional",
+          "source_kind": "code",
+          "source_version": "v2.11.0",
+          "source_sha256": "06f330c5ce12f7a7b5be938fb4fd1b78dadcc4a345c49aac58dbb923b3a3a405",
+          "locator": "L6607–L6668",
+          "start_char": 248872,
+          "end_char": 251239
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / bench.py",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-bench.py.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/bench.py",
+          "text": "    else:\n        print(\"  跳过（没有 CUDA，或当前 PyTorch 不支持 sdpa_kernel）\")\n\n    # ---- 数值等价性：三种实现算的是不是同一件事 ----\n    print(\"\\n数值等价性（与 baseline 实现逐元素比，T=64、batch=2）\")\n    equivalence = []\n    for dtype_name, dtype_ in ((\"float32\", torch.float32), (\"bfloat16\", torch.bfloat16)):\n        for n_kv_head in (4, 1):\n            torch.manual_seed(0)\n            cfg = GPTConfig(block_size=256, n_layer=4, n_embd=256, n_head=4, n_kv_head=n_kv_head)\n            model = GPT(cfg).to(DEVICE).to(dtype_).eval()\n            x = torch.randint(0, 65, (2, 64), device=DEVICE)\n            with torch.no_grad():\n                _set_attn(model, \"baseline\")\n                ref = model(x)[0].float()\n                for impl in (\"sdpa\", \"chunked\"):\n                    _set_attn(model, impl)\n                    out = model(x)[0].float()\n                    diff = (out - ref).abs()\n                    cos = F.cosine_similarity(out.flatten(), ref.flatten(), dim=0).item()\n                    argmax_match = bool(torch.equal(out.argmax(dim=-1), ref.argmax(dim=-1)))\n                    equivalence.append({\n                        \"dtype\": dtype_name,\n                        \"n_kv_head\": n_kv_head,\n                        \"impl\": impl,\n                        \"max_abs_diff\": float(f\"{diff.max().item():.3e}\"),\n                        \"mean_abs_diff\": float(f\"{diff.mean().item():.3e}\"),\n                        \"cosine\": round(cos, 8),\n                        \"argmax_match\": argmax_match,\n                        \"usable_backends\": _detect_sdpa_backends(4, n_kv_head, 64, head_dim, dtype_),\n                    })\n                    print(f\"  {dtype_name:<9} n_kv_head={n_kv_head} {impl:<8} \"\n                          f\"max|Δ|={diff.max().item():.2e}  cosine={cos:.8f}  argmax 一致={argmax_match}\")\n            del model\n            torch.cuda.empty_cache()\n\n    # ---- 重复测量波动：同一档位在实验首尾各测一次，差值就是这台机器的噪声地板 ----\n    round_2 = {impl: _headline_ms(probe_n_kv, probe_T, impl) for impl in probe_impls}\n    repeatability = {\n        \"n_kv_head\": probe_n_kv,\n        \"seq_len\": probe_T,\n",
+          "token_count": 598,
+          "source_id": "mygpt-bench.py",
+          "source_kind": "code",
+          "source_version": "local-content-snapshot:sha256:4ab37b20b5e7574c",
+          "source_sha256": "4ab37b20b5e7574c9db2cd898dd5d7e1136433fabecfca714362a977016d358a",
+          "locator": "L383–L423",
+          "start_char": 13724,
+          "end_char": 15781
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / model.py",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-model.py.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-model.py:e05006957de4:c0-1426",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/model.py",
+          "text": "# -*- coding: utf-8 -*-\n\"\"\"\nmodel.py —— 约 3.2M 参数的字符级 GPT，含四项可开关的注意力与缓存优化\n======================================================================\n\n每项改进都由配置项或调用参数控制，以便逐项做「改前 / 改后」对照实验：\n\n    GPTConfig.norm       \"layernorm\" | \"rmsnorm\"   改进 A：RMSNorm 替换 LayerNorm\n    generate(use_cache=) True | False              改进 B：KV cache 增量解码\n    GPTConfig.n_kv_head  < n_head 即启用           改进 C：GQA（多个 Q 头共享一组 KV 头）\n    GPTConfig.attn       \"baseline\" | \"sdpa\" | \"chunked\"\n                                                   改进 D：注意力实现三选一\n                                                   （逐位置完整矩阵 / PyTorch 融合内核 / 分块在线 softmax）\n\n另有改进 E（分页 KV cache）不改变本文件的默认路径，见 paged_kv.py。\n\n文件结构（自上而下 6 块）：\n    GPTConfig            超参数\n    LayerNorm / RMSNorm  两种归一化，改进 A 在此二选一\n    CausalSelfAttention  因果自注意力，改进 B / C / D 都落在这个类里\n    MLP                  前馈网络\n    Block                一层 = 注意力 + MLP，各带残差与归一化\n    GPT                  整体：嵌入 → N 层 Block → 输出层\n\n命令行入口：\n    train.py   训练 + 记录指标\n    sample.py  加载权重生成文本\n    bench.py   推理性能对照（KV cache 加速比 / GQA 显存 / 注意力实现对比 / 分页缓存容量）\n\"\"\"\nimport math\nimport warnings\nfrom dataclasses import dataclass\n\nimport torch\nimport torch.nn as nn\nfrom torch.nn import functional as F\n\ntry:                                    # 老版本 PyTorch 没有这个接口，缺了也能跑（退回默认分发器）\n    from torch.nn.attention import SDPBackend, sdpa_kernel\nexcept ImportError:                     # pragma: no cover\n    SDPBackend = sdpa_kernel = None\n\n",
+          "token_count": 581,
+          "source_id": "mygpt-model.py",
+          "source_kind": "code",
+          "source_version": "local-content-snapshot:sha256:e05006957de4bf18",
+          "source_sha256": "e05006957de4bf18a947ac6c0eb02f00a7f75a7b8518e4f657eda9f29ad2e412",
+          "locator": "L1–L42",
+          "start_char": 0,
+          "end_char": 1426
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch v2.11.0 transformer",
+          "authors": [],
+          "year": 2026,
+          "section": "foundation-pytorch-transformer-2.11.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "foundation-pytorch-transformer-2.11:ebf4e5af7173:c45349-48093",
+          "source_url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.11.0/torch/nn/modules/transformer.py",
+          "text": "            bias=bias,\n            **factory_kwargs,\n        )\n        # Implementation of Feedforward model\n        self.linear1 = Linear(d_model, dim_feedforward, bias=bias, **factory_kwargs)\n        self.dropout = Dropout(dropout)\n        self.linear2 = Linear(dim_feedforward, d_model, bias=bias, **factory_kwargs)\n\n        self.norm_first = norm_first\n        # pyrefly: ignore [bad-argument-type]\n        self.norm1 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)\n        # pyrefly: ignore [bad-argument-type]\n        self.norm2 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)\n        # pyrefly: ignore [bad-argument-type]\n        self.norm3 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)\n        self.dropout1 = Dropout(dropout)\n        self.dropout2 = Dropout(dropout)\n        self.dropout3 = Dropout(dropout)\n\n        # Legacy string support for activation function.\n        if isinstance(activation, str):\n            self.activation = _get_activation_fn(activation)\n        else:\n            self.activation = activation\n\n    def __setstate__(self, state):\n        if \"activation\" not in state:\n            state[\"activation\"] = F.relu\n        super().__setstate__(state)\n\n    def forward(\n        self,\n        tgt: Tensor,\n        memory: Tensor,\n        tgt_mask: Tensor | None = None,\n        memory_mask: Tensor | None = None,\n        tgt_key_padding_mask: Tensor | None = None,\n        memory_key_padding_mask: Tensor | None = None,\n        tgt_is_causal: bool = False,\n        memory_is_causal: bool = False,\n    ) -> Tensor:\n        r\"\"\"Pass the inputs (and mask) through the decoder layer.\n\n        Args:\n            tgt: the sequence to the decoder layer (required).\n            memory: the sequence from the last layer of the encoder (required).\n            tgt_mask: the mask for the tgt sequence (optional).\n            memory_mask: the mask for the memory sequence (optional).\n            tgt_key_padding_mask: the mask for the tgt keys per batch (optional).\n            memory_key_padding_mask: the mask for the memory keys per batch (optional).\n            tgt_is_causal: If specified, applies a causal mask as ``tgt mask``.\n                Default: ``False``.\n                Warning:\n                ``tgt_is_causal`` provides a hint that ``tgt_mask`` is\n                the causal mask. Providing incorrect hints can result in\n                incorrect execution, including forward and backward\n                compatibility.\n            memory_is_causal: If specified, applies a causal mask as\n                ``memory mask``.\n                Default: ``False``.\n                Warning:\n                ``memory_is_causal`` provides a hint that\n",
+          "token_count": 593,
+          "source_id": "foundation-pytorch-transformer-2.11",
+          "source_kind": "code",
+          "source_version": "v2.11.0",
+          "source_sha256": "ebf4e5af7173d1d8cd2738a3b410843e162915e7a011b4d6f0886fb1fe5437ca",
+          "locator": "L1059–L1120",
+          "start_char": 45349,
+          "end_char": 48093
+        },
+        {
+          "paper_id": null,
+          "title": "mygpt / bench.py",
+          "authors": [
+            "mygpt project"
+          ],
+          "year": 2026,
+          "section": "mygpt-bench.py.py",
+          "section_source": "source_segment_v1",
+          "page": null,
+          "chunk_id": "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "source_url": "C:/Users/tancy/WorkBuddy/nanogpt/mygpt/bench.py",
+          "text": "# ---------------- 计时与显存的小工具 ----------------\ndef _sync():\n    \"\"\"只有用 GPU 时才需要等设备把活干完；CPU 上跑就跳过。\"\"\"\n    if DEVICE == \"cuda\":\n        torch.cuda.synchronize()\n\n\ndef _time_ms(fn, warmup=3, repeats=10):\n    \"\"\"预热 warmup 次，再正式测 repeats 次，取最小值（与实验 1、2 的口径一致）。\"\"\"\n    for _ in range(warmup):\n        fn()\n    _sync()\n    best = float(\"inf\")\n    for _ in range(repeats):\n        _sync()\n        t0 = time.perf_counter()\n        fn()\n        _sync()\n        best = min(best, time.perf_counter() - t0)\n    return best * 1000\n\n\ndef _peak_mb(fn):\n    \"\"\"单次调用的峰值显存：先把统计清零，跑一次，再读峰值。\"\"\"\n    if DEVICE != \"cuda\":\n        return 0.0\n    _sync()\n    torch.cuda.reset_peak_memory_stats()\n    fn()\n    _sync()\n    return torch.cuda.max_memory_allocated() / 1024 / 1024\n\n\ndef _set_attn(model, impl):\n    \"\"\"把模型里每一层的注意力实现切换成 impl（权重不变，便于直接比数值）。\"\"\"\n    for blk in model.blocks:\n        blk.attn.attn_impl = impl\n\n\ndef _detect_sdpa_backends(n_head, n_kv_head, T, head_dim, dtype, batch=8):\n    \"\"\"判定本机实际能用哪些 SDPA 内核。\n\n    这台机器的 profiler（CUPTI 初始化失败）与 nvidia-smi（NVML 报错）都取不到 kernel 名，\n    所以只能用「强制指定某个后端，看它报不报错」的办法来判断谁真的能跑。\n    输入形状与掩码类型都对齐 _attn_sdpa 的真实调用（bool 掩码 + enable_gqa）。\n    \"\"\"\n    if DEVICE != \"cuda\":\n        return []\n    try:\n        from torch.nn.attention import SDPBackend, sdpa_kernel\n    except ImportError:\n        return []\n    q = torch.randn(batch, n_head, T, head_dim, device=DEVICE, dtype=dtype)\n",
+          "token_count": 568,
+          "source_id": "mygpt-bench.py",
+          "source_kind": "code",
+          "source_version": "local-content-snapshot:sha256:4ab37b20b5e7574c",
+          "source_sha256": "4ab37b20b5e7574c9db2cd898dd5d7e1136433fabecfca714362a977016d358a",
+          "locator": "L198–L250",
+          "start_char": 6545,
+          "end_char": 7944
+        }
+      ],
+      "omitted_whole": [
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c31334-33790",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c235326-237898",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c250972-252415",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+        "mygpt-model.py:e05006957de4:c7739-9025",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c239782-242463",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c43250-45706",
+        "mygpt-bench.py:4ab37b20b5e7:c0-1284"
+      ],
+      "characters": 23583
+    },
+    "llm_wiki": {
+      "evidence": [
+        {
+          "paper_id": null,
+          "title": "Dropout：缩放、位置与推理配置（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:dropout",
+          "source_url": "",
+          "text": "# Dropout：缩放、位置与推理配置\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nDropout训练时随机将部分激活置零，用于正则化；推理行为取决于具体接口及参数。\n\n## 工作机制\n\n常见inverted dropout中，保留概率为1−p，被保留激活乘1/(1−p)，因而在给定输入下期望保持。nn.Dropout的eval模式通常为恒等映射。原始Transformer在残差子层输出及嵌入与位置和等位置使用dropout；注意力概率dropout是另一个具体位置。\n\n## 适用条件与易混淆点\n\n不能把所有dropout接口都理解成由model.eval自动关闭。PyTorch SDPA总按传入的dropout_p应用dropout，调用者在评估时应显式传0；不同随机mask会影响正确性比较。\n\n## 关联知识\n\n训练：优化器、学习率与数值精度、PyTorch SDPA 与后端选择、Transformer前向流程：输入、层堆叠与输出概率\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281` — [PyTorch v2.11.0 dropout, foundation-pytorch-dropout-2.11.py, L1–L79]\n- `paper-1706.03762:eee8b5a0bcc2:c20388-21360` — [Attention Is All You Need, full page context, PDF file p. 7]\n- `paper-1706.03762:eee8b5a0bcc2:c21360-23083` — [Attention Is All You Need, full page context, PDF file p. 8]\n- `pytorch-sdpa-2.11:42a07d742f7e:c0-2094` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3134–L3170; snapshot L1–L37]\n- `pytorch-sdpa-2.11:42a07d742f7e:c1869-3693` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3167–L3207; snapshot L34–L74]\n",
+          "token_count": 1798,
+          "source_id": "wiki-article:dropout",
+          "source_kind": "wiki_article",
+          "source_version": "9f4135fe4fbb1cd27c9349b59082978ea9f71a50906722d16e354177f5a36dca",
+          "source_sha256": "9f4135fe4fbb1cd27c9349b59082978ea9f71a50906722d16e354177f5a36dca",
+          "locator": "dropout.md"
+        },
+        {
+          "paper_id": null,
+          "title": "PyTorch SDPA 与后端选择（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:sdpa",
+          "source_url": "",
+          "text": "# PyTorch SDPA 与后端选择\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nPyTorch scaled_dot_product_attention是注意力算子的接口，具体后端由设备、dtype、形状和支持条件等决定，不是FlashAttention的同义词。\n\n## 工作机制\n\n概念计算为softmax(QK^T*scale+bias)V，默认scale为1/√d_k。接口可选择math或可用融合后端；sdpa_kernel等控制可用实现。布尔attn_mask中True表示参与注意力，浮点mask作为logit偏置。dropout_p由调用者传入，评估时应显式传0。\n\n## 适用条件与易混淆点\n\n自动fallback不意味着必然发warning。文档所述无法运行融合实现的warning与用户禁用math、要求融合内核的情境有关。性能必须注明实际后端、硬件、dtype、batch、头数及Tq/Tk，不能把某次3.68倍当成接口保证。\n\n## 关联知识\n\nFlashAttention 与 IO 优化、分块注意力与在线 Softmax、性能测量、正确性与适用条件\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `pytorch-sdpa-2.11:42a07d742f7e:c3520-5776` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3203–L3222; snapshot L70–L89]\n- `pytorch-sdpa-2.11:42a07d742f7e:c0-2094` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3134–L3170; snapshot L1–L37]\n- `mygpt-model.py:e05006957de4:c1194-2694` — [mygpt / model.py, mygpt-model.py.py, L37–L76]\n- `mygpt-model.py:e05006957de4:c8927-10267` — [mygpt / model.py, mygpt-model.py.py, L241–L267]\n- `mygpt-bench.py:4ab37b20b5e7:c7703-9607` — [mygpt / bench.py, mygpt-bench.py.py, L243–L288]\n- `mygpt-bench.py:4ab37b20b5e7:c9306-11043` — [mygpt / bench.py, mygpt-bench.py.py, L281–L329]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c4113-5673` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L214–L286]\n- `mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331` — [mygpt / results/bench_attention_impls.json, mygpt-results-bench_attention_impls.json.json, L143–L224]\n",
+          "token_count": 2243,
+          "source_id": "wiki-article:sdpa",
+          "source_kind": "wiki_article",
+          "source_version": "6d1f0de4d6bc0a8084d9a38be1f1651da63ff2e6b1d2a28c57379b9af60a97dc",
+          "source_sha256": "6d1f0de4d6bc0a8084d9a38be1f1651da63ff2e6b1d2a28c57379b9af60a97dc",
+          "locator": "sdpa.md"
+        },
+        {
+          "paper_id": null,
+          "title": "Decoder-only架构与mygpt实现（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:gpt",
+          "source_url": "",
+          "text": "# Decoder-only架构与mygpt实现\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nGPT式Decoder-only语言模型通过因果自注意力预测下一个token。mygpt是本地字符级受控实验实现，不代表完整生产推理系统。\n\n## 工作机制\n\nmygpt使用token与可学习位置嵌入相加，再经过重复的归一化、因果注意力、残差和MLP模块，最后投影到词表。代码可配置RMSNorm、KV Cache、KV头数和注意力实现等开关。训练可并行计算已知序列各位置，生成则逐步追加token。\n\n## 适用条件与易混淆点\n\n本地实现的层数、上下文和性能数字只适用于对应配置与原始JSON。不能把其他优化、推测解码或生产级连续批处理说成已经实现，也不能把小模型速度外推到大模型。\n\n## 关联知识\n\n位置表示总览：绝对PE、RoPE与偏置、逐位置FFN / MLP：投影、激活与宽度、归一化总览与RMSNorm、训练：优化器、学习率与数值精度、Tokenizer：BPE、WordPiece、Unigram与SentencePiece、Token Embedding、位置嵌入与输出权重共享\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-1910.10683:7aa53b0ecc3b:c130789-133277` — [Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer, full page context, PDF file p. 41]\n- `mygpt-readme.md:2d20f1a5d663:c0-2086` — [mygpt / README.md, mygpt-readme.md.md, L1–L41]\n- `mygpt-model.py:e05006957de4:c12523-14451` — [mygpt / model.py, mygpt-model.py.py, L319–L369]\n- `mygpt-model.py:e05006957de4:c14266-16158` — [mygpt / model.py, mygpt-model.py.py, L366–L411]\n- `mygpt-readme.md:2d20f1a5d663:c12397-14611` — [mygpt / README.md, mygpt-readme.md.md, L193–L244]\n- `mygpt-model.py:e05006957de4:c0-1426` — [mygpt / model.py, mygpt-model.py.py, L1–L42]\n",
+          "token_count": 1940,
+          "source_id": "wiki-article:gpt",
+          "source_kind": "wiki_article",
+          "source_version": "1262f77370fc93c736a91d4b34064f0c583147ed21901f63eae879ba7dfb2231",
+          "source_sha256": "1262f77370fc93c736a91d4b34064f0c583147ed21901f63eae879ba7dfb2231",
+          "locator": "gpt.md"
+        },
+        {
+          "paper_id": null,
+          "title": "训练：优化器、学习率与数值精度（AI整理词条）",
+          "authors": [],
+          "year": 2026,
+          "section": "完整知识词条；非原论文逐字原文",
+          "section_source": "unknown",
+          "page": null,
+          "chunk_id": "wiki-article:training",
+          "source_url": "",
+          "text": "# 训练：优化器、学习率与数值精度\n\n> 状态：AI整理草稿，未获人工逐项确认。本文是完整知识词条，不是论文逐字原文。\n\n## 定义与用途\n\nTransformer训练需同时考虑优化器、学习率变化、正则化和数值精度，某个稳定技巧的结论有模型及初始化范围。\n\n## 工作机制\n\n原论文使用Adam，β1=0.9、β2=0.98、ε=10^−9；学习率为d_model^−0.5*min(step^−0.5,step*warmup_steps^−1.5)，warmup_steps=4000，即先线性增长后按步数平方根倒数衰减。残差dropout与label smoothing等是不同正则手段。\n\n## 适用条件与易混淆点\n\n这些是原论文配置，不是所有Transformer的最优超参数。Pre-LN论文对初始化梯度及warmup的分析不保证任意大模型、优化器和学习率下可无条件移除warmup。混合精度和梯度缩放需结合具体实现核对。\n\n## 关联知识\n\nDecoder-only架构与mygpt实现、归一化总览与RMSNorm、性能测量、正确性与适用条件、Dropout：缩放、位置与推理配置、BatchNorm：统计轴、训练与推理\n\n## 来源追溯\n\n以下是整理依据与核查入口，不是逐句正确性认证。\n\n- `paper-1706.03762:eee8b5a0bcc2:c20388-21360` — [Attention Is All You Need, full page context, PDF file p. 7]\n- `paper-1706.03762:eee8b5a0bcc2:c21360-23083` — [Attention Is All You Need, full page context, PDF file p. 8]\n- `mygpt-train.py:52262ac90caa:c4587-6729` — [mygpt / train.py, mygpt-train.py.py, L126–L179]\n- `mygpt-train.py:52262ac90caa:c6470-7904` — [mygpt / train.py, mygpt-train.py.py, L173–L210]\n- `mygpt-readme.md:2d20f1a5d663:c1849-3478` — [mygpt / README.md, mygpt-readme.md.md, L32–L66]\n- `mygpt-readme.md:2d20f1a5d663:c12397-14611` — [mygpt / README.md, mygpt-readme.md.md, L193–L244]\n- `mygpt-readme.md:2d20f1a5d663:c14355-16474` — [mygpt / README.md, mygpt-readme.md.md, L239–L267]\n- `mygpt-results-base_metrics.json:b0fb3bff29ed:c0-1363` — [mygpt / results/base_metrics.json, mygpt-results-base_metrics.json.json, L1–L85]\n- `mygpt-results-gqa1_metrics.json:2a751af5abd5:c0-1360` — [mygpt / results/gqa1_metrics.json, mygpt-results-gqa1_metrics.json.json, L1–L85]\n- `mygpt-results-gqa2_metrics.json:356f7ea90b77:c0-1359` — [mygpt / results/gqa2_metrics.json, mygpt-results-gqa2_metrics.json.json, L1–L85]\n",
+          "token_count": 2353,
+          "source_id": "wiki-article:training",
+          "source_kind": "wiki_article",
+          "source_version": "40393d8224d6c736e6e0b54b1f2d3563a65c4d76ee78190debc2ac44c83a95bf",
+          "source_sha256": "40393d8224d6c736e6e0b54b1f2d3563a65c4d76ee78190debc2ac44c83a95bf",
+          "locator": "training.md"
+        }
+      ],
+      "omitted_whole": [],
+      "characters": 5687
+    }
+  },
+  "timing_rows": [
+    {
+      "mode": "llm_wiki",
+      "repeat": 0,
+      "seconds": 0.0013447999954223633
+    },
+    {
+      "mode": "source",
+      "repeat": 0,
+      "seconds": 0.6974243999575265
+    },
+    {
+      "mode": "source",
+      "repeat": 1,
+      "seconds": 0.6892283000051975
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 1,
+      "seconds": 0.0014173999661579728
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 2,
+      "seconds": 0.001386100018862635
+    },
+    {
+      "mode": "source",
+      "repeat": 2,
+      "seconds": 0.6956300000310875
+    },
+    {
+      "mode": "source",
+      "repeat": 3,
+      "seconds": 0.6828417999786325
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 3,
+      "seconds": 0.0016396999708376825
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 4,
+      "seconds": 0.001471000025048852
+    },
+    {
+      "mode": "source",
+      "repeat": 4,
+      "seconds": 0.6889274000423029
+    },
+    {
+      "mode": "source",
+      "repeat": 5,
+      "seconds": 0.6782174999825656
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 5,
+      "seconds": 0.0015181999769993126
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 6,
+      "seconds": 0.0014126000460237265
+    },
+    {
+      "mode": "source",
+      "repeat": 6,
+      "seconds": 0.6812267000204884
+    },
+    {
+      "mode": "source",
+      "repeat": 7,
+      "seconds": 0.6817955999867991
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 7,
+      "seconds": 0.0016948999837040901
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 8,
+      "seconds": 0.0014420999796129763
+    },
+    {
+      "mode": "source",
+      "repeat": 8,
+      "seconds": 0.6865496999816969
+    },
+    {
+      "mode": "source",
+      "repeat": 9,
+      "seconds": 0.6867898000054993
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 9,
+      "seconds": 0.0014329999685287476
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 10,
+      "seconds": 0.0013697000104002655
+    },
+    {
+      "mode": "source",
+      "repeat": 10,
+      "seconds": 0.6973595000454225
+    },
+    {
+      "mode": "source",
+      "repeat": 11,
+      "seconds": 0.6778969999868423
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 11,
+      "seconds": 0.0015424999874085188
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 12,
+      "seconds": 0.0012855000095441937
+    },
+    {
+      "mode": "source",
+      "repeat": 12,
+      "seconds": 0.6837526999879628
+    },
+    {
+      "mode": "source",
+      "repeat": 13,
+      "seconds": 0.6812043000245467
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 13,
+      "seconds": 0.001664399984292686
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 14,
+      "seconds": 0.0013895999873057008
+    },
+    {
+      "mode": "source",
+      "repeat": 14,
+      "seconds": 0.6883988000336103
+    },
+    {
+      "mode": "source",
+      "repeat": 15,
+      "seconds": 0.6956644000019878
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 15,
+      "seconds": 0.00154669996118173
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 16,
+      "seconds": 0.001291799999307841
+    },
+    {
+      "mode": "source",
+      "repeat": 16,
+      "seconds": 0.6965022999793291
+    },
+    {
+      "mode": "source",
+      "repeat": 17,
+      "seconds": 0.6933967000222765
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 17,
+      "seconds": 0.001559700001962483
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 18,
+      "seconds": 0.0014118999824859202
+    },
+    {
+      "mode": "source",
+      "repeat": 18,
+      "seconds": 0.6863054999848828
+    },
+    {
+      "mode": "source",
+      "repeat": 19,
+      "seconds": 0.6919277999550104
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 19,
+      "seconds": 0.0014614000101573765
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 20,
+      "seconds": 0.001284099998883903
+    },
+    {
+      "mode": "source",
+      "repeat": 20,
+      "seconds": 0.6781389000243507
+    },
+    {
+      "mode": "source",
+      "repeat": 21,
+      "seconds": 0.681422499998007
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 21,
+      "seconds": 0.0015258999774232507
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 22,
+      "seconds": 0.0016517999465577304
+    },
+    {
+      "mode": "source",
+      "repeat": 22,
+      "seconds": 0.6954277000040747
+    },
+    {
+      "mode": "source",
+      "repeat": 23,
+      "seconds": 0.7176173000480048
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 23,
+      "seconds": 0.0016864000353962183
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 24,
+      "seconds": 0.0019057999597862363
+    },
+    {
+      "mode": "source",
+      "repeat": 24,
+      "seconds": 0.6860562000074424
+    },
+    {
+      "mode": "source",
+      "repeat": 25,
+      "seconds": 0.6774968000245281
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 25,
+      "seconds": 0.001443799992557615
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 26,
+      "seconds": 0.0013781000161543489
+    },
+    {
+      "mode": "source",
+      "repeat": 26,
+      "seconds": 0.7037230000132695
+    },
+    {
+      "mode": "source",
+      "repeat": 27,
+      "seconds": 0.7001127999974415
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 27,
+      "seconds": 0.0015092999674379826
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 28,
+      "seconds": 0.0013915000017732382
+    },
+    {
+      "mode": "source",
+      "repeat": 28,
+      "seconds": 0.6966259999899194
+    },
+    {
+      "mode": "source",
+      "repeat": 29,
+      "seconds": 0.714904899999965
+    },
+    {
+      "mode": "llm_wiki",
+      "repeat": 29,
+      "seconds": 0.0016883000498637557
+    }
+  ],
+  "median_seconds": {
+    "source": 0.6886631000379566,
+    "llm_wiki": 0.0014526000013574958
+  },
+  "actual_routing_traces": {
+    "source": [
+      {
+        "stage": "wiki_source_navigation",
+        "mode": "source",
+        "rerank_original_query": "Verify the actual implementation in this repository's mygpt/model.py: where do _attn_baseline and _attn_sdpa respectively apply dropout and mask? What dropout_p is passed to SDPA during training and eval, and is is_causal=True used? Cite specific code locations and distinguish executable code from performance observations in comments.",
+        "effective_search_queries": [
+          "mygpt/model.py _attn_baseline _attn_sdpa dropout mask implementation",
+          "mygpt/model.py _attn_sdpa dropout_p training eval is_causal=True SDPA",
+          "Verify the actual implementation in this repository's mygpt/model.py: where do _attn_baseline and _attn_sdpa respectively apply dropout and mask? What dropout_p is passed to SDPA during training and eval, and is is_causal=True used? Cite specific code locations and distinguish executable code from performance observations in comments.",
+          "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。"
+        ],
+        "effective_rerank_query": "Verify the actual implementation in this repository's mygpt/model.py: where do _attn_baseline and _attn_sdpa respectively apply dropout and mask? What dropout_p is passed to SDPA during training and eval, and is is_causal=True used? Cite specific code locations and distinguish executable code from performance observations in comments.",
+        "term_corrections": [],
+        "query_terminology": {
+          "original_query": "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。",
+          "expanded_query": "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。",
+          "corrections": [],
+          "rejected_choices": [],
+          "suggestions": [
+            {
+              "original": "dropout_p",
+              "candidates": [
+                {
+                  "canonical": "dropout",
+                  "wiki_pages": [
+                    "dropout"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+                    "paper-1706.03762:eee8b5a0bcc2:c22763-24539"
+                  ]
+                }
+              ],
+              "kind": "spelling_candidate"
+            },
+            {
+              "original": "mygpt",
+              "candidates": [
+                {
+                  "canonical": "mygpt",
+                  "wiki_pages": [
+                    "gpt"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-readme.md:2d20f1a5d663:c0-2086",
+                    "mygpt-readme.md:2d20f1a5d663:c10199-12641"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "dropout",
+              "candidates": [
+                {
+                  "canonical": "dropout",
+                  "wiki_pages": [
+                    "dropout"
+                  ],
+                  "attested_chunk_ids": [
+                    "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+                    "paper-1706.03762:eee8b5a0bcc2:c22763-24539"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "训练",
+              "candidates": [
+                {
+                  "canonical": "训练",
+                  "wiki_pages": [
+                    "training"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c0-1426",
+                    "mygpt-model.py:e05006957de4:c3941-5197"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "SDPA",
+              "candidates": [
+                {
+                  "canonical": "SDPA",
+                  "wiki_pages": [
+                    "sdpa"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-readme.md:2d20f1a5d663:c0-2086",
+                    "mygpt-readme.md:2d20f1a5d663:c6983-8692"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            },
+            {
+              "original": "性能",
+              "candidates": [
+                {
+                  "canonical": "性能",
+                  "wiki_pages": [
+                    "measurement"
+                  ],
+                  "attested_chunk_ids": [
+                    "mygpt-model.py:e05006957de4:c0-1426",
+                    "mygpt-sample.py:a522fb11f829:c0-1114"
+                  ]
+                }
+              ],
+              "kind": "exact_or_format"
+            }
+          ],
+          "policy": "source-vocabulary-one-edit-v1",
+          "new_provider_calls": 0
+        },
+        "rerank_search_context_used": false,
+        "rerank_context_rankings": [],
+        "authoritative_original_reranker_ids": [
+          "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c29080-31620",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+          "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c45349-48093",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c31334-33790",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c235326-237898",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c250972-252415",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c239782-242463",
+          "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c43250-45706",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "mygpt-model.py:e05006957de4:c5047-6681",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c39846-42485",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426",
+          "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c50080-52569",
+          "mygpt-model.py:e05006957de4:c6488-7889",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c237676-240188",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c7133-9802",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c4493-7539",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c244502-246860",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c33492-36210",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c50090-52547",
+          "mygpt-train.py:52262ac90caa:c0-1445",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c47091-50438",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c42130-44800",
+          "mygpt-model.py:e05006957de4:c12523-14451",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c4024-6213",
+          "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+          "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c6003-8305",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c1990-4234",
+          "mygpt-bench.py:4ab37b20b5e7:c9306-11043",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c10165-11517",
+          "mygpt-bench.py:4ab37b20b5e7:c26352-27532",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c7921-10480",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c26503-29461",
+          "mygpt-model.py:e05006957de4:c10000-11173",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-model.py:e05006957de4:c8927-10267",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c16629-19395",
+          "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+          "mygpt-bench.py:4ab37b20b5e7:c17046-18649",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-bench.py:4ab37b20b5e7:c15612-17277",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c5440-5898"
+        ],
+        "wiki_pages": [],
+        "graph_neighbors": [],
+        "source_pointer_ids": [],
+        "final_ids": [
+          "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c29080-31620",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+          "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c45349-48093",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c31334-33790",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c235326-237898",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c250972-252415",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c239782-242463",
+          "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c43250-45706",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284"
+        ],
+        "overview_anchor_ids": [],
+        "overview_anchor_policy": "protected-reranker-head8;bounded-tail-topic-coverage-v2;no-forced-neighbors",
+        "navigation_selection": {
+          "protected_reranker_ids": [
+            "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+            "mygpt-readme.md:2d20f1a5d663:c0-2086",
+            "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+            "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+            "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+            "foundation-pytorch-transformer-2.11:ebf4e5af7173:c29080-31620",
+            "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+            "mygpt-bench.py:4ab37b20b5e7:c13724-15781"
+          ],
+          "admitted_anchor_ids": [],
+          "omitted_anchor_ids": [],
+          "displaced_reranker_ids": [],
+          "semantic_support_certified": false,
+          "additional_provider_calls": 0
+        },
+        "topic_entry_ids": {},
+        "original_reranker_ids": [
+          "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+          "mygpt-readme.md:2d20f1a5d663:c0-2086",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c31068-33425",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c40996-43565",
+          "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c29080-31620",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+          "mygpt-bench.py:4ab37b20b5e7:c13724-15781",
+          "mygpt-model.py:e05006957de4:c0-1426",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c45349-48093",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c31334-33790",
+          "mygpt-bench.py:4ab37b20b5e7:c6545-7944",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c235326-237898",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c250972-252415",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c233132-235655",
+          "mygpt-model.py:e05006957de4:c7739-9025",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c239782-242463",
+          "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c43250-45706",
+          "mygpt-bench.py:4ab37b20b5e7:c0-1284",
+          "mygpt-model.py:e05006957de4:c5047-6681",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c39846-42485",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281",
+          "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426",
+          "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c50080-52569",
+          "mygpt-model.py:e05006957de4:c6488-7889",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c237676-240188",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c7133-9802",
+          "mygpt-model.py:e05006957de4:c3941-5197",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c4493-7539",
+          "author-pytorch-v2.11.0-functional:06f330c5ce12:c244502-246860",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c33492-36210",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c50090-52547",
+          "mygpt-train.py:52262ac90caa:c0-1445",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c47091-50438",
+          "foundation-pytorch-activation-2.11:8b8076c9383f:c42130-44800",
+          "mygpt-model.py:e05006957de4:c12523-14451",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c4024-6213",
+          "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+          "mygpt-bench.py:4ab37b20b5e7:c12377-13830",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c6003-8305",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c1990-4234",
+          "mygpt-bench.py:4ab37b20b5e7:c9306-11043",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c10165-11517",
+          "mygpt-bench.py:4ab37b20b5e7:c26352-27532",
+          "foundation-pytorch-dropout-2.11:f1abdbdda095:c7921-10480",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c26503-29461",
+          "mygpt-model.py:e05006957de4:c10000-11173",
+          "mygpt-model.py:e05006957de4:c1194-2694",
+          "mygpt-model.py:e05006957de4:c8927-10267",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c16629-19395",
+          "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528",
+          "foundation-pytorch-transformer-2.11:ebf4e5af7173:c24171-26904",
+          "mygpt-bench.py:4ab37b20b5e7:c17046-18649",
+          "mygpt-sample.py:a522fb11f829:c0-1114",
+          "mygpt-bench.py:4ab37b20b5e7:c15612-17277",
+          "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c5440-5898"
+        ],
+        "latency_ms": 731.665899977088,
+        "editorial_content_used_as_evidence": false,
+        "new_provider_calls": 0
+      }
+    ],
+    "llm_wiki": [
+      {
+        "stage": "whole_article_navigation",
+        "mode": "llm_wiki",
+        "seeds": [
+          "dropout",
+          "sdpa",
+          "gpt",
+          "training"
+        ],
+        "graph_neighbors": [],
+        "selected": [
+          "dropout",
+          "sdpa",
+          "gpt",
+          "training"
+        ],
+        "omitted_whole": [],
+        "graph_selection": "query_weighted_whole_article_one_hop_v2",
+        "graph_candidates": [],
+        "complete_articles": true,
+        "article_characters": 5687,
+        "chunk_recall_calls": 0,
+        "dense_search_calls": 0,
+        "reranker_calls": 0,
+        "new_provider_calls": 0,
+        "latency_ms": 1.4903999981470406,
+        "verification_scope": "article_faithfulness_not_original_source_certification"
+      }
+    ]
+  }
+}

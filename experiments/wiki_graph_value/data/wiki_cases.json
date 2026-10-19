@@ -1,0 +1,110 @@
+[
+  {
+    "id": "N01",
+    "stratum": "single_topic_control",
+    "question": "多头注意力中，若d_model=768、query头数为12且各头等宽，Q/K/V投影、每头维度、拼接与输出投影如何衔接？请说明缩放因子的维度依据，不把头数直接解释成提速倍数。",
+    "criteria": [
+      "每头64及形状推导前提",
+      "Q/K/V分头和拼接输出投影",
+      "缩放使用每头key维度",
+      "头数不是端到端加速倍率"
+    ],
+    "topics": [
+      "mha",
+      "self-attention",
+      "attention-scoring"
+    ]
+  },
+  {
+    "id": "N02",
+    "stratum": "wiki_integration",
+    "question": "请把Transformer的归一化拆成三个独立问题：统计轴、是否去均值、在残差中的位置。比较LayerNorm、RMSNorm、BatchNorm以及Pre-LN/Post-LN，并解释为什么换成Pre-LN不能推出任何模型都可取消warmup。",
+    "criteria": [
+      "LN/RMSNorm/BN统计轴区分",
+      "RMSNorm不去均值",
+      "Pre/Post结构式及残差路径",
+      "初始化和warmup论文范围而非普遍保证"
+    ],
+    "topics": [
+      "normalization",
+      "pre-ln",
+      "batchnorm",
+      "layernorm",
+      "training"
+    ]
+  },
+  {
+    "id": "N03",
+    "stratum": "wiki_integration",
+    "question": "从原始Transformer到Decoder-only，说明训练的一次前向与自回归生成循环有什么不同：编码器输出和交叉注意力、右移目标与因果可见性、逐位置FFN以及KV缓存分别在何处发挥作用？请区分架构事实与推理优化。",
+    "criteria": [
+      "原始编码器解码器与Decoder-only差异",
+      "目标右移及因果可见性",
+      "FFN逐位置且参数共享",
+      "训练并行前向与生成循环区别",
+      "缓存复用历史KV但不消除历史注意力读取"
+    ],
+    "topics": [
+      "forward-flow",
+      "transformer",
+      "gpt",
+      "causal-mask",
+      "kv-cache",
+      "mlp"
+    ]
+  },
+  {
+    "id": "N04",
+    "stratum": "precision_boundary_control",
+    "question": "请核对本库mygpt/model.py的实际实现：_attn_baseline与_attn_sdpa分别在哪里应用dropout和mask？训练与eval时传给SDPA的dropout_p是什么，是否用is_causal=True？请引用具体代码位置，区分可执行代码与注释中的性能观察。",
+    "criteria": [
+      "baseline在softmax后乘V前应用attn_dropout",
+      "SDPA显式mask.bool而非is_causal=True",
+      "dropout_p训练self.dropout而eval为0",
+      "引用真实代码定位并区分注释观察与新测量"
+    ],
+    "topics": [
+      "sdpa",
+      "dropout",
+      "causal-mask"
+    ],
+    "source_anchor_ids": [
+      "mygpt-model.py:e05006957de4:c7739-9025",
+      "mygpt-model.py:e05006957de4:c8927-10267"
+    ]
+  },
+  {
+    "id": "N05",
+    "stratum": "graph_bridge",
+    "question": "FlashAttention分块处理注意力时，为什么不能对每一块各自softmax后直接平均？请说明合并新旧块需要维护哪些量、最大值变化时如何重缩放，以及为什么避免完整注意力矩阵不等于把注意力算术变成线性复杂度。",
+    "criteria": [
+      "局部分块softmax平均不等价",
+      "维护运行最大值/指数和/加权和",
+      "合并最大值与旧新统计重缩放公式及最终归一化",
+      "IO/物化优化不等于线性算术或逐bit一致"
+    ],
+    "topics": [
+      "flash-attention",
+      "online-softmax"
+    ],
+    "graph_expected_bridge": "flash-attention -> online-softmax; expectation only, do not force retrieval"
+  },
+  {
+    "id": "N06",
+    "stratum": "graph_bridge",
+    "question": "有人报告调用PyTorch SDPA后显存下降、单次计时更快，就声称所有解码场景都会提速。你会如何判断实际后端、验证数值正确性，并设计可复现测量？请区分prefill/decode、GPU异步计时、allocated/reserved和已有JSON记录的适用范围。",
+    "criteria": [
+      "SDPA接口不保证某融合后端或普遍提速",
+      "固定输入配置及容差正确性",
+      "预热同步重复统计和测量边界",
+      "prefill/decode及allocated/reserved区分",
+      "旧JSON不是当前硬件新实验"
+    ],
+    "topics": [
+      "sdpa",
+      "measurement",
+      "prefill-decode"
+    ],
+    "graph_expected_bridge": "sdpa -> measurement; expectation only, do not force retrieval"
+  }
+]

@@ -1,0 +1,259 @@
+Bridging Nonlinearities and Stochastic
+Regularizers with Gaussian Error Linear Units
+Dan Hendrycks ∗
+University of Chicago
+dan@ttic.edu
+Kevin Gimpel
+Toyota Technological Institute at Chicago
+kgimpel@ttic.edu
+Abstract
+We propose the Gaussian Error Linear Unit (GELU), a high-performing neural network ac-
+tivation function. The GELU nonlinearity is the expected transformation of a stochastic process
+which randomly applies the identity or zero map, combining the intuitions of dropout and zone-
+out while respecting neuron values. This connection suggests a new probabilistic understanding
+of nonlinearities. We perform an empirical evaluation of the GELU nonlinearity against the
+ReLU and ELU activations and ﬁnd performance improvements across all tasks.
+1 Introduction
+The sigmoid function was once the most popular nonlinear activation function for neural net-
+works. Despite having a probabilistic interpretation, it has fallen out of favor due to slow and
+inaccurate convergence. In contrast, the widely-used ReLU activation usually demonstrates
+superior convergence yet is lacking in terms of its probabilistic interpretation [8]. Both nonlin-
+earities increase monotonically and thus yield greater outputs for greater inputs—their utility
+lies in how they respond to their input.
+Some neural network regularization strategies, in contrast, act irrespectively of a neuron’s
+value. For example, dropout randomly sets neuron values to zero, and zoneout randomly pre-
+serves previously computed neuron values [10, 5]. Dropout can act as a stochastic zero map, and
+zoneout can act as a stochastic identity map. The ReLU is a deterministic zero map or identity
+map, depending on the input value. But this determinism of the ReLU is limiting; the stochas-
+ticity of dropout and zoneout may allow for a pseudo-ensemble [1] of networks with stochastic
+width or stochastic depth, respectively, and this leads to improved performance [3, 11]. Since Re-
+LUs lack stochasticity and since the aforementioned regularizers are irrespective of their input,
+the innovations have remained distinct. In this paper, we bridge the gap between nonlinearities
+and stochastic regularizers by considering a stochastic process that is dependent upon input
+values. We encapsulate the stochastic process into a deterministic activation function that we
+call the Gaussian Error Linear Unit (GELU). In experiments across several tasks, we ﬁnd GELU
+activations to outperform both ReLU and ELU activations.
+2 GELUs and the Stochastic 0-I Map
+We begin by describing the stochastic process that underlies the GELU nonlinearity. We call
+the process the stochastic 0- I map (SOI map). Before expounding on this map, we establish
+∗Work done while the author was at TTIC.
+1
+arXiv:1606.08415v1  [cs.LG]  27 Jun 2016
+4
+ 3
+ 2
+ 1
+ 0 1 2 3
+x
+1
+0
+1
+2
+3
+f(x)
+GELU
+ReLU
+ELU
+Figure 1: The Gaussian Error Linear Unit ( µ = 0,σ = 1), the Rectiﬁed Linear Unit, and the
+Exponential Linear Unit (α = 1).
+motivating assumptions. To start, let us initialize each column of the neural networks weights
+W∈ Rnin×nout uniformly on the surface of (not inside) the unit hypersphere, and let the input
+data X ∈ Rbatch size ×nin have a standard normal distribution. As a consequence, it we let
+Z = XW , it follows that Zij is from a standard normal distribution. Now, we have seen that
+both the sigmoid and ReLU assign greater values to greater inputs; we wish to have a stochastic
+process which tends to do this. So, we deﬁne the SOI map as randomly applying the identity
+map to an input with probability Φ(Zij) =P (Y ≤Zij),Y ∼N (0, 1) and applying the zero map
+otherwise. This introduces nondeterminism but maintains dependency upon the input value.
+We can recover a deterministic function from this process to obtain a traditional nonlinearity.
+The expected transformation to an input x is Φ(x)×Ix + (1− Φ(x))× 0x = xΦ(x). We now
+make an obvious generalization. Since the cumulative distribution function is computed with
+the error function, we deﬁne the Gaussian Error Linear Unit (GELU) as
+GELU(x) =xFX(x) =xP (X≤x)
+where X∼N (µ,σ 2). Both µ and σ are possibly parameters to optimize, but throughout this
+paper we simply let µ = 0 and σ = 1.
+The GELU bears semblance to the ReLU and ELU (see [2] for an ELU description). For
+example, as σ→ 0 and if µ = 0, the GELU becomes a ReLU. More, the ReLU and GELU are
+equal asymptotically. Unlike the ReLU, the GELU and ELU can be both negative and positive.
+In fact, if we used the cumulative distribution function of the standard Cauchy distribution,
+then the ELU (when α = 1/π or ELU(x) = 1(x >0)x + 1
+π 1(x≤ 0)(ex− 1), where 1 is the
+indicator function) is xFC(x),C ∼ Cauchy(0, 1) asymptotically. These are some fundamental
+relations to previous nonlinearities.
+However, the GELU has several notable diﬀerences. This non-convex, non-monotonic func-
+tion is not linear in the positive domain and exhibits curvature at all points. Meanwhile ReLUs
+and ELUs, which are convex and monotonic activations, are linear in the positive domain and
+do not always exhibit curvature. Increased curvature and non-monotonicity may allow GELUs
+to more easily approximate complicated functions than can RELUs or ELUs. In addition and
+signiﬁcantly, the GELU has a probabilistic interpretation given that it is the expected SOI map.
+2
+0 5 10 15 20 25
+Epoch
+10 2
+10 1
+Log Loss
+GELU
+ReLU
+ELU
+Figure 2: MNIST Classiﬁcation Results. Each curve is the the median of ﬁve runs, and we plot each
+on a logarithmic scale as each model ﬁts MNIST data well. Training set log loss are the darker,
+lower curves, and the fainter, upper curves are the validation set log loss.
+3 Experiments
+We evaluate the GELU, ReLU, and ELU on MNIST classiﬁcation (grayscale images with 10
+classes, 60k training examples and 10k test examples), MNIST autoencoding, and CIFAR-10
+(color images with 10 classes, 50k training examples and 10k test examples) tasks. We do not
+evaluate the LReLU because of its similarity to ReLUs (see [6] for a description of LReLUs).
+3.1 MNIST Classiﬁcation
+Let us verify that this nonlinearity competes with previous activation functions. We train a
+fully connected neural network with GELUs ( µ = 0,σ = 1), ReLUs, and ELUs ( α = 1). Each
+7-layer, 128 neuron wide neural network is trained for 50 epochs with a batch size of 128. We
+use the Adam optimizer and its suggested learning rate of 0 .001 [4]. The weights are uniformly
+initialized on the unit hypersphere as a consequence of our argument in the previous section;
+this has positive impact on each nonlinearity’s performance [7, 9]. Figure 2 shows that the
+GELU tends to have the lowest median training log loss.
+3.2 MNIST Autoencoder
+We now move to a self-supervised setting and train a deep autoencoder on MNIST. To accom-
+plish this, we use a network with layers of width 1000, 500, 250, 30, 250, 500, 1000, in that
+order. We again use the Adam optimizer and a batch size of 64. Our loss is the mean squared
+3
+0 50 100 150
+Epoch
+10 2
+Reconstruction Error
+GELU
+ReLU
+ELU
+0 50 100 150
+Epoch
+10 2
+GELU
+ReLU
+ELU
+0 50 100 150
+Epoch
+10 2
+GELU
+ReLU
+ELU
+Figure 3: MNIST Autoencoding Results. Each curve is the median of three runs, and we plot each
+on a logarithmic scale because the mean squared losses are small. Left are loss curves for a learning
+rate of 10 −3, the middle ﬁgure has a 10 −4 learning rate, and right has 10 −5.
+loss. We vary the learning rate from 10 −3 to 10 −5.1 The results are shown in Figure 3. The
+GELU either ties or signiﬁcantly outperforms the other nonlinearities. This shows the GELU
+nonlinearity is both stable and accurate under diﬀerent learning rates.
+3.3 CIFAR-10
+Next, we demonstrate that for more intricate architectures with dropout the GELU nonlinearity
+again outperforms other nonlinearities. We use a convolutional architecture with the stacks
+(2× 3× 32), (2× 3× 64) representing the number of layers, receptive ﬁeld, and number of ﬁlters,
+respectively. We then feed this output through a two layer network with 512 and 256 neurons for
+the two layers. We apply max-pooling after every stack, and we run two experiments: we apply
+no dropout or use dropout rates of 0 .25 after the ﬁrst stack, 0 .25 after the second stack, and
+0.5 before the last fully-connected layer. As ever, we use the Adam optimizer with a learning
+rate of 0.001 and initialize weights on the unit hypersphere (each ﬁlter has an 𝓁2 norm of one).
+Figure 4 shows the results. In both situations, GELUs provide faster and superior convergence.
+Consequently, although the GELU is inspired by a diﬀerent stochastic process, it comports well
+with dropout.
+4 Discussion
+Across several experiments, the GELU outperformed previous nonlinearities, but there are mi-
+nor cautions. The MNIST experiments are similar to those run by the architects of the ELU,
+but unlike their experiments, we use Adam instead of ordinary gradient descent because Adam
+1Afterward, we tried a 10 −2 learning rate but all solutions poorly converged, GELUs tied with ReLUs, and ELUs
+diverged.
+4
+0 50 100 150 200
+Epoch
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+1.4Training Set Log Loss
+GELU
+ReLU
+ELU
+0 50 100 150 200
+Epoch
+0.6
+0.8
+1.0
+1.2
+1.4
+1.6Training Set Log Loss
+GELU
+ReLU
+ELU
+Figure 4: CIFAR-10 Results. Each curve is the median of three runs, and we plot on a linear scale
+since a logarithmic plot lends little visual aid. Left is the network without dropout, and right is
+the network with dropout.
+better reﬂects what is typically used in practice for training neural networks. Interestingly, this
+change causes ELUs to occasionally perform worse than ReLUs. Furthermore, by the GELU’s
+diﬀerence in convexity and monotonicity, we ﬁnd that an optimizer with momentum is impor-
+tant for allowing GELUs to converge well, while previous nonlinearities do not have this (minor)
+drawback. This suggests GELUs generate an error surface unlike those generated by ReLUs.
+Also, like exp(·) andσ(·), the error function is expensive to compute accurately, but fast approx-
+imations exist. It is also worth mentioning why we did not display the SOI map performance in
+the above experiments. We now show one such example of its performance in Figure 5. Clearly,
+it can replace nonlinearities occasionally. For example, on the MNIST Classiﬁcation tasks, it
+outperforms the ELU nonlinearity—a neural network with only a regularization process can
+outperform a network with a nonlinearity. It achieves low validation log loss as a consequence
+of its regularizing stochasticity. However, adjusting the extent to which the SOI map regular-
+izes is currently unclear, thus we cannot yet recommend using the SOI map as a nonlinearity
+replacement.
+5 Conclusion
+We observed that the GELU outperforms previous nonlinearities across several tasks. Impor-
+tantly for future work, this nonlinearity has a probabilistic interpretation and may thus lead to
+a deeper understanding of the feedforward process as a whole. Other future research avenues
+include researching the LaLU, xFL(x),L ∼ Laplace(0, 1), as this may encourage neuron spar-
+sity. Another avenue is ﬁnding a useful way to apply the SOI map across many diﬀerent tasks
+because it remains unclear how best to modify the extent to which the SOI map regularizes.
+Fortunately, the GELU does not require any apparent adjustment to exceed the accuracy of
+previous nonlinearities.
+5
+0 5 10 15 20 25
+Epoch
+10 2
+10 1
+Training Set Log Loss
+GELU
+SOI
+ReLU
+ELU
+0 5 10 15 20 25
+Epoch
+10 1
+Validation Set Log Loss
+GELU
+SOI
+ReLU
+ELU
+Figure 5: MNIST Classiﬁcation Results with the SOI map evaluated.
+References
+[1] Philip Bachman, Ouais Alsharif, and Doina Precup. Learning with pseudo-ensembles. In
+Advances in Neural Information Processing Systems , pages 3365-3373, 2014.
+[2] Djork-Arne Clevert, Thomas Unterthiner, Sepp Hochreiter. Fast and Accurate Deep Network
+Learning by Exponential Linear Units (ELUs). In International Conference on Learning
+Representations, 2016.
+[3] Gao Huang, Yu Sun, Zhuang Liu, Daniel Sedra, Kilian Weinberger. Deep Networks with
+Stochastic Depth. In arXiv:1603.09382.
+[4] Diederik P. Kingma and Jimmy Lei Ba.. Adam: A Method for Stochastic Optimization. In
+International Conference on Learning Representations , 2015.
+[5] David Krueger, Tegan Maharaj, Jnos Kramr, Mohammad Pezeshki, Nicolas Ballas, Nan
+Rosemary Ke1, Anirudh Goyal, Yoshua Bengio, Hugo Larochelle, Aaron Courville, and
+Chris Pal. Zoneout: Regularizing RNNs by Randomly Preserving Hidden Activations. In
+arXiv:1606.01305.
+[6] Andrew L. Maas, Awni Y. Hannun, and Andrew Y. Ng. Rectiﬁer nonlinearities improve
+neural network acoustic models. In International Conference on Machine Learning , 2013.
+[7] Dmytro Mishkin and Jiri Matas. All You Need Is a Good Init. In International Conference
+on Learning Representations, 2016.
+[8] Vinod Nair and Geoﬀrey E. Hinton. Rectiﬁed Linear Units Improve Restricted Boltzmann
+Machines. In International Conference on Machine Learning , 2010.
+[9] Andrew M. Saxe, James L. McClelland, and Surya Ganguli. Exact solutions to the nonlinear
+dynamics of learning in deep linear neural networks. InInternational Conference on Learning
+Representations, 2014.
+[10] Nitish Srivastava, Geoﬀrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhut-
+dinov. Dropout: A Simple Way to Prevent Neural Networks from Overﬁtting. In Journal of
+Machine Learning Research, 2014.
+[11] Andreas Veit, Michael Wilber, and Serge Belongie. Residual Networks are Exponential
+Ensembles of Relatively Shallow Networks. In arXiv:1605.06431.
+6

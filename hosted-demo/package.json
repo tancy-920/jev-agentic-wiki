@@ -1,0 +1,6 @@
+{
+  "name": "jev-offline-demo",
+  "private": true,
+  "scripts": { "check": "node --check assets/app.js" },
+  "dependencies": { "katex": "^0.16.22", "marked": "^16.0.0", "dompurify": "^3.2.6" }
+}

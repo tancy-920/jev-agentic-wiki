@@ -1,0 +1,42 @@
+L3134: # RMSNormcite2729†#
+L3135: 
+L3136: class torch.nn.RMSNorm(normalized_shape, eps=None, elementwise_affine=True, device=None, dtype=None)cite2730†[source]†github.com cite2731†#
+L3137: 
+L3138: 
+L3139: Applies Root Mean Square Layer Normalization over a mini-batch of inputs.
+L3140: 
+L3141: This layer implements the operation as described in the paper cite2732†Root Mean Square Layer Normalization†arxiv.org
+L3142: 
+L3143: $$y_i = \frac{x_i}{\mathrm{RMS}(x)} * \gamma_i, \quad
+L3144: \text{where} \quad \text{RMS}(x) = \sqrt{\epsilon + \frac{1}{n} \sum_{i=1}^{n} x_i^2}
+L3145: $$y i​=RMS(x)x i​​∗γ i​,where RMS(x)=ϵ+n 1​i=1∑n​x i 2​​
+L3146: 
+L3147: The RMS is taken over the last `D` dimensions, where `D` is the dimension of `normalized_shape`. For example, if `normalized_shape` is `(3, 5)` (a 2-dimensional shape), the RMS is computed over the last 2 dimensions of the input.
+L3148: 
+L3149: Parameters:
+L3150: 
+L3151: 
+L3152:   * normalized_shape (cite2733†int†docs.python.org or cite2734†list†docs.python.org or cite2735†torch.Size ) –
+L3153: 
+L3154: input shape from an expected input of size
+L3155: $$[* \times \text{normalized\_shape}[0] \times \text{normalized\_shape}[1]
+L3156:     \times \ldots \times \text{normalized\_shape}[-1]]
+L3157: 
+L3158: $$[∗×normalized_shape[0]×normalized_shape[1]×…×normalized_shape[−1]]
+L3159: 
+L3160: If a single integer is used, it is treated as a singleton list, and this module will normalize over the last dimension which is expected to be of that specific size.
+L3161:   * eps (cite2736†float†docs.python.org | None) – a value added to the denominator for numerical stability. If not specified, uses the machine epsilon of the computation (opmath) type: fp16/bf16 and fp32 inputs use `torch.finfo(torch.float32).eps`, while fp64 inputs use `torch.finfo(torch.float64).eps`.
+L3162: 
+L3163:   * elementwise_affine (cite2737†bool†docs.python.org ) – a boolean value that when set to `True`, this module has learnable per-element affine parameters initialized to ones (for weights). Default: `True`.
+L3164: Shape:
+L3165: 
+L3166: 
+L3167:   * Input: $(N, *)$(N,∗)
+L3168: 
+L3169:   * Output: $(N, *)$(N,∗) (same shape as input)
+L3170: 
+L3171: Examples:
+L3172: 
+L3173:     >>> rms_norm = nn.RMSNorm([2, 3])
+L3174:     >>> input = torch.randn(2, 2, 3)
+L3175:     >>> rms_norm(input)

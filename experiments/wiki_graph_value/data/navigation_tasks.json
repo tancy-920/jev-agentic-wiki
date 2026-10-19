@@ -1,0 +1,150 @@
+[
+  {
+    "id": "M01",
+    "group": "integration",
+    "question": "GQA把32个KV头减为4个后，服务大量共享提示前缀、输出长度不同的请求。为什么不能据此宣称总显存减少八倍、吞吐提高八倍？解释头数量、前缀物理存储、共享块写入和请求完成后接纳新请求分别受什么机制控制，并明确条件。",
+    "targets": [
+      "gqa",
+      "kv-cache",
+      "paged-kv",
+      "continuous-batching"
+    ],
+    "criteria": [
+      "同条件逻辑KV容量1/8，不是总显存倍率",
+      "头共享不自动跨请求共享前缀物理块",
+      "COW限于修改共享块，非所有前缀共享必需",
+      "迭代级调度区别于分页管理，不保证八倍吞吐"
+    ],
+    "old_review": "G01",
+    "start": "gqa"
+  },
+  {
+    "id": "M02",
+    "group": "integration",
+    "question": "把注意力分块后维护运行最大值和指数和，数学上能合并出精确结果。为什么这还不能证明PyTorch实际选中了FlashAttention，也不能证明训练、提示处理和逐token生成都会更快？请连贯说明合并公式、IO机制、后端约束以及应补充的测量证据。",
+    "targets": [
+      "online-softmax",
+      "flash-attention",
+      "sdpa",
+      "measurement",
+      "prefill-decode"
+    ],
+    "criteria": [
+      "重缩放的运行最大值、指数和、加权和递推及最终归一化",
+      "不物化完整分数矩阵的IO机制，非降低精确注意力算术阶数",
+      "API不保证特定内核，需检查dtype/形状/设备等支持条件",
+      "同配置正确性、预热同步重复计时，区分prefill和decode"
+    ],
+    "start": "flash-attention"
+  },
+  {
+    "id": "M03",
+    "group": "integration",
+    "question": "残差网络提供恒等路径，为什么Transformer仍会受到归一化位置和warmup影响？请把局部Jacobian、Pre-LN与Post-LN的初始化梯度分析、训练设置与性能测量的边界连起来解释，判断能否据此保证所有任务无需warmup且训练更快。",
+    "targets": [
+      "residual",
+      "pre-ln",
+      "training",
+      "measurement"
+    ],
+    "criteria": [
+      "局部残差Jacobian为I+J_F但多层乘积不保证梯度稳定",
+      "归一化位置改变路径，PreLN块外恒等路径与最终LN区分",
+      "初始化理论及论文任务范围不能保证所有任务免warmup",
+      "优化配置与实际测量决定训练速度，不能由结构推出倍率"
+    ],
+    "old_review": "G04",
+    "start": "residual"
+  },
+  {
+    "id": "M04",
+    "group": "integration",
+    "question": "BERT的MLM模型若改用单向注意力，再采用增量KV缓存并让多个query头共享KV头，能否直接成为等价且更快的自回归生成器？请区分目标函数、可见性、历史状态复用条件、头共享和训练并行性，说明哪些还需训练或验证。",
+    "targets": [
+      "bert-mlm",
+      "causal-mask",
+      "kv-cache",
+      "gqa"
+    ],
+    "criteria": [
+      "MLM选定位置预测不同于因果next-token目标，改mask不等于完成训练适配",
+      "掩码控制可见性，缓存需过去状态不受未来增量影响且位置一致",
+      "KV头共享是架构改变，不能把既有权重任意等价合并",
+      "因果训练已知序列也可并行，未知输出解码逐步，不能保证更快"
+    ],
+    "old_review": "G06",
+    "start": "bert-mlm"
+  },
+  {
+    "id": "M05",
+    "group": "direct_control",
+    "question": "明确比较GQA、KV Cache、PagedAttention与continuous batching：分别改变头数量、历史复用、物理块管理和迭代调度中的什么？为什么不能把这些机制的收益简单相乘？",
+    "targets": [
+      "gqa",
+      "kv-cache",
+      "paged-kv",
+      "continuous-batching"
+    ],
+    "criteria": [
+      "区分四个机制的作用对象",
+      "逻辑KV比例不等于总显存或吞吐比例",
+      "物理共享与COW具有适用条件",
+      "共同瓶颈与配置决定实测收益"
+    ],
+    "start": "gqa"
+  },
+  {
+    "id": "M06",
+    "group": "direct_control",
+    "question": "明确比较online softmax、FlashAttention、SDPA与性能测量：写出分块合并式，说明数学正确、IO优化、实际后端和实测加速为什么是四个不同结论。",
+    "targets": [
+      "online-softmax",
+      "flash-attention",
+      "sdpa",
+      "measurement"
+    ],
+    "criteria": [
+      "正确的m/l/o重缩放递推",
+      "IO优化不等于降低精确注意力算术阶数",
+      "SDPA后端受支持条件和选择机制约束",
+      "同配置正确性和同步重复计时才支持加速结论"
+    ],
+    "start": "online-softmax"
+  },
+  {
+    "id": "M07",
+    "group": "negative_control",
+    "question": "RoPE与KV Cache有关联，是否足以推出GQA能保证任意长度外推且保持准确率？仅根据资料说明这些机制能支持和不能支持哪些结论。",
+    "targets": [
+      "rope",
+      "kv-cache",
+      "gqa"
+    ],
+    "criteria": [
+      "关系边不能证明因果或性能保证",
+      "RoPE位置机制不保证任意长度外推",
+      "缓存需保持位置与历史状态一致",
+      "GQA改变KV头数不提供长度准确率保证"
+    ],
+    "start": "rope"
+  },
+  {
+    "id": "M08",
+    "group": "insufficient_evidence",
+    "question": "只凭本知识库，给出GQA加分页缓存和FlashAttention在一张尚未指定型号的显卡上相对基线的精确吞吐倍数，并判断是否一定无需warmup；若无法确定，请逐项说明缺少什么证据。",
+    "targets": [
+      "measurement",
+      "gqa",
+      "paged-kv",
+      "flash-attention",
+      "pre-ln"
+    ],
+    "criteria": [
+      "不编造吞吐倍率或设备结果",
+      "指出硬件/配置/负载/基线及测量缺失",
+      "不能从这些机制推出普遍免warmup",
+      "区分条件分析、旧观察与当前实测"
+    ],
+    "start": "flash-attention"
+  }
+]

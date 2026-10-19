@@ -1,0 +1,233 @@
+{
+  "setup": {
+    "kind": "ARCHIVED_LIVE_MEASUREMENTS_AND_AI_LABELS",
+    "cases": 6,
+    "model": "deepseek-flash",
+    "reasoning": "none",
+    "temperature": 0,
+    "max_output_tokens": 2048,
+    "human_attested": false,
+    "fresh_provider_calls": 0,
+    "scope": "Aggregate saved judgments and measurements, not fresh QA evaluation"
+  },
+  "rows": [
+    {
+      "id": "N01",
+      "input_tokens": {
+        "source": 7306,
+        "llm_wiki": 1838
+      },
+      "output_tokens": {
+        "source": 818,
+        "llm_wiki": 467
+      },
+      "coverage": {
+        "source": 1.0,
+        "llm_wiki": 1.0
+      },
+      "supported_items": {
+        "source": 4,
+        "llm_wiki": 4
+      },
+      "total_items": 4,
+      "retrieval_median_ms": {
+        "source": 593.5916999878827,
+        "llm_wiki": 1.5357499942183495
+      },
+      "paired_input_reduction": 0.7484259512729263
+    },
+    {
+      "id": "N02",
+      "input_tokens": {
+        "source": 7232,
+        "llm_wiki": 3260
+      },
+      "output_tokens": {
+        "source": 976,
+        "llm_wiki": 641
+      },
+      "coverage": {
+        "source": 1.0,
+        "llm_wiki": 1.0
+      },
+      "supported_items": {
+        "source": 4,
+        "llm_wiki": 4
+      },
+      "total_items": 4,
+      "retrieval_median_ms": {
+        "source": 655.5307999660727,
+        "llm_wiki": 1.7268999945372343
+      },
+      "paired_input_reduction": 0.5492256637168141
+    },
+    {
+      "id": "N03",
+      "input_tokens": {
+        "source": 6691,
+        "llm_wiki": 3679
+      },
+      "output_tokens": {
+        "source": 759,
+        "llm_wiki": 590
+      },
+      "coverage": {
+        "source": 0.6,
+        "llm_wiki": 0.8
+      },
+      "supported_items": {
+        "source": 3,
+        "llm_wiki": 4
+      },
+      "total_items": 5,
+      "retrieval_median_ms": {
+        "source": 641.5339999948628,
+        "llm_wiki": 1.6563999815844
+      },
+      "paired_input_reduction": 0.4501569272156628
+    },
+    {
+      "id": "N04",
+      "input_tokens": {
+        "source": 8071,
+        "llm_wiki": 3467
+      },
+      "output_tokens": {
+        "source": 686,
+        "llm_wiki": 709
+      },
+      "coverage": {
+        "source": 0.0,
+        "llm_wiki": 0.0
+      },
+      "supported_items": {
+        "source": 0,
+        "llm_wiki": 0
+      },
+      "total_items": 4,
+      "retrieval_median_ms": {
+        "source": 688.6631000379566,
+        "llm_wiki": 1.4526000013574958
+      },
+      "paired_input_reduction": 0.5704373683558419
+    },
+    {
+      "id": "N05",
+      "input_tokens": {
+        "source": 7046,
+        "llm_wiki": 1998,
+        "llm_wiki_graph": 1998
+      },
+      "output_tokens": {
+        "source": 796,
+        "llm_wiki": 606,
+        "llm_wiki_graph": 606
+      },
+      "coverage": {
+        "source": 1.0,
+        "llm_wiki": 1.0
+      },
+      "supported_items": {
+        "source": 4,
+        "llm_wiki": 4
+      },
+      "total_items": 4,
+      "retrieval_median_ms": {
+        "source": 539.2270500015002,
+        "llm_wiki": 1.504699990618974
+      },
+      "paired_input_reduction": 0.7164348566562588
+    },
+    {
+      "id": "N06",
+      "input_tokens": {
+        "source": 8259,
+        "llm_wiki": 3647,
+        "llm_wiki_graph": 4371
+      },
+      "output_tokens": {
+        "source": 1002,
+        "llm_wiki": 676,
+        "llm_wiki_graph": 780
+      },
+      "coverage": {
+        "source": 0.4,
+        "llm_wiki": 0.8
+      },
+      "supported_items": {
+        "source": 2,
+        "llm_wiki": 4
+      },
+      "total_items": 5,
+      "retrieval_median_ms": {
+        "source": 686.2550999794621,
+        "llm_wiki": 1.8423000001348555
+      },
+      "paired_input_reduction": 0.5584211163579126
+    }
+  ],
+  "summary": {
+    "macro_coverage": {
+      "source": 0.6666666666666666,
+      "llm_wiki": 0.7666666666666667
+    },
+    "integration_macro_coverage": {
+      "source": 0.75,
+      "llm_wiki": 0.9
+    },
+    "mean_paired_input_reduction": 0.598850313929236,
+    "coverage_delta_pp": 10.000000000000009,
+    "integration_delta_pp": 15.000000000000002,
+    "complete_efficiency_acceptance": false,
+    "unsupported_claims": [
+      {
+        "id": "N06",
+        "mode": "llm_wiki",
+        "severity": "substantive_unsupported_generalization",
+        "quote": "显存下降只说明中间矩阵未物化",
+        "source_ids": [
+          "paper-2205.14135:b86de4ee5c52:c11869-13995"
+        ],
+        "reason": "Converse inference unsupported: avoiding materialization reduces intermediate memory, but observing memory reduction does not establish that cause. This blocks a clean no-new-serious-unsupported-claim efficiency acceptance."
+      },
+      {
+        "id": "N06",
+        "mode": "source",
+        "severity": "substantive_unsupported_generalization",
+        "quote": "不可用时只发警告并回退",
+        "source_ids": [
+          "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776"
+        ],
+        "reason": "Warnings depend on forced-kernel context; disabled math does not guarantee fallback, and automatic fallback need not warn."
+      },
+      {
+        "id": "N05",
+        "mode": "source",
+        "severity": "missing_complexity_condition",
+        "quote": "真正把复杂度降到线性或次二次的是近似路线，如 block-sparse FlashAttention",
+        "source_ids": [
+          "paper-2205.14135:b86de4ee5c52:c22492-24426"
+        ],
+        "reason": "Need sparse density scaling with N for changed asymptotic order; fixed fractional sparsity alone retains quadratic term. Core dense-IO-versus-arithmetic requirement remains answered."
+      }
+    ],
+    "accounting": {
+      "cap": 42,
+      "physical_calls": 18,
+      "unused_closed": 24,
+      "planning": 2,
+      "first_generation": 13,
+      "counterfactual": 0,
+      "product": 3,
+      "exact_replays": 6,
+      "jev_calls": 0,
+      "input_tokens": 94126,
+      "output_tokens": 11612,
+      "cost_usd": null,
+      "cumulative_before": 3334,
+      "cumulative_after": 3352,
+      "first_answer_slots": 14,
+      "first_parsed": 14
+    }
+  }
+}

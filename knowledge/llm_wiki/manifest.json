@@ -1,0 +1,1045 @@
+{
+  "type": "LLM_WIKI_COMPLETE_ARTICLES_V1",
+  "version": "2026-10-19-v2-source-grounded-repair",
+  "source_binding": {
+    "sources.jsonl": "2f0df305904f2236492a476a881d2436d419ee1af4e2b8d8045af1cf0b1a1682",
+    "chunks.jsonl": "0bf63b2c00efb98d266eb0a8e4db04295d1d5e00069a2c6bded8264d63016045",
+    "wiki.json": "82c088ba8bac7ae6859ea28f7f9aed9683cbaea39667d41107afe60d773cb3f0",
+    "index.json": "fc90476d88428625197cda29e5ff15b67ee2f23f01676b86c3d84d7cb5de0445"
+  },
+  "articles": [
+    {
+      "article_id": "transformer",
+      "title": "Transformer 架构",
+      "aliases": [
+        "Transformer",
+        "transformer架构"
+      ],
+      "markdown_file": "transformer.md",
+      "sha256": "77eb13774b6eecf5c9bfbfb4bb2fd6f2c73320bc9c59d03a0c5200416d4ad265",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+        "depth-orca-osdi22:b0b993441062:c12952-15716",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "paper-1910.10683:7aa53b0ecc3b:c132875-133573",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+        "paper-1810.04805:6bb076ca96de:c10285-12186",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c5047-6681",
+        "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426"
+      ],
+      "related": [
+        "self-attention",
+        "cross-attention",
+        "gpt",
+        "normalization",
+        "residual",
+        "layernorm",
+        "bert-mlm"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "self-attention",
+      "title": "自注意力与 Q/K/V",
+      "aliases": [
+        "self-attention",
+        "self attention",
+        "自注意力",
+        "QKV"
+      ],
+      "markdown_file": "self-attention.md",
+      "sha256": "db776a16c60a8c4f9a18f21512ae4c2d63201e192500a7f634605d33c9a2c787",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-model.py:e05006957de4:c5047-6681"
+      ],
+      "related": [
+        "causal-mask",
+        "cross-attention",
+        "mha",
+        "attention-scoring",
+        "padding-mask"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "cross-attention",
+      "title": "交叉注意力与架构分类",
+      "aliases": [
+        "cross-attention",
+        "cross attention",
+        "交叉注意力",
+        "encoder-decoder"
+      ],
+      "markdown_file": "cross-attention.md",
+      "sha256": "aad37facc15cdc7b6b45444e84656e9bab8a70d4021bb49c8f0bd8d76d1aeb1e",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c47700-50426",
+        "paper-1910.10683:7aa53b0ecc3b:c52189-54691",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "paper-1910.10683:7aa53b0ecc3b:c33101-35632",
+        "paper-1810.04805:6bb076ca96de:c6145-8482",
+        "paper-1810.04805:6bb076ca96de:c14307-16636",
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911",
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c0-752",
+        "author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383"
+      ],
+      "related": [
+        "self-attention",
+        "gpt",
+        "transformer"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "causal-mask",
+      "title": "因果掩码与位置",
+      "aliases": [
+        "causal mask",
+        "causal",
+        "因果掩码",
+        "掩码",
+        "掩码多头注意力",
+        "masked multi-head attention",
+        "masked attention"
+      ],
+      "markdown_file": "causal-mask.md",
+      "sha256": "b97fe09479690cb6261c85bee3ee1aa0160da2f1cbfee29436fc2d2950e52e2b",
+      "source_chunk_ids": [
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c6488-7889",
+        "mygpt-model.py:e05006957de4:c7739-9025",
+        "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+        "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+      ],
+      "related": [
+        "self-attention",
+        "kv-cache",
+        "position",
+        "padding-mask",
+        "bert-mlm"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "gpt",
+      "title": "Decoder-only架构与mygpt实现",
+      "aliases": [
+        "GPT",
+        "GPT-2",
+        "mygpt",
+        "decoder-only"
+      ],
+      "markdown_file": "gpt.md",
+      "sha256": "1262f77370fc93c736a91d4b34064f0c583147ed21901f63eae879ba7dfb2231",
+      "source_chunk_ids": [
+        "paper-1910.10683:7aa53b0ecc3b:c130789-133277",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-model.py:e05006957de4:c0-1426"
+      ],
+      "related": [
+        "position",
+        "mlp",
+        "normalization",
+        "training",
+        "tokenizer",
+        "embedding"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "position",
+      "title": "位置表示总览：绝对PE、RoPE与偏置",
+      "aliases": [
+        "positional embedding",
+        "position encoding",
+        "位置编码",
+        "位置嵌入",
+        "PE",
+        "PE编码",
+        "正弦位置编码",
+        "sinusoidal positional encoding"
+      ],
+      "markdown_file": "position.md",
+      "sha256": "d0e7167a209088f252ebc581d11feefcbae5ba087510cf29f4af150b47394814",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "depth-2104.09864:abd4e80aae4d:c10919-13279",
+        "depth-2104.09864:abd4e80aae4d:c14290-15871",
+        "depth-2104.09864:abd4e80aae4d:c3293-6099",
+        "depth-2104.09864:abd4e80aae4d:c5673-7829",
+        "paper-1706.03762:eee8b5a0bcc2:c25848-27513",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+        "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+        "paper-1910.10683:7aa53b0ecc3b:c12742-15676",
+        "foundation-2108.12409:cf6a3d07cc4d:c15367-17283",
+        "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+        "foundation-2108.12409:cf6a3d07cc4d:c18966-21650"
+      ],
+      "related": [
+        "gpt",
+        "kv-cache",
+        "rope",
+        "embedding",
+        "alibi"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "mlp",
+      "title": "逐位置FFN / MLP：投影、激活与宽度",
+      "aliases": [
+        "MLP",
+        "FFN",
+        "feed-forward",
+        "前馈网络",
+        "升维",
+        "降维"
+      ],
+      "markdown_file": "mlp.md",
+      "sha256": "cb462c467e6a42e51da010589a5037bf2b99c839a5712a5bf9c5f67e7dbe4b2a",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c11035-12913",
+        "depth-2002.05202:2f0b42e51459:c2216-3968",
+        "depth-2002.05202:2f0b42e51459:c3762-4507",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c2583-4229",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "gpt",
+        "normalization",
+        "activations",
+        "residual"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "normalization",
+      "title": "归一化总览与RMSNorm",
+      "aliases": [
+        "RMSNorm",
+        "归一化"
+      ],
+      "markdown_file": "normalization.md",
+      "sha256": "d10a61ae96daf16e93401551a188b493aa8686dd1354e0f7975db29db058dc20",
+      "source_chunk_ids": [
+        "pytorch-rmsnorm-2.11:9d22e35bf7b3:c0-1532",
+        "depth-1910.07467:14a6a097250f:c0-2733",
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+        "depth-2002.04745:8e1c3e3564f6:c7049-9310",
+        "depth-1910.07467:14a6a097250f:c3581-5993",
+        "depth-1910.07467:14a6a097250f:c7675-10103",
+        "pytorch-rmsnorm-2.11:9d22e35bf7b3:c1267-2350",
+        "mygpt-model.py:e05006957de4:c2583-4229",
+        "mygpt-model.py:e05006957de4:c1194-2694",
+        "mygpt-results-rmsnorm_metrics.json:25396ba25fac:c0-1356"
+      ],
+      "related": [
+        "training",
+        "gpt",
+        "measurement",
+        "pre-ln",
+        "batchnorm",
+        "layernorm"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "kv-cache",
+      "title": "KV Cache 增量解码",
+      "aliases": [
+        "KV Cache",
+        "kvcache",
+        "kvcahe",
+        "KV缓存",
+        "缓存",
+        "incremental decoding"
+      ],
+      "markdown_file": "kv-cache.md",
+      "sha256": "ea5f3cc049c2fbcf1562520ebb786d8044418ca521db0a05589133c4b0fc9635",
+      "source_chunk_ids": [
+        "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
+        "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+        "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+        "paper-1911.02150:292091205298:c0-1731",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "mygpt-model.py:e05006957de4:c15869-17957",
+        "mygpt-sample.py:a522fb11f829:c2447-3941",
+        "mygpt-sample.py:a522fb11f829:c867-2738",
+        "mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376",
+        "paper-2305.13245:3ed3d65bc419:c4200-6482",
+        "paper-2309.06180:7ba2ff703be1:c14989-17264",
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c10932-13356"
+      ],
+      "related": [
+        "prefill-decode",
+        "gqa",
+        "paged-kv",
+        "measurement"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "prefill-decode",
+      "title": "Prefill 与 Decode",
+      "aliases": [
+        "prefill",
+        "decode",
+        "增量解码",
+        "预填充"
+      ],
+      "markdown_file": "prefill-decode.md",
+      "sha256": "5855d543d2e2257ff86b51fc452e915a1ab597d2aa9738b6b1cc1932d5bc1729",
+      "source_chunk_ids": [
+        "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
+        "hf-transformers-cache-4.57.0:50131d48d593:c4136-6760",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c3979-6531",
+        "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c7024-9618",
+        "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
+        "paper-1911.02150:292091205298:c0-1731",
+        "mygpt-model.py:e05006957de4:c15869-17957",
+        "mygpt-model.py:e05006957de4:c0-1426",
+        "mygpt-paged_kv.py:4453b1b84e0f:c0-1099",
+        "mygpt-paged_kv.py:4453b1b84e0f:c6418-8055"
+      ],
+      "related": [
+        "kv-cache",
+        "causal-mask",
+        "paged-kv",
+        "continuous-batching"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "mha",
+      "title": "MHA 多头注意力",
+      "aliases": [
+        "MHA",
+        "multi-head attention",
+        "多头注意力"
+      ],
+      "markdown_file": "mha.md",
+      "sha256": "7256326a295290c9583624a7a9a4aa64d34cc0316f698ff07f90a2262b48ab4e",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "paper-2305.13245:3ed3d65bc419:c2100-4367",
+        "paper-2305.13245:3ed3d65bc419:c0-2100",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-model.py:e05006957de4:c1194-2694"
+      ],
+      "related": [
+        "gqa",
+        "mqa",
+        "self-attention"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "gqa",
+      "title": "GQA 分组查询注意力",
+      "aliases": [
+        "GQA",
+        "grouped-query attention",
+        "分组查询注意力"
+      ],
+      "markdown_file": "gqa.md",
+      "sha256": "4ba7522cad3f54ee9e7e23a8dc204e0f5037007382341be5d1a9fd89502b0cce",
+      "source_chunk_ids": [
+        "paper-2305.13245:3ed3d65bc419:c4200-6482",
+        "paper-2305.13245:3ed3d65bc419:c13133-15425",
+        "mygpt-model.py:e05006957de4:c0-1426",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-results-bench_gqa_memory.json:12a3cf8406d0:c0-612",
+        "mygpt-results-gqa1_metrics.json:2a751af5abd5:c0-1360",
+        "mygpt-results-gqa2_metrics.json:356f7ea90b77:c0-1359",
+        "paper-2309.06180:7ba2ff703be1:c14989-17264"
+      ],
+      "related": [
+        "mha",
+        "mqa",
+        "kv-cache"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "mqa",
+      "title": "MQA 多查询注意力",
+      "aliases": [
+        "MQA",
+        "multi-query attention",
+        "多查询注意力"
+      ],
+      "markdown_file": "mqa.md",
+      "sha256": "b74adbc35a1938b502c810aeb5d68d4932146440f856b873bc6e6b64bf16f0ca",
+      "source_chunk_ids": [
+        "paper-1911.02150:292091205298:c0-1731",
+        "paper-2305.13245:3ed3d65bc419:c4200-6482",
+        "paper-2305.13245:3ed3d65bc419:c13133-15425",
+        "mygpt-results-bench_gqa_memory.json:12a3cf8406d0:c0-612"
+      ],
+      "related": [
+        "mha",
+        "gqa",
+        "kv-cache"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "sdpa",
+      "title": "PyTorch SDPA 与后端选择",
+      "aliases": [
+        "SDPA",
+        "scaled_dot_product_attention",
+        "cuDNN",
+        "fused attention",
+        "融合注意力"
+      ],
+      "markdown_file": "sdpa.md",
+      "sha256": "6d1f0de4d6bc0a8084d9a38be1f1651da63ff2e6b1d2a28c57379b9af60a97dc",
+      "source_chunk_ids": [
+        "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "mygpt-model.py:e05006957de4:c1194-2694",
+        "mygpt-model.py:e05006957de4:c8927-10267",
+        "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+        "mygpt-bench.py:4ab37b20b5e7:c9306-11043",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c4113-5673",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c2669-4331"
+      ],
+      "related": [
+        "flash-attention",
+        "online-softmax",
+        "measurement"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "flash-attention",
+      "title": "FlashAttention 与 IO 优化",
+      "aliases": [
+        "FlashAttention",
+        "Flash Attention",
+        "闪存注意力"
+      ],
+      "markdown_file": "flash-attention.md",
+      "sha256": "aa460fcbd3d7e37b63549f2da055b74a97ebfd5caf596f480d42d7efaf23d04a",
+      "source_chunk_ids": [
+        "paper-2205.14135:b86de4ee5c52:c0-2471",
+        "paper-2205.14135:b86de4ee5c52:c3556-5723",
+        "pytorch-sdpa-2.11:42a07d742f7e:c3520-5776",
+        "depth-2307.08691:f917fc544aae:c3449-6144",
+        "depth-2307.08691:f917fc544aae:c21985-24558",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+        "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+        "mygpt-readme.md:2d20f1a5d663:c8442-10433"
+      ],
+      "related": [
+        "sdpa",
+        "online-softmax",
+        "measurement"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "online-softmax",
+      "title": "分块注意力与在线 Softmax",
+      "aliases": [
+        "online softmax",
+        "chunked attention",
+        "在线softmax",
+        "分块注意力"
+      ],
+      "markdown_file": "online-softmax.md",
+      "sha256": "9b5f22fae0b68a8b63fca00268bdb88ec79157c13274a0ecf85ffdea47dc6e53",
+      "source_chunk_ids": [
+        "paper-2205.14135:b86de4ee5c52:c13633-15122",
+        "paper-2205.14135:b86de4ee5c52:c15122-16331",
+        "paper-2205.14135:b86de4ee5c52:c11869-13995",
+        "mygpt-model.py:e05006957de4:c10000-11173",
+        "mygpt-model.py:e05006957de4:c3941-5197",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c1321-2882",
+        "mygpt-results-bench_attention_impls.json:2a0918a1aa55:c0-1528"
+      ],
+      "related": [
+        "flash-attention",
+        "sdpa"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "paged-kv",
+      "title": "分页 KV Cache 与前缀共享",
+      "aliases": [
+        "PagedAttention",
+        "paged kv",
+        "分页缓存",
+        "分页KV",
+        "前缀共享",
+        "vLLM"
+      ],
+      "markdown_file": "paged-kv.md",
+      "sha256": "c3b6004784c47407c66466595efc0555e021c171db2f635d869879f4c05382a2",
+      "source_chunk_ids": [
+        "paper-2309.06180:7ba2ff703be1:c14989-17264",
+        "mygpt-paged_kv.py:4453b1b84e0f:c848-2277",
+        "mygpt-paged_kv.py:4453b1b84e0f:c1976-3903",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+        "depth-orca-osdi22:b0b993441062:c22008-24173",
+        "depth-orca-osdi22:b0b993441062:c23849-26414",
+        "depth-2309.06180:4e592d02d9a3:c21000-23565",
+        "depth-2309.06180:4e592d02d9a3:c23235-24761",
+        "depth-2309.06180:4e592d02d9a3:c31560-34002",
+        "depth-2309.06180:4e592d02d9a3:c33679-36093",
+        "paper-2309.06180:7ba2ff703be1:c23494-24418",
+        "paper-2309.06180:7ba2ff703be1:c21043-23494",
+        "mygpt-readme.md:2d20f1a5d663:c8442-10433",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c1337-2321",
+        "mygpt-results-bench_paged_kv.json:1ab4cce92ee9:c0-1544"
+      ],
+      "related": [
+        "kv-cache",
+        "prefill-decode",
+        "measurement",
+        "continuous-batching"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "training",
+      "title": "训练：优化器、学习率与数值精度",
+      "aliases": [
+        "training",
+        "训练",
+        "bf16",
+        "fp32",
+        "TinyShakespeare",
+        "梯度检查点"
+      ],
+      "markdown_file": "training.md",
+      "sha256": "40393d8224d6c736e6e0b54b1f2d3563a65c4d76ee78190debc2ac44c83a95bf",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c20388-21360",
+        "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+        "mygpt-train.py:52262ac90caa:c4587-6729",
+        "mygpt-train.py:52262ac90caa:c6470-7904",
+        "mygpt-readme.md:2d20f1a5d663:c1849-3478",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474",
+        "mygpt-results-base_metrics.json:b0fb3bff29ed:c0-1363",
+        "mygpt-results-gqa1_metrics.json:2a751af5abd5:c0-1360",
+        "mygpt-results-gqa2_metrics.json:356f7ea90b77:c0-1359"
+      ],
+      "related": [
+        "gpt",
+        "normalization",
+        "measurement",
+        "dropout",
+        "batchnorm"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "measurement",
+      "title": "性能测量、正确性与适用条件",
+      "aliases": [
+        "benchmark",
+        "speedup",
+        "性能",
+        "显存",
+        "加速",
+        "batch",
+        "数值等价"
+      ],
+      "markdown_file": "measurement.md",
+      "sha256": "d26c2bb66a9049138bd937ba3140e7b02919606af0fab317cbaa3b299678df37",
+      "source_chunk_ids": [
+        "mygpt-bench.py:4ab37b20b5e7:c979-2847",
+        "mygpt-bench.py:4ab37b20b5e7:c7703-9607",
+        "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+        "mygpt-readme.md:2d20f1a5d663:c6983-8692",
+        "mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376",
+        "mygpt-results-bench_forward_cost.json:f3529c0f7798:c0-284",
+        "mygpt-requirements.txt:7d5067774196:c0-202"
+      ],
+      "related": [
+        "kv-cache",
+        "sdpa",
+        "paged-kv",
+        "training"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "speculative",
+      "title": "推测解码与未实现技术",
+      "aliases": [
+        "speculative decoding",
+        "推测解码",
+        "未实现"
+      ],
+      "markdown_file": "speculative.md",
+      "sha256": "f1198d625bc394da1b820d4b31caa28c879e307abe9cefa2f0def695632f43be",
+      "source_chunk_ids": [
+        "mygpt-readme.md:2d20f1a5d663:c10199-12641",
+        "mygpt-readme.md:2d20f1a5d663:c12397-14611",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "measurement",
+        "kv-cache"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "rope",
+      "title": "RoPE旋转位置编码",
+      "aliases": [
+        "RoPE",
+        "rotary position embedding",
+        "旋转位置编码"
+      ],
+      "markdown_file": "rope.md",
+      "sha256": "8b5745f516e7505b1173a8dc041a35cdaef26c9944b87570b9f86818830b737c",
+      "source_chunk_ids": [
+        "depth-2104.09864:abd4e80aae4d:c10919-13279",
+        "depth-2104.09864:abd4e80aae4d:c14290-15871",
+        "depth-2104.09864:abd4e80aae4d:c3293-6099",
+        "depth-2104.09864:abd4e80aae4d:c5673-7829",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "position",
+        "self-attention",
+        "kv-cache"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "pre-ln",
+      "title": "Pre-LN与Post-LN",
+      "aliases": [
+        "pre-LN",
+        "preln",
+        "post-LN",
+        "postln",
+        "前置归一化",
+        "后置归一化"
+      ],
+      "markdown_file": "pre-ln.md",
+      "sha256": "440d08de389cbda7de04df32dc804f03dd18db64332f9d852e25c31d2629a9d0",
+      "source_chunk_ids": [
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+        "depth-2002.04745:8e1c3e3564f6:c7049-9310",
+        "mygpt-model.py:e05006957de4:c11035-12913",
+        "mygpt-model.py:e05006957de4:c12523-14451"
+      ],
+      "related": [
+        "normalization",
+        "training",
+        "transformer"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "activations",
+      "title": "FFN激活：ReLU、GELU与SwiGLU",
+      "aliases": [
+        "SwiGLU",
+        "ReLU",
+        "GELU",
+        "GLU",
+        "Swish",
+        "激活函数"
+      ],
+      "markdown_file": "activations.md",
+      "sha256": "c1f728eb2e453d349e7da9259334d367e305884772a1a604e7180afcd950b608",
+      "source_chunk_ids": [
+        "depth-2002.05202:2f0b42e51459:c2216-3968",
+        "depth-2002.05202:2f0b42e51459:c3762-4507",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "mygpt-model.py:e05006957de4:c11035-12913",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "foundation-pytorch-activation-2.11:8b8076c9383f:c1831-4154",
+        "foundation-pytorch-activation-2.11:8b8076c9383f:c19312-21442",
+        "foundation-1606.08415:54bf88ceea5f:c2784-4719"
+      ],
+      "related": [
+        "mlp",
+        "normalization",
+        "gpt"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "tokenizer",
+      "title": "Tokenizer：BPE、WordPiece、Unigram与SentencePiece",
+      "aliases": [
+        "tokenizer",
+        "tokenization",
+        "分词",
+        "BPE",
+        "WordPiece",
+        "Unigram",
+        "SentencePiece",
+        "字节分词"
+      ],
+      "markdown_file": "tokenizer.md",
+      "sha256": "64a6105e48f17fbfaf993469df45ff2b663490f62525d0a19dee6f8764f650d5",
+      "source_chunk_ids": [
+        "depth-tokenizer-hf-4.57:8e310fb8d331:c752-1751",
+        "depth-tokenizer-hf-4.57:8e310fb8d331:c8001-9978",
+        "depth-1808.06226:fa30b4a82307:c7462-9739",
+        "depth-1808.06226:fa30b4a82307:c9555-11805",
+        "depth-1508.07909:e8c1f2db5b4b:c10093-12489",
+        "depth-1508.07909:e8c1f2db5b4b:c12489-14823",
+        "depth-1804.10959:365099810758:c7131-9576",
+        "depth-1804.10959:365099810758:c11015-13351",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "depth-tokenizer-hf-4.57:8e310fb8d331:c12609-13933",
+        "foundation-bert-tokenizer-4.57:15f92ca3917a:c16977-19600",
+        "paper-1810.04805:6bb076ca96de:c12186-14638",
+        "paper-1706.03762:eee8b5a0bcc2:c18059-20718"
+      ],
+      "related": [
+        "embedding",
+        "gpt",
+        "training"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "embedding",
+      "title": "Token Embedding、位置嵌入与输出权重共享",
+      "aliases": [
+        "embedding",
+        "token embedding",
+        "词嵌入",
+        "嵌入",
+        "wte",
+        "权重绑定"
+      ],
+      "markdown_file": "embedding.md",
+      "sha256": "6e07cebbbe6c0c94e58e3ccc901a1e3032a75676f23dfd766adbc567b24d03c9",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+        "author-t2t-v1.2.0-modalities:b5f73ae48f67:c1130-3425",
+        "author-tensorflow-v1.3.0-init-ops:38d036411557:c8163-9257",
+        "mygpt-model.py:e05006957de4:c12523-14451",
+        "mygpt-model.py:e05006957de4:c14266-16158",
+        "paper-1706.03762:eee8b5a0bcc2:c14608-17145"
+      ],
+      "related": [
+        "tokenizer",
+        "position",
+        "gpt",
+        "mlp"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "continuous-batching",
+      "title": "Continuous Batching与迭代级调度",
+      "aliases": [
+        "continuous batching",
+        "continuous batch",
+        "连续批处理",
+        "动态批处理",
+        "iteration-level scheduling",
+        "ORCA"
+      ],
+      "markdown_file": "continuous-batching.md",
+      "sha256": "d0945091d3e922be26633b5d82abebfe5d3d1e7f09d01afc2837b790d656f256",
+      "source_chunk_ids": [
+        "depth-orca-osdi22:b0b993441062:c22008-24173",
+        "depth-orca-osdi22:b0b993441062:c23849-26414",
+        "depth-orca-osdi22:b0b993441062:c643-3163",
+        "depth-orca-osdi22:b0b993441062:c5343-8296",
+        "mygpt-readme.md:2d20f1a5d663:c14355-16474"
+      ],
+      "related": [
+        "paged-kv",
+        "prefill-decode",
+        "measurement"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "forward-flow",
+      "title": "Transformer前向流程：输入、层堆叠与输出概率",
+      "aliases": [
+        "前向流程",
+        "完整前向",
+        "完整流程",
+        "forward pass",
+        "transformer pipeline",
+        "从输入token到输出token"
+      ],
+      "markdown_file": "forward-flow.md",
+      "sha256": "824c692b229b995765a6d4efac3f44fcf18cfb88c7459f269bef2618989c178b",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c13665-14608",
+        "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "mygpt-readme.md:2d20f1a5d663:c0-2086",
+        "mygpt-model.py:e05006957de4:c12523-14451"
+      ],
+      "related": [
+        "transformer",
+        "tokenizer",
+        "embedding",
+        "position",
+        "self-attention",
+        "mlp",
+        "gpt",
+        "pre-ln"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "batchnorm",
+      "title": "BatchNorm：统计轴、训练与推理",
+      "aliases": [
+        "BatchNorm",
+        "Batch Normalization",
+        "BN",
+        "批归一化"
+      ],
+      "markdown_file": "batchnorm.md",
+      "sha256": "17cd7cb01a4d658dc968ddbac9f950057458376b1bb380053c9256a712e1713f",
+      "source_chunk_ids": [
+        "foundation-1502.03167:ff1b9f13b590:c12196-14541",
+        "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c9509-12131",
+        "foundation-pytorch-batchnorm-2.11:46b3c108a19d:c11899-14252",
+        "foundation-1502.03167:ff1b9f13b590:c16449-18435",
+        "foundation-1607.06450:2e66a69eecc9:c5764-7454"
+      ],
+      "related": [
+        "layernorm",
+        "normalization",
+        "training"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "layernorm",
+      "title": "LayerNorm：特征维归一化与BN/RMSNorm区别",
+      "aliases": [
+        "LayerNorm",
+        "Layer Normalization",
+        "LN",
+        "层归一化"
+      ],
+      "markdown_file": "layernorm.md",
+      "sha256": "f2906dabda4a2e103de85b3379dc1857b8ab4048ac692c0e767a9087af904e38",
+      "source_chunk_ids": [
+        "foundation-1607.06450:2e66a69eecc9:c5764-7454",
+        "foundation-pytorch-normalization-2.11:fe394c3aea14:c1630-3907",
+        "foundation-pytorch-normalization-2.11:fe394c3aea14:c3565-6055",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341"
+      ],
+      "related": [
+        "batchnorm",
+        "normalization",
+        "pre-ln",
+        "residual"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "residual",
+      "title": "残差连接：恒等路径、梯度与维度",
+      "aliases": [
+        "residual",
+        "残差",
+        "残差连接",
+        "shortcut"
+      ],
+      "markdown_file": "residual.md",
+      "sha256": "ad7bf62ad12731fd6eb0ae17bd0bca6f8b7e5141383160b0baef2bf10947cefd",
+      "source_chunk_ids": [
+        "foundation-1512.03385:dace4e4f4f1a:c4287-6786",
+        "foundation-1512.03385:dace4e4f4f1a:c2137-4287",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
+        "depth-2002.04745:8e1c3e3564f6:c14586-15771",
+        "depth-2002.04745:8e1c3e3564f6:c4702-7341",
+        "depth-2002.04745:8e1c3e3564f6:c7049-9310"
+      ],
+      "related": [
+        "forward-flow",
+        "pre-ln",
+        "layernorm",
+        "mlp"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "padding-mask",
+      "title": "Padding Mask：形状、布尔语义与输出边界",
+      "aliases": [
+        "padding mask",
+        "key_padding_mask",
+        "padding",
+        "填充掩码"
+      ],
+      "markdown_file": "padding-mask.md",
+      "sha256": "0288693d43e1ac7a64f0930bf116dff458f74ae7dc5b6a41621433e6819d5a3f",
+      "source_chunk_ids": [
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367",
+        "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
+        "foundation-pytorch-activation-2.11:8b8076c9383f:c37704-40193",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c4493-7539",
+        "foundation-pytorch-transformer-2.11:ebf4e5af7173:c9582-11976",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+      ],
+      "related": [
+        "causal-mask",
+        "sdpa",
+        "self-attention",
+        "bert-mlm"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "dropout",
+      "title": "Dropout：缩放、位置与推理配置",
+      "aliases": [
+        "dropout",
+        "随机失活",
+        "丢弃率",
+        "残差dropout"
+      ],
+      "markdown_file": "dropout.md",
+      "sha256": "9f4135fe4fbb1cd27c9349b59082978ea9f71a50906722d16e354177f5a36dca",
+      "source_chunk_ids": [
+        "foundation-pytorch-dropout-2.11:f1abdbdda095:c0-2281",
+        "paper-1706.03762:eee8b5a0bcc2:c20388-21360",
+        "paper-1706.03762:eee8b5a0bcc2:c21360-23083",
+        "pytorch-sdpa-2.11:42a07d742f7e:c0-2094",
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+      ],
+      "related": [
+        "training",
+        "sdpa",
+        "forward-flow"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "attention-scoring",
+      "title": "Attention评分：Q/K、缩放与加性注意力",
+      "aliases": [
+        "attention score",
+        "加性注意力",
+        "缩放点积",
+        "QK共享",
+        "scaled dot product"
+      ],
+      "markdown_file": "attention-scoring.md",
+      "sha256": "19bc14aeed177f0c798c29675a7ccc97b8dfb52a74c080dc23efdd2e55d3aabe",
+      "source_chunk_ids": [
+        "paper-1706.03762:eee8b5a0bcc2:c8934-11426",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973"
+      ],
+      "related": [
+        "self-attention",
+        "mha",
+        "cross-attention",
+        "padding-mask"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "bert-mlm",
+      "title": "BERT MLM：输入遮盖与注意力可见性",
+      "aliases": [
+        "BERT MLM",
+        "MLM",
+        "masked language model",
+        "输入mask",
+        "BERT mask"
+      ],
+      "markdown_file": "bert-mlm.md",
+      "sha256": "a8f0edff6ba39abf1350aaa3c501301e443aaef1b089433c345730b11f4bbf55",
+      "source_chunk_ids": [
+        "paper-1810.04805:6bb076ca96de:c14307-16636",
+        "paper-1810.04805:6bb076ca96de:c0-2284",
+        "paper-1706.03762:eee8b5a0bcc2:c7110-8934"
+      ],
+      "related": [
+        "padding-mask",
+        "causal-mask",
+        "tokenizer",
+        "transformer"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "alibi",
+      "title": "ALiBi与相对位置偏置",
+      "aliases": [
+        "ALiBi",
+        "线性位置偏置",
+        "relative position bias",
+        "T5相对位置"
+      ],
+      "markdown_file": "alibi.md",
+      "sha256": "d69e8429598eccc6d06bc2b5646f071100793af2ad0146f387b0a03c4b0e214f",
+      "source_chunk_ids": [
+        "foundation-2108.12409:cf6a3d07cc4d:c15367-17283",
+        "foundation-2108.12409:cf6a3d07cc4d:c16996-18966",
+        "foundation-2108.12409:cf6a3d07cc4d:c18966-21650",
+        "paper-1910.10683:7aa53b0ecc3b:c12742-15676"
+      ],
+      "related": [
+        "position",
+        "rope",
+        "self-attention"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    }
+  ],
+  "authoring": "Codex offline source-assisted synthesis; no provider API",
+  "human_attested": false,
+  "ground_truth_release": false,
+  "provider_calls": 0,
+  "token_count_policy": "UTF8 byte upper bound, not tokenizer measurement"
+}

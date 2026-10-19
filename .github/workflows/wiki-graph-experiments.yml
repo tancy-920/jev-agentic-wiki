@@ -1,0 +1,29 @@
+name: Reproduce Wiki and graph experiments
+on:
+  workflow_dispatch:
+  push:
+    paths: ['experiments/wiki_graph_value/**', '.github/workflows/wiki-graph-experiments.yml']
+  pull_request:
+    paths: ['experiments/wiki_graph_value/**', '.github/workflows/wiki-graph-experiments.yml']
+permissions:
+  contents: read
+jobs:
+  offline:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: experiments/wiki_graph_value
+    env:
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -S reproduce.py
+      - run: python -S benchmark_retrieval.py --check-inputs
+      - run: python -S -m unittest discover -s tests -v
