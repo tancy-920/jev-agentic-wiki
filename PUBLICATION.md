@@ -10,6 +10,7 @@ development workspace. No repository or remote publication is created by this sc
 | Material | Why it is needed |
 |---|---|
 | English root and experiment READMEs | Results, comparison design, interpretation and reproduction commands |
+| Root `LICENSE` | MIT terms for project-owned code and documentation; third-party terms remain applicable |
 | `experiments/wiki_graph_value/results/` | Machine-readable headline results, with per-case rows |
 | Frozen experiment inputs, original responses/usage and item-level AI reviews | Inspect and recompute the claims, including unsupported answers |
 | `data/history/` inside the experiment artifact | Preserve relevant graph-QA zero/negative evidence and sensitivity controls |
@@ -46,4 +47,6 @@ this is a bounded export check, not a promise about an arbitrary existing Git hi
 Publish from a fresh repository rooted at the prepared directory. Avoid importing the
 development workspace's `.git` directory. No license for third-party sources is
 overridden; their provenance remains in the source catalog. This preparation does not
-choose a new legal license on the owner's behalf.
+choose a new legal license on the owner's behalf. The root `LICENSE` records the
+owner-selected MIT terms for project-owned code and documentation. The local
+Chinese review draft is excluded from publication.

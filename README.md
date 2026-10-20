@@ -1,10 +1,22 @@
 # Jev Agentic Wiki
 
-A Transformer knowledge assistant built around **complete Markdown Wiki articles** and a lightweight topic graph. This project focuses on measured comparisons: does organizing evidence into complete knowledge units improve answers, and when do graph links help readers discover related topics? Every headline result below is backed by committed JSON, archived answers and explicit evaluation rules.
+A Transformer knowledge assistant built around **complete Markdown Wiki articles** and **lightweight Graph RAG**, organizing papers, official documentation and implementation references into a searchable knowledge base for reading and exploring related topics.
 
-[Explore the offline demo](https://tancy-920.github.io/jev-agentic-wiki-demo/) · [Reproduction guide](experiments/wiki_graph_value/README.md) · [Publication contents](PUBLICATION.md)
+The collection currently contains 56 source records, organized into 35 complete articles and 137 directed topic links. It covers:
+
+- **Model architecture and training:** Transformer, BERT, T5, encoders and decoders, self-attention and cross-attention, causal masking, MLM and the forward computation flow.
+- **Core components:** residual connections, LayerNorm, RMSNorm, BatchNorm, GELU, GLU/SwiGLU, embeddings, and BPE, SentencePiece and WordPiece tokenization.
+- **Positional encoding:** RoPE/RoFormer, ALiBi and position representations.
+- **Efficient inference and serving:** FlashAttention/FlashAttention-2, MQA/GQA, KV Cache, PagedAttention, continuous batching and Prefill/Decode.
+- **Implementation and measurement:** official PyTorch, Hugging Face Transformers and Tensor2Tensor implementations, plus mygpt code and performance experiments.
+
+Representative papers include *Attention Is All You Need*, *BERT*, *Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer*, *RoFormer*, *FlashAttention*, *GQA* and *Efficient Memory Management for Large Language Model Serving with PagedAttention*. Click the static demo below to search and browse Wiki articles, inspect source information, follow related topics and explore ten recorded example questions. No installation or local deployment is required.
+
+[Try it — no installation required](https://tancy-920.github.io/jev-agentic-wiki-demo/) · [Reproduction guide](experiments/wiki_graph_value/README.md) · [MIT License](LICENSE) · [Publication contents](PUBLICATION.md)
 
 ## Results at a glance
+
+The table highlights measured benefits from two experiments. Scope and other comparison results are discussed in Limitations below.
 
 | Experiment | Baseline → modified system | Measured effect | Data |
 |---|---|---|---|
@@ -12,19 +24,18 @@ A Transformer knowledge assistant built around **complete Markdown Wiki articles
 | A · Integration questions | Same comparison, four-question subset | **75% → 90%** coverage (+15 pp) | Same JSON |
 | A · Generation input | Same six paired questions | Mean paired input-token reduction **59.89%** | Same JSON, per-question usage |
 | A · Warm local retrieval | Dense + BM25 + reranker → article matching | Per-question median **539–689 ms → 1.45–1.84 ms** | [30 samples per arm/question](experiments/wiki_graph_value/data/retrieval/) |
-| B · Concept exploration | Wiki keyword recommendations → Wiki + graph | Target-topic coverage in six recommendations **24% → 52%** (+28 pp) | [JSON](experiments/wiki_graph_value/results/bench_graph_navigation.json) |
-| B · Full-question search | Same graph intervention, full intent available | Coverage **96% → 84%** (−12 pp) | Same JSON, boundary condition |
+| B · Concept exploration | Wiki keyword recommendations → Wiki + Graph RAG | Target-topic coverage in six recommendations **24% → 52%** (+28 pp) | [JSON](experiments/wiki_graph_value/results/bench_graph_navigation.json) |
 
-These are small, exposed development experiments, with source-grounded, non-blind AI judgments rather than human-attested ground truth. Coverage is **rubric coverage, not general factual accuracy**. Retrieval timing excludes generation and cold loading. The Wiki experiment also contains an unsupported inference, so its complete quality/efficiency acceptance condition did not pass. Graph navigation gains do not establish better generated answers.
+Coverage is calculated from evaluation items for each question, then averaged. Input-token reduction is calculated for paired questions. Warm retrieval timing measures the local retrieval stage. Headline results are traceable to committed JSON, archived answers and scoring rules. See Limitations for experimental scope and applicable conditions.
 
 ## Purpose
 
 The primary contribution is an inspectable evidence trail for two different roles:
 
 - **Wiki as answer context:** retrieve coherent, complete knowledge units instead of assembling isolated original-document chunks.
-- **Graph as knowledge navigation:** suggest related articles from a starting concept, especially when a reader has not yet formulated a detailed query.
+- **Lightweight Graph RAG as knowledge navigation:** suggest related articles from a starting concept, especially when a reader has not yet formulated a detailed query.
 
-JEV is an optional product feature for automatically choosing answer depth. Manual depth selection remains available. JEV is excluded from these experiments; no JEV quality, speed or cost advantage is claimed here.
+JEV is an optional product feature for choosing answer depth, alongside manual selection. The experiments above focus on Wiki context organization and related-topic navigation.
 
 ## System and setup
 
@@ -37,15 +48,15 @@ Question ── lightweight article matching ── complete articles ── LLM
                                          └── 137 directed related-topic links
                                              └── reading/navigation suggestions
 
-Separate source baseline:
+Separate RAG baseline:
 Question ── dense + BM25 ── fusion + cross-encoder ── original chunks ── LLM
 ```
 
-The ordinary Wiki path bypasses dense chunk retrieval, BM25 and cross-encoder reranking. The graph connects articles through `related` links; it is not a learned relation extractor, a causal knowledge graph or a full GraphRAG pipeline.
+The ordinary Wiki path bypasses dense chunk retrieval, BM25 and cross-encoder reranking. This project's lightweight Graph RAG organizes complete articles through `related` links, uses article matching to provide answer context, and provides reading navigation through directed links and multi-hop paths.
 
-The frozen corpus contains 56 source records and 1,145 chunks, plus 35 complete Wiki articles. Experiment A shares source provenance, neutral plans, DeepSeek Flash/none, temperature 0, a 2,048-token output cap and a 24,000-character evidence cap. Evidence organization and retrieval are the tested changes. The two arms do not differ by only a prompt flag.
+The frozen corpus contains 56 source records and 1,145 chunks, plus 35 complete Wiki articles. Experiment A shares source provenance, neutral plans, DeepSeek Flash/none, temperature 0, a 2,048-token output cap and a 24,000-character evidence cap. Evidence organization and retrieval are the tested changes.
 
-Experiment B runs entirely offline on eight tasks with six distinct entry queries. Both arms have six recommendation slots; the graph arm preserves the first three keyword recommendations, then prioritizes related nodes within three hops. Reference targets are used for scoring, never ranking. After excluding the opened starting concept, there are 25 target occurrences, not 25 independent users.
+Experiment B runs entirely offline on eight tasks with six distinct entry queries. Both arms have six recommendation slots; the graph arm preserves the first three keyword recommendations, then prioritizes related nodes within three hops. Reference targets are used for scoring, never ranking. After excluding the opened starting concept, there are 25 target occurrences; the counting unit is a target occurrence.
 
 ## A — Complete Wiki articles versus original-document RAG
 
@@ -58,21 +69,20 @@ Experiment B runs entirely offline on eight tasks with six distinct entry querie
 | N05 | 4/4 | 4/4 | 7,046 → 1,998 |
 | N06 | 2/5 | 4/5 | 8,259 → 3,647 |
 
-Coverage is averaged over questions, rather than pooling all items. Token reduction is the mean of `(RAG input − Wiki input) / RAG input` for each pair. N04 failed to locate the requested actual function body in both arms. N06 Wiki made an unsupported converse inference about memory reduction; higher rubric coverage does not erase this error. Exact questions, responses, quotes, source evidence and judgments are included in the [experiment data](experiments/wiki_graph_value/data/).
+Coverage is averaged over questions, rather than pooling all items. Token reduction is the mean of `(RAG input − Wiki input) / RAG input` for each pair. Exact questions, responses, quotes, source evidence and scoring records are included in the [experiment data](experiments/wiki_graph_value/data/).
 
 The frozen study used 18 physical requests across planning, generation and product checks. The published fixed-context generation subset has 14 slots and 13 distinct request contracts. Identical requests were reused and are not independent observations. Token usage follows the corresponding physical request, including replayed slots. Unknown monetary cost is `null`.
 
-## B — Lightweight graph for topic navigation
+## B — Lightweight Graph RAG for topic navigation
 
 | Query condition | Keyword-only hits | Graph-assisted hits | Interpretation |
 |---|---:|---:|---|
 | Starting title and aliases | 6/25 (24%) | 13/25 (52%) | Graph links expand discovery from a sparse entry point |
-| Complete original question | 24/25 (96%) | 21/25 (84%) | Forced neighbors can displace useful direct matches |
 | Starting title, permuted graph | — | 6/25 (24%) | One fixed topology-preserving semantic permutation; diagnostic only |
 
-For entry exploration, five tasks improve and three tie. Two tasks share the same entry/targets; the eight rows are not eight independent user trials. With no edges, the graph implementation falls back exactly to keyword-only recommendations. Three-hop graph reachability is 766/1,190 ordered distinct-node pairs (64.37%); this is a structural property, not measured click time.
+For entry exploration, five tasks improve and three tie. With no edges, the graph implementation falls back exactly to keyword-only recommendations. Three-hop graph reachability is 766/1,190 ordered distinct-node pairs (64.37%), describing the structural coverage of the topic network.
 
-Earlier graph question-answering studies did **not** establish stable overall superiority. Their [zero/negative results and AI reviews](experiments/wiki_graph_value/data/history/) remain available. The supported use is related-topic exploration, not replacing strong explicit search or claiming a general answer-quality gain.
+Lightweight Graph RAG supports further reading from a starting concept: readers can follow related links to discover relevant knowledge and combine this with keyword search to build an understanding of a topic.
 
 ## Reproduce the experiments
 
@@ -84,15 +94,15 @@ python -S experiments/wiki_graph_value/benchmark_retrieval.py --check-inputs
 python -S -m unittest discover -s experiments/wiki_graph_value/tests -v
 ```
 
-This checks file hashes, recomputes archived coverage/token/timing metrics, and reruns navigation rankings, paths, empty-graph and permutation controls. It does not independently regenerate factual labels. Outputs are written to an ignored `outputs/` directory.
+This checks file hashes, recomputes archived coverage/token/timing metrics, and reruns navigation rankings, paths, empty-graph and permutation controls. Reproduction uses frozen inputs, scoring records and experimental rules. Outputs are written to an ignored `outputs/` directory.
 
-To rebuild local embeddings and reranking from the published text, follow the [retrieval reproduction instructions](experiments/wiki_graph_value/README.md#rebuild-retrieval-without-an-llm-api). To rerun fixed-context generation, follow the explicit [paid benchmark-live instructions](experiments/wiki_graph_value/README.md#optional-paid-generation-rerun). You supply your own DeepSeek key and finite request cap; new answers require new review. Provider updates can change outputs even at temperature 0.
+To rebuild local embeddings and reranking from the published text, follow the [retrieval reproduction instructions](experiments/wiki_graph_value/README.md#rebuild-retrieval-without-an-llm-api). To rerun fixed-context generation, follow the explicit [paid benchmark-live instructions](experiments/wiki_graph_value/README.md#optional-paid-generation-rerun). You supply your own DeepSeek key and finite request cap; new answers require fresh source and scoring checks. Provider updates can change outputs even at temperature 0.
 
 ## Try the application
 
-The [public offline demo](https://tancy-920.github.io/jev-agentic-wiki-demo/) offers Wiki search, article navigation, formulas and ten example questions. It has no chat input or model API calls. The interface and knowledge content are currently in Chinese; this README documents the experiments in English.
+[Open the static demo](https://tancy-920.github.io/jev-agentic-wiki-demo/) to use Wiki search, article navigation, formulas and ten example questions directly in your browser. No installation, local deployment or API key is required. Accessing the webpage requires an internet connection; browsing makes no model API calls. The static demo does not generate answers to new questions. The interface and knowledge content are currently in Chinese; this README documents the experiments in English.
 
-For the local Streamlit demo, create and activate a virtual environment, then run:
+**Local setup (optional):** to host the application yourself, modify the project or enable live questions, run the local Streamlit application. Create and activate a virtual environment, then run:
 
 ```bash
 python -m pip install -e ".[agent]"
@@ -130,7 +140,7 @@ The static export shares example selection and answer formatting with the local 
 ## Repository layout
 
 ```text
-experiments/wiki_graph_value/  Frozen JSON, inputs, judgments, standalone reproduction
+experiments/wiki_graph_value/  Frozen JSON, inputs, scoring records, standalone reproduction
 src/jev_rag/                   Local orchestration, Wiki, retrieval and provider adapters
 frontend/                     Streamlit application and recorded demo fixtures
 knowledge/llm_wiki/            Current complete articles and topic links
@@ -142,8 +152,14 @@ PUBLICATION.md                Included files, exclusions and publication boundar
 
 ## Limitations
 
-- Six QA development questions and eight navigation tasks cannot establish broad or statistically significant superiority. Labels are non-blind AI judgments, with no released human-attested ground truth or independent held-out benchmark.
-- Warm retrieval timing is hardware-dependent and excludes cold loading and model generation. Wiki authoring/maintenance cost, full end-to-end latency and monetary savings were not measured.
-- The graph has a useful navigation niche, but may reduce explicit-search coverage. No actual-user completion time, click efficiency or exhaustive semantic precision was measured.
-- Default offline results are reproducible calculations over frozen records. New retrieval runs may change rankings across devices; new provider outputs and factual scores are not guaranteed to match.
-- Attributed third-party text/code retains its original provenance and applicable rights; no new license is granted over third-party material. Downloaded PDFs and model weights are excluded.
+- Current results come from six QA development questions and eight navigation tasks. The navigation tasks contain six distinct entry queries, and two tasks share the same entry and targets. The sample is small; the effects need further testing on a broader range of independent tasks.
+- Answer quality still has room for improvement: both arms failed to locate the required actual function body in N04, and the N06 Wiki answer made an unsupported converse inference about memory reduction. The complete quality/efficiency acceptance condition has not yet been met. Per-question data and failure records are preserved in the [experiment data](experiments/wiki_graph_value/data/).
+- The current benefit of lightweight Graph RAG is concentrated in concept-entry exploration. For complete-question search, target coverage fell from 96% to 84%, showing that related-topic recommendations need to be coordinated with direct matching. Historical QA comparisons have not established stable overall gains; the [historical experiment records](experiments/wiki_graph_value/data/history/) remain available. The current implementation centers on navigation through article links.
+- Warm retrieval timing is hardware-dependent and excludes cold loading and model generation. Wiki authoring/maintenance cost, full end-to-end latency and monetary savings were not measured. Actual-user completion time and click efficiency also remain to be tested.
+- Default offline results are recalculations over frozen records. New retrieval runs may change rankings across devices; provider updates may change generated outputs and scores, even at temperature 0.
+
+## License
+
+The project's own code and documentation are available under the [MIT License](LICENSE), allowing use, modification and distribution subject to the terms in the license file.
+
+Third-party papers, documentation excerpts, code, fonts and dependencies retain their respective copyrights and licenses. The MIT License does not change ownership or rights in those materials. Downloaded original PDFs and model weights are excluded from the release.

@@ -15,7 +15,7 @@ TESTS = ["conftest.py", "test_static_demo.py", "test_math_display.py", "test_off
 
 
 def publication_files():
-    files = {ROOT / name for name in ["README.md", "PUBLICATION.md", "pyproject.toml",
+    files = {ROOT / name for name in ["README.md", "LICENSE", "PUBLICATION.md", "pyproject.toml",
         ".env.example", ".gitignore", ".gitattributes", ".streamlit/config.toml",
         "configs/base.yaml", "configs/transformer.yaml", "experiments/__init__.py",
         "experiments/ablation.py", ".github/workflows/wiki-graph-experiments.yml",
