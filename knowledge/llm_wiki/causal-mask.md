@@ -14,6 +14,10 @@
 
 KV Cache中T_query与T_key可能不同，不能直接假定任意接口的非方形causal对齐方式。布尔True的含义依API而异：MultiheadAttention的布尔mask表示屏蔽，SDPA布尔attn_mask表示允许。
 
+## 与增量缓存的依赖关系
+
+在相同参数、位置与既有输入下，因果mask隔离未来token，保证旧位置不会因为序列尾部追加token而改变其逐层表示，从而支持逐层复用旧K/V。全双向可见性没有这一保证：新增token可改变旧位置的注意力输出，进一步改变高层的K/V。该机制推导说明，不能把因果append-only缓存直接用于不断增长的全双向self-attention；固定encoder memory的交叉注意力是另外的缓存场景。
+
 ## 关联知识
 
 自注意力与 Q/K/V、KV Cache 增量解码、位置表示总览：绝对PE、RoPE与偏置、Padding Mask：形状、布尔语义与输出边界、BERT MLM：输入遮盖与注意力可见性
@@ -34,3 +38,5 @@ KV Cache中T_query与T_key可能不同，不能直接假定任意接口的非方
 - `hf-transformers-cache-4.57.0:50131d48d593:c2433-4394` — [Hugging Face Transformers v4.57.0 / Caching, Official caching documentation, L40–L75]
 - `paper-1706.03762:eee8b5a0bcc2:c7110-8934` — [Attention Is All You Need, full page context, PDF file p. 3]
 - `pytorch-sdpa-2.11:42a07d742f7e:c1869-3693` — [PyTorch 2.11 scaled_dot_product_attention, captured public-source excerpt, captured excerpt L3167–L3207; snapshot L34–L74]
+
+- `hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911` — [Hugging Face Transformers v4.57.0 / KV cache strategies，缓存不变性或固定memory机制核查入口]

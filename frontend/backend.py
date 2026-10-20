@@ -57,6 +57,20 @@ class ApplicationLLMDecisions(LLMDecisions):
     def payload_builder(self, requests):
         payload = application_judge_payload(requests)
         for index, request in enumerate(requests):
+            if self.semantic_scope_audit and request.task == "citation":
+                from frontend.arithmetic_witnesses import arithmetic_witnesses
+                from frontend.quantity_scope import condition_attachments, quantity_scope_conflicts
+
+                state = payload["state"]["requests"][f"q{index}"]
+                state["local_arithmetic_witnesses"] = arithmetic_witnesses(request.evidence)
+                claims = (request.answer_claims if isinstance(request, AnswerCoverageRequest)
+                          else [request.claim])
+                state["literal_scope_observations"] = [
+                    {"unit_index": i, "quantity_scope_conflicts": quantity_scope_conflicts(claim.text),
+                     "condition_attachments": condition_attachments(claim.text),
+                     "semantic_support_certified": False}
+                    for i, claim in enumerate(claims)
+                ]
             if request.evidence and all(c.source_kind == "wiki_article" for c in request.evidence):
                 payload["questions"][f"q{index}"]["instructions"]["knowledge_unit_scope"] = (
                     "Evidence is complete AI-edited Wiki articles. Judge faithfulness to "
@@ -329,10 +343,15 @@ class ApplicationLLMDecisions(LLMDecisions):
                               application_observation_version="typed-request-binding-v1")
 
     def __init__(self, *args, strong_completion=False, verification_feedback_enabled=False,
+                 semantic_scope_audit=False,
                  literal_clause_audit=False, flat_single_prediction=False, verification_evidence_audit=False, verification_premise_spans=False, verification_math_probes=False, verification_premise_groups=False, comparison_grid_enabled=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.strong_completion = strong_completion
         self.verification_feedback_enabled = verification_feedback_enabled
+        if type(semantic_scope_audit) is not bool or (semantic_scope_audit and (
+            not strong_completion or not verification_feedback_enabled)):
+            raise ValueError("semantic scope audit requires product verification feedback")
+        self.semantic_scope_audit = semantic_scope_audit
         self._feedback_requests = None
         self._coverage_requirements = {}
         self._comparison_grids = {}
@@ -514,9 +533,17 @@ class ApplicationLLMDecisions(LLMDecisions):
                         }
                         match["required"].insert(0, "assessment")
         items = schema.get("properties", {}).get("answers", {}).get("properties", {})
+        if self.semantic_scope_audit:
+            from frontend.semantic_scope import check_schema
+
+            for i, request in enumerate(requests):
+                if request.task == "citation":
+                    item = items[f"q{i}"]
+                    item["properties"]["semantic_scope_checks"] = check_schema()
+                    item["required"].append("semantic_scope_checks")
         for item in items.values():
             # Finite observations precede the summary verdict on the wire.
-            order = ("type", "evidence_audit", "clause_support", "comparison_checks", "requirement_matches", "choice",
+            order = ("type", "semantic_scope_checks", "evidence_audit", "clause_support", "comparison_checks", "requirement_matches", "choice",
                      "confidence", "probabilities", "feedback")
             properties = item["properties"]
             item["properties"] = {k: properties[k] for k in order if k in properties}
@@ -569,7 +596,12 @@ class ApplicationLLMDecisions(LLMDecisions):
         self._prepare_evidence_audit(requests)
         self._prepare_premise_spans(requests)
         if self._evidence_audit_spans:
-            return self._premise_span_instruction(requests, flat)
+            instruction = self._premise_span_instruction(requests, flat)
+            if self.semantic_scope_audit:
+                from frontend.semantic_scope import INSTRUCTION
+
+                instruction += INSTRUCTION
+            return instruction
         # A syntax example only; predictions still come from the supplied evidence.
         example = {
             "answers": {
@@ -773,10 +805,18 @@ class ApplicationLLMDecisions(LLMDecisions):
             item = example["answers"][key]
             if "NOT_SUPPORTED" in item["probabilities"]:
                 item["choice"] = "NOT_SUPPORTED"
+        if self.semantic_scope_audit:
+            from frontend.semantic_scope import INSTRUCTION
+
+            instruction += INSTRUCTION
         for key, item in example["answers"].items():
+            if self.semantic_scope_audit and requests[int(key[1:])].task == "citation":
+                from frontend.semantic_scope import CHECKS
+
+                item["semantic_scope_checks"] = dict.fromkeys(CHECKS, False)
             if self._flat_choice_constant(requests):
                 item.pop('type',None)
-            order = ("type", "evidence_audit", "clause_support", "comparison_checks", "requirement_matches", "choice",
+            order = ("type", "semantic_scope_checks", "evidence_audit", "clause_support", "comparison_checks", "requirement_matches", "choice",
                      "confidence", "probabilities", "feedback")
             example["answers"][key] = {k: item[k] for k in order if k in item}
 
@@ -817,6 +857,22 @@ class ApplicationLLMDecisions(LLMDecisions):
             # Original output remains in the record; shared validators follow.
             data = {'answers': {'q0': data}}
             record['single_prediction_wire'] = 'flat-to-typed-q0-v1; no prediction fields changed'
+        if self.semantic_scope_audit:
+            from frontend.semantic_scope import validate_checks
+
+            for i, request in enumerate(self._feedback_requests or []):
+                if request.task != "citation":
+                    continue
+                key = f"q{i}"
+                item = data.get("answers", {}).get(key)
+                if not isinstance(item, dict):
+                    raise ValueError("missing_semantic_scope_answer")
+                values = item.pop("semantic_scope_checks", None)
+                observation = dict(question_id=key, checks=values, ground_truth=False,
+                                   semantic_support_certified=False, validation_passed=False)
+                record.setdefault("semantic_scope_checks", []).append(observation)
+                validate_checks(values, item.get("choice"))
+                observation["validation_passed"] = True
         for key, targets in getattr(self, "_evidence_audit_targets", {}).items():
             from frontend.feedback import validate_evidence_audit
 
@@ -1098,6 +1154,7 @@ def application_hash(workspace):
                     "frontend/chat.py",
                     "frontend/app.py",
                     "frontend/session.py",
+                    "frontend/answer_gaps.py",
                     "frontend/ranking.py",
                     "frontend/conversation.py",
                     "frontend/view.py",
@@ -1280,6 +1337,7 @@ def run_question(workspace, config, request, gate, retriever, environment, *, ge
         strong_completion=request.variant == "A",
         verification_feedback_enabled=verification_feedback_enabled and request.variant == "A",
         literal_clause_audit=verification_feedback_enabled and request.variant == "A",
+        semantic_scope_audit=verification_feedback_enabled and request.variant == "A",
         flat_single_prediction=flat_single_prediction,
         verification_evidence_audit=verification_evidence_audit,
         verification_premise_spans=verification_premise_spans,
@@ -1297,6 +1355,7 @@ def run_question(workspace, config, request, gate, retriever, environment, *, ge
     ) if request.variant == "A" else None
     coverage_llm = ApplicationLLMDecisions(
         coverage_adapter, policy, strong_completion=True,
+        semantic_scope_audit=verification_feedback_enabled,
         verification_feedback_enabled=verification_feedback_enabled,
         relevance_batch_size=shared.jev.relevance_batch_size,
         flat_single_prediction=flat_single_prediction,
@@ -1411,6 +1470,7 @@ def run_question(workspace, config, request, gate, retriever, environment, *, ge
             "application_generation_source_excerpts": generation_source_excerpts,
             "application_source_span_selection": source_span_selection,
             "application_generation_relation_audit": generation_relation_audit,
+            "application_semantic_scope_audit": verification_feedback_enabled and request.variant == "A",
             "application_generation_named_units": generation_named_units,
             "application_generation_compact_contract": generation_compact_contract,
             "application_verification_comparison_grid": verification_comparison_grid,
@@ -1576,9 +1636,11 @@ class ChatService:
         previous = json.loads(path.read_text(encoding="utf-8"))
         if previous.get("status") != "closed" or sha256_file(path) != carry["receipt_sha256"]:
             raise ValueError("closed unchanged session required")
-        for field in ("config", "corpus_sha256", "chunks_sha256", "knowledge_binding"):
-            if (previous.get("binding") or {}).get(field) != (self.receipt.get("binding") or {}).get(field):
-                raise ValueError("conversation transfer requires unchanged knowledge and configuration")
+        old_binding, new_binding = previous.get("binding") or {}, self.receipt.get("binding") or {}
+        if old_binding.get("config") != new_binding.get("config"):
+            raise ValueError("conversation transfer requires unchanged configuration")
+        changed_knowledge = [field for field in ("corpus_sha256", "chunks_sha256", "knowledge_binding")
+                             if old_binding.get(field) != new_binding.get(field)]
         directory = self.workspace / "results/live/application" / identifier
         for request_id, job in previous.get("jobs", {}).items():
             raw_path = directory / f"{UUID(request_id)}.json"
@@ -1590,14 +1652,20 @@ class ChatService:
                 raise ValueError("conversation input ledger mismatch")
             response = raw["response"]
             self.jobs[request_id] = {"state": "completed", "fingerprint": job["input_sha256"], "response": response}
-            if request.conversation_id:
+            if request.conversation_id and not changed_knowledge:
                 key = (str(request.conversation_id), request.variant, request.knowledge_mode)
                 turns = self.conversations.setdefault(key, [])
                 turns.append(ConversationTurn(request_id=request.request_id, question=request.question,
                     answer=response.get("answer") if response.get("status") == "answered" else None,
                     status=response.get("status", "unknown")))
                 del turns[:-3]
-        self.receipt["conversation_transfer"] = {"from_session": identifier, "restored_jobs": len(self.jobs), "completed_request_ids": list(self.jobs), "history_is_evidence": False}
+        self.receipt["conversation_transfer"] = {
+            "from_session": identifier, "restored_jobs": len(self.jobs),
+            "completed_request_ids": list(self.jobs), "history_is_evidence": False,
+            "context_restored": not changed_knowledge,
+            "context_reset_reason": "knowledge_changed" if changed_knowledge else None,
+            "changed_knowledge_fields": changed_knowledge,
+        }
         self.persist()
 
     def consume(self, remaining):

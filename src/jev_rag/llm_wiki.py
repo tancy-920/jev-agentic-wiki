@@ -159,6 +159,32 @@ class ArticleRetriever:
     def search(self, query):
         return self.search_plan([query], query, top_k=6)
 
+    def merge_context(self, previous, fresh, *, top_k):
+        """Keep original scope during repair without slicing or growing budgets.
+
+        Alternate earlier context and new hits, so a broad supplementary query
+        cannot replace all of the evidence for the original question.
+        """
+        selected, omitted, seen, size = [], [], set(), 0
+        for index in range(max(len(previous), len(fresh))):
+            for group in (previous, fresh):
+                if index >= len(group):
+                    continue
+                chunk = group[index]
+                identifier = chunk["chunk_id"]
+                if identifier in seen:
+                    continue
+                seen.add(identifier)
+                if len(selected) >= min(top_k, 6) or size + len(chunk["text"]) > self.max_chars:
+                    omitted.append(identifier)
+                    continue
+                selected.append(chunk)
+                size += len(chunk["text"])
+        return selected, dict(policy="whole_article_scope_preserving_repair_v1",
+                              selected_ids=[c["chunk_id"] for c in selected],
+                              omitted_whole=omitted, article_characters=size,
+                              max_characters=self.max_chars, new_provider_calls=0)
+
     def search_plan(self, queries, original_query, *, top_k=6):
         if (not isinstance(queries, (list, tuple)) or not 1 <= len(queries) <= 2
             or type(top_k) is not int or not 1 <= top_k <= 20

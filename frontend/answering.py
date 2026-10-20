@@ -72,7 +72,7 @@ def project_question(query):
 def relational_question(query):
     """Condition/relationship questions need more than definition excerpts."""
     return bool(re.search(
-        r"依赖|取决于|前提|成立|必要|充分|必须|等价|是否.*(?:需要|可以|能|导致|基于)|"
+        r"依赖|取决于|前提|成立|必要|充分|必须|等价|能否|适用|可以.*吗|能.*用于|是否.*(?:需要|可以|能|导致|基于)|"
         r"\b(?:depend\w*|requir\w*|prerequisite|necessary|sufficient|equivalen\w*|validity)\b",
         query, re.IGNORECASE))
 
@@ -84,6 +84,11 @@ def workflow_question(query):
 
 
 RELATION_SUPPORT_POLICY = (
+    " For applicability questions, state the scoped conclusion explicitly, then "
+    "explain the conditions and relevant exceptions supported by the evidence. "
+    "Do not replace the requested applicability judgment with definitions alone. "
+    "If the evidence cannot establish the boundary, explicitly identify that limit "
+    "without converting missing evidence into a universal yes/no assertion. "
     " Distinguish definitions from conditions establishing a requested dependence. "
     "A source's silence about a prerequisite is not evidence that the prerequisite "
     "does not exist. A deduction may combine cited mechanisms only when its stated "
@@ -96,6 +101,27 @@ RELATION_SUPPORT_POLICY = (
 
 
 DERIVED_SUPPORT_POLICY = (
+    " DEPENDENCY SCOPE: distinguish a factor's dependence from the full output's "
+    "dependence. Inventory the operands in the cited equation, including content "
+    "inputs, learned parameters, masks and normalization terms where relevant. "
+    "When saying 'only depends on', 'independent of' or 'invariant', explicitly "
+    "state which operands are held fixed and which may vary. A factor depending "
+    "on a relative coordinate does not remove content dependence from the whole "
+    "expression. Invariance under a joint transformation does not imply independence "
+    "from every transformed input separately. Check whether changing an omitted "
+    "operand while preserving the claimed determining variable can change the "
+    "output under the cited operations. If so, the unqualified exclusivity claim "
+    "is unsupported as written; do not silently supply a missing condition. "
+    "A stated scoped factorization is valid without claiming global independence. "
+    " Dependence alone does not imply guaranteed change: several changing inputs "
+    "can compensate in a sum, product or normalization. State one-factor scaling "
+    "only with all other relevant operands fixed; otherwise say 'can change' and "
+    "identify the aggregate that must change. Match verbal aggregation scope "
+    "(per item, per layer, per request, or total) to every multiplicative count "
+    "and sum in the equation. The opening conclusion must carry the same essential "
+    "conditions as later explanations; a later exception cannot retroactively "
+    "qualify an unconditional opening. State general possibility and exceptions "
+    "together when the question admits both, rather than an absolute yes/no. "
     " Source support is semantic entailment, not word-for-word quotation. "
     "A transparent deduction from the actual cited equations, dimensions, operation order "
     "or code is valid when every premise is present and the conclusion follows under "
@@ -1084,6 +1110,7 @@ class FocusedGenerator(CompatibleGenerator):
         if getattr(self, "product_name_spacing", False):
             self._format_repair_proposal = None
             self._format_repair_reason = None
+            self._format_repair_scope_observations = None
             self._format_repair_raw_json = None
             if feedback and getattr(self, "_previous_draft_query", None) == query:
                 previous_draft = getattr(self, "_previous_application_draft", None)
@@ -1463,6 +1490,14 @@ class FocusedGenerator(CompatibleGenerator):
                 "repeat it confidently. Return the entire corrected answer, not a patch "
                 "or a partial answer."
             )
+        if product and relational_scope:
+            instruction += (
+                " For an applicability question, lead with a clear, evidence-scoped "
+                "conclusion, followed by the conditions and relevant exceptions. "
+                "Definitions alone do not answer whether a technique applies. If the "
+                "boundary cannot be established, name that limitation explicitly; "
+                "do not infer a universal yes or no from missing evidence."
+            )
         if precision_context:
             instruction += (
                 " Both preceding checks predicted SUPPORTED but at least one was uncertain. "
@@ -1498,6 +1533,9 @@ class FocusedGenerator(CompatibleGenerator):
                 "优先用最少必要内容完整作答：每个所问维度通常一至两句，避免重复。"
                 "需要推导时给出假设、关键中间等式及结论，不能只复述最终结果；"
                 "比较题明确对应的对象、轴或配置，公式必须逐项核对输入、运算与残差项。"
+                "比较结论直接陈述有依据的差异，不额外使用‘最根本’‘最大优势’‘唯一’等排序或排他判断，除非证据支持该判断。"
+                "描述公式依赖时区分位置因子与完整数值：若只证明某一因子取决于相对量，不能声称整个输出只依赖该相对量而忽略内容输入。"
+                "修复只针对已报告的缺口和必要限定，保留其余已核对的关系与内容，不为增强语气新增排名、绝对化或经验收益断言；最终仍重新核验全部回答。"
                 "未问的实验数字、其他模型类比和一般性能优劣不追加，避免引入无关断言。"
                 "按original_question_parts逐项直接作答，每项先给所问形式的答案，再解释依据。"
                 "有充分前提时应给出有范围的推导结论，并用一句话解释依据；不要求原文逐字写出结论。"
@@ -1756,7 +1794,35 @@ class FocusedGenerator(CompatibleGenerator):
                 + " Full root syntax example: " + json.dumps(root_example, ensure_ascii=False)
                 + (" This is the ONE complete repair; correct the actual feedback, returning the full instance. " if feedback else "")
             )
+        # Product/typed-output branches above replace the initial instruction.
+        # Attach semantic rules only after the final replacement so every real
+        # output contract retains the same dependency and scope requirements.
+        if product:
+            from frontend.quantity_scope import INSTRUCTION as QUANTITY_SCOPE_INSTRUCTION
+
+            instruction += DERIVED_SUPPORT_POLICY + REASONING_AXIS_POLICY
+            instruction += QUANTITY_SCOPE_INSTRUCTION
+            instruction += (
+                " For applicability questions, lead with an evidence-scoped conclusion "
+                "and state the conditions and relevant exceptions; definitions alone "
+                "do not establish applicability. Do not invent rankings, uniqueness "
+                "or stronger comparisons unsupported by the actual evidence."
+            )
+            if feedback:
+                instruction += (
+                    " This is the single complete repair. Correct the actual bound "
+                    "diagnostic using supplied evidence, preserving essential scope "
+                    "and qualifications. Previous drafts and verdicts are not evidence. "
+                    "Do not strengthen wording or add unrequested claims to repair "
+                    "uncertainty. Return the entire corrected answer for both checks."
+                )
         article_mode = bool(evidence and all(c.source_kind == "wiki_article" for c in evidence))
+        from frontend.arithmetic_witnesses import INSTRUCTION as ARITHMETIC_INSTRUCTION
+        from frontend.arithmetic_witnesses import arithmetic_witnesses
+
+        local_witnesses = arithmetic_witnesses(evidence) if product else []
+        if local_witnesses:
+            instruction += ARITHMETIC_INSTRUCTION
         article_tasks = []
         if article_mode:
             from frontend.article_answering import (
@@ -1779,6 +1845,7 @@ class FocusedGenerator(CompatibleGenerator):
             prompt=json.dumps(
                 {
                     "original_query": query,
+                    **({"local_arithmetic_witnesses": local_witnesses} if local_witnesses else {}),
                     "original_question_parts": original_question_parts(query),
                     **(comparison_navigation(query) if cell_plan is not None or getattr(self, 'product_comparison_grid_enabled', False) else {}),
                     "resolved_question": (
@@ -1832,6 +1899,8 @@ class FocusedGenerator(CompatibleGenerator):
                 tasks=article_tasks,
                 **repair_diagnostics(output, previous_draft, article_tasks),
             )
+        if local_witnesses:
+            record["local_arithmetic_witnesses"] = local_witnesses
         if product:
             record["product_generation_instruction_sha256"] = canonical_hash(instruction)
             record["product_generation_instruction_characters"] = len(instruction)
@@ -2019,6 +2088,22 @@ class FocusedGenerator(CompatibleGenerator):
                 raise ValueError("unit count exceeded")
             if total_char_limit is not None and sum(len(unit.text) for unit in result.claims) > total_char_limit:
                 raise ValueError("total answer text exceeded")
+            if product:
+                from frontend.quantity_scope import condition_attachments, quantity_scope_conflicts
+
+                scope_observations = [
+                    {"unit_index": index, "conflicts": quantity_scope_conflicts(unit.text),
+                     "condition_attachments": condition_attachments(unit.text)}
+                    for index, unit in enumerate(result.claims)
+                ]
+                record["literal_quantity_scope_audit"] = {
+                    "units": scope_observations, "additional_provider_calls": 0,
+                    "text_rewritten": False, "semantic_support_certified": False,
+                    "unmatched_syntax_is_unchecked": True,
+                }
+                if any(item["conflicts"] for item in scope_observations):
+                    self._format_repair_scope_observations = scope_observations
+                    raise ValueError("literal quantity scope conflict")
             if product and getattr(self, "product_cross_unit_context_enabled", False):
                 contexts = cross_unit_citation_context(result.claims, evidence)
                 for index, (citations, added) in enumerate(contexts):
@@ -2117,6 +2202,7 @@ class FocusedGenerator(CompatibleGenerator):
                     "unit count exceeded": "unit_count_exceeded",
                     "total answer text exceeded": "total_answer_text_exceeded",
                     "internal source reference in prose": "internal_source_reference_in_text",
+                    "literal quantity scope conflict": "literal_quantity_scope_conflict",
                     "invented requirement quote": "unknown_requirement_quote",
                     "citation not retrieved": "citation_not_retrieved",
                     "requested quote point omitted": "requirement_quote_omitted",

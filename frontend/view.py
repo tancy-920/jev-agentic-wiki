@@ -76,7 +76,21 @@ def failure_diagnostic(row):
         next_step = "可以继续提问；已保留具体格式错误供排查，不自动重试或放行答案。"
     elif stage == "transport_timeout":
         next_step = "请等待模型服务或网络恢复后再试；不会自动追加调用。"
-    return {"reason": status, "message": message, "next_step": next_step}
+    result = {"reason": status, "message": message, "next_step": next_step}
+    if status in {"answer_incomplete", "low_confidence", "citation_failure", "conflicting_evidence"}:
+        from frontend.answer_gaps import gap_diagnostic
+
+        detail = gap_diagnostic(row)
+        if detail:
+            result.update(detail)
+            if detail["uncertain_judgment"]:
+                result["message"] = "核验倾向于支持候选回答，但确定性未达到交付条件；不能据此判断答案错误或资料缺失。"
+            result["next_step"] = (
+                "已针对缺口尝试补检索，仍未得到可交付结论；未展示未经完整核验的草稿。"
+                if detail["supplement_attempted"] else
+                "未确认的结论暂不展示；可补充具体使用场景，或查看引用词条进一步核对。"
+            )
+    return result
 
 
 def provider_timing(row):

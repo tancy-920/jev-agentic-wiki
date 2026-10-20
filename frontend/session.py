@@ -2,6 +2,8 @@
 
 import json
 import os
+import shutil
+import socket
 import subprocess
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -12,6 +14,145 @@ from jev_rag.io import write_json
 
 ROOT = Path(__file__).resolve().parents[1]
 _children = {}
+
+
+class SessionStartupError(ValueError):
+    """Safe, actionable startup failure text for the UI (never provider errors)."""
+
+
+def _backend_absent():
+    """An exclusive bind proves the fixed local endpoint is available.
+
+    Connecting to an unused port can time out under Windows firewall rules;
+    that is not evidence of a running server. Match the entrypoint's bind check.
+    """
+    try:
+        with socket.socket() as probe:
+            if os.name == "nt":
+                probe.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            probe.bind(("127.0.0.1", 8765))
+        return True
+    except OSError:
+        return False
+
+
+def reconcile_interrupted_session(workspace):
+    """Close an exactly identified dead session; never restore its unused credit.
+
+    Called only under the startup lock after an explicit new-session approval.
+    Preserve original receipts/locks. Unfinished jobs require manual accounting.
+    """
+    local = workspace / ".local"
+    startup = local / "app-startup.json"
+    if not startup.exists():
+        return
+    data = json.loads(startup.read_text(encoding="utf-8"))
+    pid = data.get("pid")
+    if type(pid) is not int or pid <= 0 or _alive(pid):
+        return
+    identifier = data.get("authorization_id")
+    # Validate before constructing any filesystem path from the record.
+    from uuid import UUID
+
+    try:
+        identifier = str(UUID(identifier))
+    except (ValueError, TypeError, AttributeError):
+        raise SessionStartupError("旧会话标识无效，需要核对启动记录；未新增授权。") from None
+    matches = []
+    for path in (workspace / "results/reports/live_study").glob("*.json"):
+        receipt = json.loads(path.read_text(encoding="utf-8"))
+        if receipt.get("type") != "LIVE_M6_APPLICATION_SESSION_RECEIPT":
+            continue
+        if receipt.get("status") != "closed" and receipt.get("authorization_id") != identifier:
+            raise SessionStartupError("另有未结算会话，需要核对调用记录；未新增授权。")
+        if receipt.get("authorization_id") == identifier and receipt.get("status") != "closed":
+            used, cap = receipt.get("used_provider_calls"), receipt.get("run_cap")
+            if (type(used) is not int or type(cap) is not int or not 0 <= used <= cap
+                    or receipt.get("in_progress")
+                    or any(j.get("state") != "completed" for j in receipt.get("jobs", {}).values())):
+                raise SessionStartupError("旧会话存在未完成请求或账目不明确，需要核对；未重置额度。")
+            matches.append((path, receipt))
+    if not matches and not (local / "app-runtime.lock").exists():
+        return
+    if not _backend_absent():
+        raise SessionStartupError("本地问答端口仍被占用或无法确认状态；请勿重复启动。")
+    archive = local / "session-recovery" / str(uuid4())
+    archive.mkdir(parents=True)
+    for path, receipt in matches:
+        shutil.copy2(path, archive / path.name)
+        receipt.update(
+            status="closed",
+            unused_calls_closed=receipt["run_cap"] - receipt["used_provider_calls"],
+            interruption_recovery={
+                "reason": "owner_process_exited_no_backend_no_pending_jobs",
+                "recovered_at_utc": datetime.now(timezone.utc).isoformat(),
+                "old_pid": pid,
+                "unused_credit_transferred": False,
+            },
+        )
+        write_json(path, receipt)
+    for path in [local / "app-runtime.lock",
+                 workspace / "results/private/live_authorizations" / f"{identifier}.lock"]:
+        if path.exists():
+            path.replace(archive / path.name)
+
+
+@contextmanager
+def _startup_lock(local):
+    # Kernel lock serializes recovery across Streamlit reruns/processes and is
+    # released by the OS even on a hard crash. Keep the guard inode in place.
+    with (local / "app-startup.guard").open("a+b") as guard:
+        guard.seek(0, 2)
+        if guard.tell() == 0:
+            guard.write(b"0")
+            guard.flush()
+        guard.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            try:
+                msvcrt.locking(guard.fileno(), msvcrt.LK_NBLCK, 1)
+            except OSError:
+                raise SessionStartupError("已有启动任务正在运行，请等待连接完成。") from None
+        else:
+            import fcntl
+            try:
+                fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                raise SessionStartupError("已有启动任务正在运行，请等待连接完成。") from None
+        try:
+            with _startup_marker(local):
+                yield
+        finally:
+            guard.seek(0)
+            if os.name == "nt":
+                msvcrt.locking(guard.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(guard, fcntl.LOCK_UN)
+
+
+@contextmanager
+def _startup_marker(local):
+    path = local / "app-startup.lock"
+    try:
+        with path.open("x", encoding="utf-8") as stream:
+            json.dump({"pid": os.getpid()}, stream)
+    except FileExistsError:
+        try:
+            owner = json.loads(path.read_text(encoding="utf-8"))
+            pid = owner.get("pid")
+        except (OSError, ValueError, AttributeError):
+            raise SessionStartupError("启动锁无法确认归属，需要核对；未新增授权。") from None
+        if type(pid) is not int or pid <= 0 or _alive(pid):
+            raise SessionStartupError("已有启动任务正在运行，请等待连接完成。") from None
+        archive = local / "session-recovery" / str(uuid4())
+        archive.mkdir(parents=True)
+        path.replace(archive / path.name)
+        with path.open("x", encoding="utf-8") as stream:
+            json.dump({"pid": os.getpid()}, stream)
+    try:
+        yield
+    finally:
+        path.unlink()
 
 
 @contextmanager
@@ -122,17 +263,15 @@ def authorize_and_start(
         raise ValueError("explicit boolean JEV transmission permission required")
     local = workspace / ".local"
     local.mkdir(parents=True, exist_ok=True)
-    lock = local / "app-startup.lock"
-    with lock.open("x", encoding="utf-8"):
-        pass
-    try:
+    with _startup_lock(local):
+        reconcile_interrupted_session(workspace)
         if (
             launch_status(workspace)["state"] == "starting"
             or _unresolved(workspace)
             or (local / "app-runtime.lock").exists()
         ):
-            raise ValueError(
-                "existing starting or unreconciled application session; no quota reset"
+            raise SessionStartupError(
+                "已有运行中或未结算的问答会话；请先结束旧会话，未重置调用额度。"
             )
         identifier = str(uuid4())
         grant = {
@@ -167,8 +306,6 @@ def authorize_and_start(
             )
         write_json(workspace / "results/private/live_authorizations" / f"{identifier}.json", grant)
         return _launch_grant(workspace, identifier, max_calls)
-    finally:
-        lock.unlink()
 
 
 def _launch_grant(workspace, identifier, max_calls):
@@ -216,10 +353,7 @@ def resume_closed_session(session_id, *, approved=False, workspace=ROOT):
     session_id = str(UUID(session_id))
     local = workspace / ".local"
     local.mkdir(parents=True, exist_ok=True)
-    lock = local / "app-startup.lock"
-    with lock.open("x", encoding="utf-8"):
-        pass
-    try:
+    with _startup_lock(local):
         if _unresolved(workspace) or (local / "app-runtime.lock").exists():
             raise ValueError("wait for previous backend to close; no quota reset")
         receipt_path = workspace / "results/reports/live_study" / f"{session_id}.json"
@@ -238,7 +372,7 @@ def resume_closed_session(session_id, *, approved=False, workspace=ROOT):
         grant = {**previous, "authorization_id": identifier, "max_calls": remaining,
                  "approved_at_utc": datetime.now(timezone.utc).isoformat(),
                  "approval_origin": "explicit_connection_repair_preserve_allowance",
-                 "approval_text": previous["approval_text"] + " 用户要求修复无法输入的问题；仅结转原会话未用额度，新增0次，原数据发送范围不变。",
+                 "approval_text": previous["approval_text"] + " 用户要求修复并重新绑定本地问答服务；仅结转原会话未用额度，新增0次，原数据发送范围不变。",
                  "carry_forward": {"session_id": session_id, "receipt_sha256": sha256_file(receipt_path), "added_calls": 0}}
         path = workspace / "results/private/live_authorizations" / f"{identifier}.json"
         write_json(path, grant)
@@ -249,5 +383,3 @@ def resume_closed_session(session_id, *, approved=False, workspace=ROOT):
             path.rename(path.with_suffix(".rejected"))
             raise
         return _launch_grant(workspace, identifier, remaining)
-    finally:
-        lock.unlink()

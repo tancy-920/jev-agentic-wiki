@@ -1,6 +1,6 @@
 {
   "type": "LLM_WIKI_COMPLETE_ARTICLES_V1",
-  "version": "2026-10-19-v2-source-grounded-repair",
+  "version": "2026-10-20-v4-quantity-condition-binding",
   "source_binding": {
     "sources.jsonl": "2f0df305904f2236492a476a881d2436d419ee1af4e2b8d8045af1cf0b1a1682",
     "chunks.jsonl": "0bf63b2c00efb98d266eb0a8e4db04295d1d5e00069a2c6bded8264d63016045",
@@ -80,7 +80,7 @@
         "encoder-decoder"
       ],
       "markdown_file": "cross-attention.md",
-      "sha256": "aad37facc15cdc7b6b45444e84656e9bab8a70d4021bb49c8f0bd8d76d1aeb1e",
+      "sha256": "01bcc89bd7f9caf4ce90238d02f67c4c5bc465ffd021c4198e5d52db4f0f984e",
       "source_chunk_ids": [
         "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
         "author-t2t-v1.2.0-transformer:3ceeacf80adf:c7610-9993",
@@ -92,7 +92,8 @@
         "paper-1810.04805:6bb076ca96de:c14307-16636",
         "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911",
         "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c0-752",
-        "author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383"
+        "author-t2t-v1.2.0-common-attention:4d7013143123:c24182-26383",
+        "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394"
       ],
       "related": [
         "self-attention",
@@ -114,7 +115,7 @@
         "masked attention"
       ],
       "markdown_file": "causal-mask.md",
-      "sha256": "b97fe09479690cb6261c85bee3ee1aa0160da2f1cbfee29436fc2d2950e52e2b",
+      "sha256": "6122137ba29374e13e17c493be9c2d4f887d060df665da99eb5dc0a24d1eb16e",
       "source_chunk_ids": [
         "author-pytorch-v2.11.0-functional:06f330c5ce12:c231374-232367",
         "author-pytorch-v2.11.0-functional:06f330c5ce12:c248872-251239",
@@ -127,7 +128,8 @@
         "hf-transformers-cache-4.57.0:50131d48d593:c0-2563",
         "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
         "paper-1706.03762:eee8b5a0bcc2:c7110-8934",
-        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693"
+        "pytorch-sdpa-2.11:42a07d742f7e:c1869-3693",
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911"
       ],
       "related": [
         "self-attention",
@@ -181,7 +183,7 @@
         "sinusoidal positional encoding"
       ],
       "markdown_file": "position.md",
-      "sha256": "d0e7167a209088f252ebc581d11feefcbae5ba087510cf29f4af150b47394814",
+      "sha256": "9af8fa413ee252cd0409a1fdb2ed710623f85ede978d6813639f69f67e6baf25",
       "source_chunk_ids": [
         "paper-1706.03762:eee8b5a0bcc2:c14608-17145",
         "mygpt-model.py:e05006957de4:c14266-16158",
@@ -287,7 +289,7 @@
         "incremental decoding"
       ],
       "markdown_file": "kv-cache.md",
-      "sha256": "ea5f3cc049c2fbcf1562520ebb786d8044418ca521db0a05589133c4b0fc9635",
+      "sha256": "4cd2705dcd5aaada3f3339a817de9cd19faf703c3ee3b5d4348ce1aa3f475747",
       "source_chunk_ids": [
         "hf-transformers-cache-4.57.0:50131d48d593:c2433-4394",
         "hf-transformers-cache-practices-4.49.0:ca2ed3e79cc8:c1447-3980",
@@ -302,7 +304,9 @@
         "mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376",
         "paper-2305.13245:3ed3d65bc419:c4200-6482",
         "paper-2309.06180:7ba2ff703be1:c14989-17264",
-        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c10932-13356"
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c10932-13356",
+        "paper-1706.03762:eee8b5a0bcc2:c11426-13973",
+        "hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911"
       ],
       "related": [
         "prefill-decode",
@@ -634,7 +638,7 @@
         "旋转位置编码"
       ],
       "markdown_file": "rope.md",
-      "sha256": "8b5745f516e7505b1173a8dc041a35cdaef26c9944b87570b9f86818830b737c",
+      "sha256": "9263442d8a652a8a30976d25b3c68d742a51aa7312019b540127c086ba6f9acf",
       "source_chunk_ids": [
         "depth-2104.09864:abd4e80aae4d:c10919-13279",
         "depth-2104.09864:abd4e80aae4d:c14290-15871",

@@ -8,7 +8,7 @@ KV Cache在自回归解码中保留历史token各层的key和value，避免每�
 
 ## 工作机制
 
-prefill先处理提示序列并建立缓存。随后每一步只生成新token的Q/K/V，将新K/V追加，再用当前Q读取历史缓存。若每层相同，缓存张量字节约为2*L*B*T*H_kv*d_head*s，其中2代表K和V，s为每元素字节数。GQA/MQA减少H_kv；量化减少s；分页改善分配与共享，优化的是不同因素。
+prefill先处理提示序列并建立缓存。随后每一步只生成新token的Q/K/V，将新K/V追加，再用当前Q读取历史缓存。单层、单请求的逻辑KV张量字节约为2*T*H_kv*d_head*s，其中T为该请求的上下文长度，H_kv为KV头数，d_head为每头维度，s为每元素字节数，2代表K和V。若L层配置相同，且batch内B个请求的长度均为T，则全部L层、整个batch的逻辑总量约为2*L*B*T*H_kv*d_head*s。含L和B乘子的后一个公式是总量，不能称为单层单请求容量；单层整个batch只乘B，全部层单请求只乘L。此处不含量化元数据、对齐、分页预留或共享后的物理分配变化。GQA/MQA减少H_kv；量化减少s；分页改善分配与共享，优化的是不同因素。
 
 ## 显存路线：内容数量、表示精度与存储利用率
 
@@ -21,6 +21,14 @@ prefill先处理提示序列并建立缓存。随后每一步只生成新token�
 ## 适用条件与易混淆点
 
 缓存不是消除所有注意力计算，每个新query仍读取历史K/V。上下文、位置偏移和mask必须一致；训练或非自回归全序列任务不应直接套用增量推理收益。batch很小时缓存管理开销可能抵消收益。
+
+## 缓存正确性：不变的依赖，而不只是相同的公式
+
+因果自注意力的历史位置不能读取后续追加的token，因此在模型、既有输入、位置和可见性保持一致的推理中，旧位置的逐层表示不随未来token变化，历史K/V可直接复用。这是逐层append-only缓存正确性的依据，不是只因为K/V投影的公式不含当前Q。
+
+普通全双向自注意力允许旧位置读取新加入的token。序列追加后，旧位置的注意力输出一般会改变，随后层的输入以及K/V也可能改变。因此不能直接照搬因果解码器“所有层只追加新token K/V、旧缓存永不重算”的做法；这会改变全双向模型的计算结果，不只是减少加速收益。这个结论是由因果缓存的不变性条件与自注意力层间依赖推导的机制边界。第一层若只投影不变的输入embedding，其旧K/V可能不变，不能由此推断所有层均能缓存。
+
+这不意味着任何双向模型都不能缓存：双向encoder完整编码后，如果encoder输出memory固定，decoder交叉注意力中的K/V来自该固定memory，可以在后续解码步复用；它与不断追加序列的双向self-attention不是同一情形。特殊分块或固定前缀mask也需逐层确认依赖不变，不能仅凭“双向”或“缓存”名称判断。单次全序列计算中每个K/V可以被多个query读取；是否有缓存收益取决于跨步骤是否重复计算同一不变依赖，不能说每个K/V只使用一次。
 
 ## 关联知识
 
@@ -44,3 +52,7 @@ Prefill 与 Decode、GQA 分组查询注意力、分页 KV Cache 与前缀共享
 - `mygpt-sample.py:a522fb11f829:c2447-3941` — [mygpt / sample.py, mygpt-sample.py.py, L72–L114]
 - `mygpt-sample.py:a522fb11f829:c867-2738` — [mygpt / sample.py, mygpt-sample.py.py, L27–L79]
 - `mygpt-results-bench_speedup_vs_batch.json:0e40587d1e5c:c0-376` — [mygpt / results/bench_speedup_vs_batch.json, mygpt-results-bench_speedup_vs_batch.json.json, L1–L23]
+
+- `paper-1706.03762:eee8b5a0bcc2:c11426-13973` — [Attention Is All You Need，缓存不变性或固定memory机制核查入口]
+
+- `hf-transformers-cache-strategies-4.57.0:d5dfb6b93c31:c13455-13911` — [Hugging Face Transformers v4.57.0 / KV cache strategies，缓存不变性或固定memory机制核查入口]

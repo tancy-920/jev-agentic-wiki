@@ -12,7 +12,7 @@ The collection currently contains 56 source records, organized into 35 complete 
 
 Representative papers include *Attention Is All You Need*, *BERT*, *Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer*, *RoFormer*, *FlashAttention*, *GQA* and *Efficient Memory Management for Large Language Model Serving with PagedAttention*. Click the static demo below to search and browse Wiki articles, inspect source information, follow related topics and explore ten recorded example questions. No installation or local deployment is required.
 
-[Try it — no installation required](https://tancy-920.github.io/jev-agentic-wiki-demo/) · [Reproduction guide](experiments/wiki_graph_value/README.md) · [MIT License](LICENSE) · [Publication contents](PUBLICATION.md)
+[Try it — no installation required](https://tancy-920.github.io/jev-agentic-wiki/) · [Reproduction guide](experiments/wiki_graph_value/README.md) · [MIT License](LICENSE) · [Publication contents](PUBLICATION.md)
 
 ## Results at a glance
 
@@ -100,9 +100,9 @@ To rebuild local embeddings and reranking from the published text, follow the [r
 
 ## Try the application
 
-[Open the static demo](https://tancy-920.github.io/jev-agentic-wiki-demo/) to use Wiki search, article navigation, formulas and ten example questions directly in your browser. No installation, local deployment or API key is required. Accessing the webpage requires an internet connection; browsing makes no model API calls. The static demo does not generate answers to new questions. The interface and knowledge content are currently in Chinese; this README documents the experiments in English.
+[Open the static demo](https://tancy-920.github.io/jev-agentic-wiki/) to use Wiki search, article navigation, formulas and ten example questions directly in your browser. No installation, local deployment or API key is required. Accessing the webpage requires an internet connection; browsing makes no model API calls. The static demo does not generate answers to new questions. The interface and knowledge content are currently in Chinese; this README documents the experiments in English.
 
-**Local setup (optional):** to host the application yourself, modify the project or enable live questions, run the local Streamlit application. Create and activate a virtual environment, then run:
+**Local setup (optional):** to host the application yourself, modify the project or enable live questions, run the local Streamlit application. Create a virtual environment with `python -m venv .venv`. Activate it with `.venv\Scripts\Activate.ps1` on Windows PowerShell or `source .venv/bin/activate` on macOS/Linux, then run:
 
 ```bash
 python -m pip install -e ".[agent]"

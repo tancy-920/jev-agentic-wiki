@@ -10,7 +10,7 @@ import streamlit as st
 from frontend.citation_display import article_text, article_title
 from frontend.client import LocalClient
 from frontend.math_display import answer_markdown
-from frontend.session import authorize_and_start, launch_status
+from frontend.session import SessionStartupError, authorize_and_start, launch_status
 from frontend.ui import heading, topic_cards, welcome
 from jev_rag.schema import source_location
 
@@ -82,6 +82,8 @@ def activation_panel():
         try:
             authorize_and_start(limit, approved=True, answer_budget_jev_approved=permit_jev)
             st.rerun()
+        except SessionStartupError as exc:
+            st.error(str(exc))
         except Exception:
             st.error("未能启动：已有启动任务、未结算会话或本地运行环境不可用。未自动追加额度。")
 
@@ -146,6 +148,10 @@ def render_result(result):
         diagnostic = result.get("failure_diagnostic")
         if diagnostic:
             st.info(diagnostic["message"] + " " + diagnostic["next_step"])
+            for detail in diagnostic.get("details", []):
+                st.caption(detail)
+            for part in diagnostic.get("question_parts", []):
+                st.text("待明确的问题部分：" + part)
     if offline:
         st.caption(f"{len(result.get('evidence', []))} 条引用 · {result.get('status')} · 历史模型结果，非本次重新核验")
     else:
