@@ -1,6 +1,6 @@
 # Offline Wiki Demo
 
-[Public demo](https://tancy-920.github.io/jev-agentic-wiki-demo/)
+[Public demo](https://tancy-920.github.io/jev-agentic-wiki/)
 
 A static, provider-free knowledge browser: 35 complete Wiki articles, topic links,
 10 selected questions and 16 archived answer configurations. There is no live chat,
