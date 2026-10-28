@@ -11,9 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 def main():
     from frontend.ui import sidebar_brand, theme
-    from frontend.view import load_report, presentation, questions, replay, reports
 
-    st.set_page_config(page_title="Jev Agentic Wiki", page_icon="✳", layout="wide", initial_sidebar_state="auto")
+    st.set_page_config(page_title="Jev Agentic Wiki", page_icon=":material/menu_book:", layout="wide", initial_sidebar_state="auto")
     st.set_option("client.toolbarMode", "viewer")
     theme()
     sidebar_brand()
@@ -21,10 +20,10 @@ def main():
     initial = {"simulate": "离线模拟", "replay": "研究记录（实验回放）", "wiki": "知识 Wiki", "library": "资料库"}.get(st.query_params.get("mode"), "实时对话")
     mode = st.sidebar.radio(
         "工作空间", choices, index=choices.index(initial),
-        format_func={"实时对话": "◌   研究对话", "离线模拟": "▷   离线模拟 · 零 API", "知识 Wiki": "⌘   知识探索", "资料库": "▤   资料库", "研究记录（实验回放）": "◷   实验档案"}.get,
+        format_func={"实时对话": "研究对话", "离线模拟": "离线模拟 · 零 API", "知识 Wiki": "知识探索", "资料库": "资料库", "研究记录（实验回放）": "实验档案"}.get,
         label_visibility="collapsed",
     )
-    st.sidebar.markdown('<div class="workspace-footer">本地研究空间<br>TRANSFORMER · PAPERS · CODE</div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="workspace-footer">本地研究空间<br><span>Transformer · Papers · Code</span></div>', unsafe_allow_html=True)
     if mode == "离线模拟":
         from frontend.simulation import main as simulation_main
 
@@ -46,6 +45,7 @@ def main():
         chat_main()
         return
     from frontend.ui import heading
+    from frontend.view import load_report, presentation, questions, replay, reports
 
     heading("RESEARCH ARCHIVE", "实验档案", "查看历史实验的原始记录、引用与处理过程。")
     st.caption("M6 实验回放：简体中文问题、原始证据和决策过程。此页面不读取密钥、不调用 API。")

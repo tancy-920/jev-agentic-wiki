@@ -9,6 +9,7 @@ import streamlit as st
 
 from frontend.citation_display import article_text, article_title
 from frontend.client import LocalClient
+from frontend.conversation_memory import PREFERENCE_OPTIONS
 from frontend.math_display import answer_markdown
 from frontend.session import SessionStartupError, authorize_and_start, launch_status
 from frontend.ui import heading, topic_cards, welcome
@@ -54,7 +55,6 @@ def startup_progress():
 
 
 def activation_panel():
-    st.info("实时对话尚未启用。可在这里授权并启动，无需打开终端。")
     try:
         state = launch_status()
     except Exception:
@@ -64,21 +64,12 @@ def activation_panel():
         startup_progress()
         return
     if state["state"] == "stopped":
-        if state.get("reason") == "session_closed":
-            st.info("上次会话已结束。可在下方明确授权启动新会话；旧调用记录和已关闭余额保留。")
-        else:
-            st.warning(
-                "上次服务已停止或启动失败。请检查本地模型与凭据；未完成结算的会话不会自动重置额度。"
-            )
-    limit = st.selectbox("本次 API 请求上限", [40, 20])
-    st.caption("按实际请求计数，失败请求也计入；到达上限后停止。费用取决于模型用量，当前无法预估。")
-    st.caption(
-        "授权范围：问题、最近三轮已完成对话、AI整理的完整Wiki词条，以及原文模式下论文/官方文档和mygpt技术代码及实验JSON片段发送给配置的LLM提供方；密钥、权重和训练数据不进入提示词。默认使用完整词条LLM-Wiki。"
-    )
-    permit_jev = st.checkbox("允许可选JEV回答预算试用（默认关闭）", value=False)
-    if permit_jev:
-        st.caption("另允许问题与最多3条检索原文发送给配置的JEV提供方。仅直接事实题可能采用一次Flash整答核验；机制解释仍按标准核验。所有LLM阶段仅使用Flash，整体提速与轻量负例质量尚未验收。")
-    if st.button("授权并启动实时对话", type="primary"):
+        if state.get("reason") != "session_closed":
+            st.warning("服务未能启动，请检查本地模型与 API 配置。")
+    limit = st.selectbox("调用上限", [40, 20], help="失败请求计入上限，到达上限后停止；费用取决于实际用量。")
+    permit_jev = st.checkbox("允许使用 JEV（可选）", value=False,
+                             help="允许将问题及最多3条相关资料发送给已配置的JEV服务，用于可选核验预算试用；具体开关在侧栏。")
+    if st.button("授权并开始", type="primary", help="允许将问题、最多6条相关历史消息、限长的任务原话、明确保存的讲解偏好及相关Wiki/原文资料发送给配置的模型服务。临时对话跳过记忆。密钥不进入提示词。"):
         try:
             authorize_and_start(limit, approved=True, answer_budget_jev_approved=permit_jev)
             st.rerun()
@@ -139,6 +130,14 @@ def render_result(result):
         term_trace = next((s.get("query_terminology") for s in reversed(result.get("knowledge_navigation", []))
                            if s.get("query_terminology")), None)
         answer = result.get("answer") or f"未输出答案：{result.get('status', result['state'])}"
+        # Apply the same presentation to older LIVE failures without rewriting
+        # saved evidence, technical drafts or original acceptance outcomes.
+        conversational_failure = False
+        if result.get("mode") == "LIVE" and result.get("variant") == "A" and result.get("failure_diagnostic"):
+            from frontend.dialogue_policy import contextual_failure
+
+            answer = result.get("conversational_reply") or contextual_failure(result["failure_diagnostic"], question=result.get("question", "")) or answer
+            conversational_failure = True
         display_answer = answer_markdown(answer) if result.get("mode") != "MOCK" else answer
         if result.get("mode") == "MOCK":
             st.text(answer)
@@ -146,18 +145,20 @@ def render_result(result):
             # Model prose may use Markdown, but must not load remote image URLs.
             st.markdown(re.sub(r"\\*!\[", r"\\!\\[", display_answer))
         diagnostic = result.get("failure_diagnostic")
-        if diagnostic:
+        if diagnostic and not conversational_failure and not result.get("dialogue_failure_presented"):
             st.info(diagnostic["message"] + " " + diagnostic["next_step"])
             for detail in diagnostic.get("details", []):
                 st.caption(detail)
             for part in diagnostic.get("question_parts", []):
                 st.text("待明确的问题部分：" + part)
-    if offline:
+    if result.get("status") == "chat_completed" or conversational_failure:
+        st.caption(timing_label(result))
+    elif offline:
         st.caption(f"{len(result.get('evidence', []))} 条引用 · {result.get('status')} · 历史模型结果，非本次重新核验")
     else:
         st.caption(f"{timing_label(result)} · {len(result.get('evidence', []))} 条原文 · {result.get('mode', '未知')} · AI 回答，请结合引用判断")
     article_evidence = result.get("verification_scope") == "article_faithfulness_not_original_source_certification"
-    if result.get("answer"):
+    if result.get("answer") and result.get("status") != "chat_completed":
         evidence_text = "\n\n".join(
             (f"[{i}] {article_title(c.get('title', ''))}\n{article_text(c.get('text', ''))}"
              if article_evidence else f"[{i}] {c.get('title', '')} / {c.get('section', '')}\n{c.get('text', '')}")
@@ -187,6 +188,8 @@ def render_result(result):
             st.json(result["budget_routing"])
         if result.get("provider_timing"):
             st.json(result["provider_timing"])
+        if result.get("failure_diagnostic"):
+            st.json(result["failure_diagnostic"])
         st.dataframe(result.get("papers", []), hide_index=True, width="stretch")
         st.dataframe(result.get("timeline", []), hide_index=True, width="stretch")
         st.json(result.get("citations", []))
@@ -240,7 +243,13 @@ def poll_pending(client):
     from frontend.ui import processing_indicator
 
     processing_indicator()
-    st.caption("检索、生成或核对中；完成后自动显示答案。")
+    st.caption("正在处理这条消息；完成后自动显示回复。")
+    if st.button("取消本轮回复"):
+        try:
+            client.cancel(st.session_state.chat_pending)
+            st.info("已请求取消；等待在途请求安全结束，不会自动重试或追加额度。")
+        except Exception:
+            st.info("尚未确认取消，请继续查看原请求状态；不会重复提交。")
     if st.button("刷新处理进度"):
         st.rerun()
 
@@ -300,7 +309,7 @@ def main():
                 welcome()
         else:
             welcome()
-        with st.expander("连接研究助手 · 启用在线问答", expanded=False):
+        with st.expander("开始对话", expanded=True):
             activation_panel()
         topic_cards()
         st.caption("知识探索与资料库可直接浏览。在线问答在你明确授权后开启。")
@@ -399,6 +408,67 @@ def main():
     ):
         st.session_state.chat_conversation = str(uuid4())
         st.rerun()
+    temporary = st.sidebar.checkbox("临时对话", value=False, disabled=health["busy"],
+        help="本次消息不读取或积累对话/任务记忆，不使用已保存偏好。聊天展示和API运行回执仍保留，不等于删除归档。")
+    with st.sidebar.expander("对话记忆与偏好", expanded=False):
+        st.caption("讨论条件与未解决问题只在当前对话生效。长期只保存你明确选择的讲解偏好；查看和修改均不调用模型。")
+        if st.button("查看参考过的对话", disabled=health["busy"]):
+            try:
+                memory = client.conversation_memory(st.session_state.chat_conversation)
+                for group in memory["groups"]:
+                    task = group.get("task", {})
+                    if task.get("scope_updates"):
+                        st.markdown("**讨论条件与纠正**")
+                        for entry in task["scope_updates"]:
+                            st.text(entry["user_quote"])
+                    if task.get("unresolved"):
+                        st.markdown("**尚未交付的问题**")
+                        for entry in task["unresolved"]:
+                            st.text(entry["user_quote"])
+                    if task.get("preferences"):
+                        st.markdown("**本轮交流偏好**")
+                        for entry in task["preferences"].values():
+                            st.text(entry["user_quote"])
+                    st.markdown("**最近对话**")
+                    for turn in group["turns"]:
+                        st.text(turn["question"])
+                if not memory["groups"]:
+                    st.info("当前没有保留的上下文。")
+            except Exception:
+                st.info("暂时无法读取上下文，请检查本地服务连接。")
+        if st.button("清除当前对话的后续上下文", disabled=health["busy"]):
+            try:
+                client.forget_conversation(st.session_state.chat_conversation)
+                st.success("后续回复不再引用此前上下文；聊天展示与运行归档仍保留。")
+            except Exception:
+                st.info("尚未确认清除成功，请稍后再试。")
+        st.caption("清除上下文不删除为复现保留的运行回执，也不追加或重置API额度。")
+        st.markdown("**这台设备的讲解偏好**")
+        st.caption("点击保存才会跨会话生效；后续在线问答会将这些偏好交给配置的模型。同一设备本地共用；当前提问的要求优先。")
+        preference_key = st.selectbox("偏好类别", list(PREFERENCE_OPTIONS),
+            format_func={"detail": "详细程度", "order": "讲解顺序", "followup": "追加提问", "support": "安慰方式"}.get,
+            disabled=health["busy"], key="memory_preference_key")
+        preference_value = st.selectbox("偏好设置", list(PREFERENCE_OPTIONS[preference_key]),
+            format_func=PREFERENCE_OPTIONS[preference_key].get, disabled=health["busy"],
+            key="memory_preference_value_" + preference_key)
+        if st.button("保存此项偏好", disabled=health["busy"]):
+            try:
+                client.save_preference(preference_key, preference_value)
+                st.success("已保存；后续非临时对话会参考此偏好。")
+            except Exception:
+                st.error("尚未确认保存成功，请检查本地服务。")
+        if st.button("查看已保存偏好", disabled=health["busy"]):
+            try:
+                stored = client.preferences()["labels"]
+                st.text("；".join(stored.values()) if stored else "尚未保存偏好。")
+            except Exception:
+                st.error("暂时无法读取已保存偏好。")
+        if st.button("清除全部已保存偏好", disabled=health["busy"]):
+            try:
+                client.forget_preferences()
+                st.success("后续回复不再使用已保存偏好。当前对话中的原话需另行清除上下文。")
+            except Exception:
+                st.error("尚未确认清除成功，请稍后再试。")
     if st.sidebar.button("结束本次 API 授权", disabled=health["busy"]):
         try:
             client.close_session()
@@ -423,7 +493,7 @@ def main():
                 st.text(st.session_state.chat_pending_question)
         poll_pending(client)
     query = st.chat_input(
-        "输入论文问题或继续追问（最多 3,000 字）",
+        "聊聊你想理解的内容，或继续追问（最多 3,000 字）",
         disabled=bool(pending)
         or health["busy"]
         or not budget_ready
@@ -442,6 +512,7 @@ def main():
                     "request_id": identifier,
                     "question": query,
                     "conversation_id": st.session_state.chat_conversation,
+                    "temporary": temporary,
                     "variant": variant,
                     "knowledge_mode": knowledge_mode,
                     "style": style,

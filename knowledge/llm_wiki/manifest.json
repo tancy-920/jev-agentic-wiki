@@ -1,6 +1,6 @@
 {
   "type": "LLM_WIKI_COMPLETE_ARTICLES_V1",
-  "version": "2026-10-20-v4-quantity-condition-binding",
+  "version": "2026-10-22-v5-architecture-application-coverage",
   "source_binding": {
     "sources.jsonl": "2f0df305904f2236492a476a881d2436d419ee1af4e2b8d8045af1cf0b1a1682",
     "chunks.jsonl": "0bf63b2c00efb98d266eb0a8e4db04295d1d5e00069a2c6bded8264d63016045",
@@ -1037,6 +1037,37 @@
         "position",
         "rope",
         "self-attention"
+      ],
+      "review_status": "AI_SOURCE_GROUNDED_DRAFT"
+    },
+    {
+      "article_id": "architecture-selection",
+      "title": "Transformer 架构分类与应用场景",
+      "aliases": [
+        "encoder",
+        "decoder",
+        "encoder-only",
+        "decoder-only",
+        "encoder-decoder",
+        "架构分类",
+        "架构选择"
+      ],
+      "markdown_file": "architecture-selection.md",
+      "sha256": "56c30e2b11223012bd7aea846187762fa88f5bfed5d3319e8b5d76e7a5836b12",
+      "source_chunk_ids": [
+        "paper-1810.04805:6bb076ca96de:c0-2284",
+        "paper-1810.04805:6bb076ca96de:c1994-3955",
+        "paper-1810.04805:6bb076ca96de:c14307-16636",
+        "paper-1706.03762:eee8b5a0bcc2:c0-2632",
+        "paper-1706.03762:eee8b5a0bcc2:c5591-7110",
+        "paper-1910.10683:7aa53b0ecc3b:c9253-11726",
+        "paper-1910.10683:7aa53b0ecc3b:c6490-9198"
+      ],
+      "related": [
+        "transformer",
+        "cross-attention",
+        "gpt",
+        "bert-mlm"
       ],
       "review_status": "AI_SOURCE_GROUNDED_DRAFT"
     }

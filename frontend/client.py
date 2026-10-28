@@ -57,3 +57,21 @@ class LocalClient:
 
     def close_session(self):
         return self.request("POST", "/session/close")
+
+    def conversation_memory(self, conversation_id):
+        return self.request("GET", f"/conversations/{UUID(str(conversation_id))}/memory")
+
+    def forget_conversation(self, conversation_id):
+        return self.request("POST", f"/conversations/{UUID(str(conversation_id))}/forget")
+
+    def preferences(self):
+        return self.request("GET", "/preferences")
+
+    def save_preference(self, key, value):
+        return self.request("POST", "/preferences", payload={"key": key, "value": value})
+
+    def forget_preferences(self):
+        return self.request("POST", "/preferences/forget")
+
+    def cancel(self, request_id):
+        return self.request("POST", f"/chat/{UUID(str(request_id))}/cancel")

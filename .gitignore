@@ -46,6 +46,7 @@
 !/tests/test_dependency_scope.py
 !/tests/test_semantic_scope.py
 !/tests/test_quantity_scope.py
+!/tests/test_chat_agent.py
 /experiments/*
 !/experiments/__init__.py
 !/experiments/ablation.py

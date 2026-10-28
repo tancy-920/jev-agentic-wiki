@@ -14,6 +14,7 @@ def failure_diagnostic(row):
     """Explain known stages without exposing prompts, provider bodies or credentials."""
     status = row.get("status")
     messages = {
+        "application_failure": "这轮处理没有完成，具体原因仍需排查；当前没有可交付答案。",
         "planning_failure": "检索规划未通过格式或内容校验；尚不能据此判断知识库缺少资料。",
         "generation_failure": "答案生成或修复未通过结构校验；不等于知识库没有相关内容。",
         "provider_failure": "模型服务或返回格式失败；不等于知识库没有答案。",
@@ -199,6 +200,8 @@ def presentation(row):
         "status": row["status"],
         "verification_scope": row.get("verification_scope", "original_source_support"),
         "answer": row.get("answer"),
+        "conversational_reply": row.get("conversational_reply"),
+        "dialogue_origin": row.get("dialogue_origin"),
         "route": agent.get("route"),
         "intent": agent.get("intent"),
         "iterations": row.get("iterations"),

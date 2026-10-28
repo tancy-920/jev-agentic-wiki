@@ -24,6 +24,17 @@ from frontend.answering import (
     required_question_parts,
 )
 from frontend.conversation import CONVERSATION_POLICY, ConversationTurn
+from frontend.conversation_memory import (
+    SavedPreference,
+    TaskMemory,
+    enrich_state,
+    load_preferences,
+    preference_view,
+    select_context,
+    session_state,
+    update_task_memory,
+)
+from frontend.dialogue_policy import DIALOGUE_POLICY
 from frontend.ranking import RANKING_POLICY, load_selection
 from frontend.retrieval import (
     APPLICATION_DRAFT_POLICY,
@@ -1072,9 +1083,10 @@ class ApplicationDecisions(MixedDecisions):
 class ApplicationGate(LiveGate):
     """Distinguish a denied local request from a failed actual provider request."""
 
-    def __init__(self, *, enforce_nonpeak=False, peak_override_date=None, **kwargs):
+    def __init__(self, *, enforce_nonpeak=False, peak_override_date=None, cancel_event=None, **kwargs):
         super().__init__(**kwargs)
         self.budget_denied = False
+        self.cancel_event = cancel_event
         self.enforce_nonpeak, self.time_denied = enforce_nonpeak, False
         self.peak_override_date = peak_override_date
 
@@ -1083,6 +1095,8 @@ class ApplicationGate(LiveGate):
             return self._consume_application_locked()
 
     def _consume_application_locked(self):
+        if self.cancel_event is not None and self.cancel_event.is_set():
+            raise ProviderError("user_cancelled")
         if self.enforce_nonpeak:
             from jev_rag.knowledge import nonpeak_allowed
 
@@ -1103,7 +1117,10 @@ class ChatRequest(BaseModel):
     answer_budget_router: Literal["off", "local", "jev"] = "off"
     light_verification: bool = False
     conversation_id: UUID | None = None
+    temporary: bool = False
     _conversation_context: tuple[ConversationTurn, ...] = PrivateAttr(default=())
+    _cancel_event: object = PrivateAttr(default_factory=threading.Event)
+    _conversation_state: dict = PrivateAttr(default_factory=dict)
     _shared_pair: object | None = PrivateAttr(default=None)
     style: Literal["beginner", "balanced", "technical"] = "balanced"
     complex_multi_hop: bool = False
@@ -1405,7 +1422,10 @@ def run_question(workspace, config, request, gate, retriever, environment, *, ge
         generator.workflow_catalog = retriever.store
     generator.product_response_kind_enabled = request.variant == "A"
     generator.product_source_refs_enabled = generation_source_refs and request.variant == "A"
+    generator.product_chat_enabled = request.variant == "A" and request._shared_pair is None
+    generator.assistant_profile = {"provider": config.llm.provider, "model": config.llm.model}
     generator.conversation_context = request._conversation_context
+    generator.conversation_state = request._conversation_state
     shared_first = None
     if request._shared_pair is not None:
         retriever, shared_first = request._shared_pair.bind(generator, retriever)
@@ -1447,14 +1467,15 @@ def run_question(workspace, config, request, gate, retriever, environment, *, ge
         agent.light_verification_enabled = request.light_verification
     try:
         state = agent.run(request.question)
-        return {
+        row = {
             "status": state["termination_reason"],
             "answer": state["final_answer"],
             "iterations": state["iteration"],
             "agent": state,
             "variant": request.variant,
             "knowledge_mode": request.knowledge_mode if request.variant == "A" else "historical",
-            "verification_scope": ("article_faithfulness_not_original_source_certification"
+            "verification_scope": ("non_factual_dialogue" if state["termination_reason"] == "chat_completed" else
+                                   "article_faithfulness_not_original_source_certification"
                                    if article_mode else "original_source_support"),
             "knowledge_binding": retriever.store.binding() if hasattr(retriever, "store") else None,
             "profile": policy.profile.model_dump(),
@@ -1496,7 +1517,10 @@ def run_question(workspace, config, request, gate, retriever, environment, *, ge
             else None,
             "ranking_selection": selection,
             "application_relevance_reviews": decisions.relevance_reviews,
-            "application_conversation_policy": CONVERSATION_POLICY,
+            "application_conversation_policy": {**CONVERSATION_POLICY, **(
+                DIALOGUE_POLICY
+                if generator.product_chat_enabled else {})},
+            "application_conversation_state": request._conversation_state,
             "conversation_context": [
                 t.model_dump(mode="json") for t in request._conversation_context
             ],
@@ -1511,6 +1535,13 @@ def run_question(workspace, config, request, gate, retriever, environment, *, ge
             "human_semantic_review": "pending",
             "estimated_cost_usd": None,
         }
+        dialogue = (generator.failure_dialogue(request.question, failure_diagnostic(row))
+                    if not any(r.get("status") == "failed" for r in row["llm_calls"]) else None)
+        if dialogue:
+            row["conversational_reply"] = dialogue
+            row["dialogue_origin"] = "model_failure_continuation"
+        row["llm_calls"] = physical_llm_records()
+        return row
     finally:
         # Exceptions retain actual call records too, without keys or provider prompts.
         if state is None:
@@ -1589,6 +1620,7 @@ class ChatService:
         self.executor = ThreadPoolExecutor(max_workers=1)
         self.jobs, self.busy, self.closed = {}, False, False
         self.conversations = {}
+        self.task_memories = {}
         self.session_id = str(uuid4())
         self.path = workspace / "results/reports/live_study" / f"{self.session_id}.json"
         self.receipt = {
@@ -1625,6 +1657,12 @@ class ChatService:
         self.receipt["jobs"] = {
             k: {"state": j["state"], "input_sha256": j["fingerprint"]} for k, j in self.jobs.items()
         }
+        self.receipt["conversation_memory_snapshot"] = [
+            {"conversation_id": key[0], "variant": key[1], "knowledge_mode": key[2],
+             "turns": [t.model_dump(mode="json") for t in turns],
+             "task": self.task_memories.get(key, TaskMemory()).model_dump(mode="json")}
+            for key, turns in self.conversations.items()
+        ]
         write_json(self.path, self.receipt)
 
     def restore_conversations(self, carry):
@@ -1641,6 +1679,8 @@ class ChatService:
             raise ValueError("conversation transfer requires unchanged configuration")
         changed_knowledge = [field for field in ("corpus_sha256", "chunks_sha256", "knowledge_binding")
                              if old_binding.get(field) != new_binding.get(field)]
+        forgotten = set(previous.get("forgotten_context_request_ids", []))
+        self.receipt["forgotten_context_request_ids"] = sorted(forgotten)
         directory = self.workspace / "results/live/application" / identifier
         for request_id, job in previous.get("jobs", {}).items():
             raw_path = directory / f"{UUID(request_id)}.json"
@@ -1648,17 +1688,33 @@ class ChatService:
                 continue
             raw = json.loads(raw_path.read_text(encoding="utf-8"))
             request = ChatRequest.model_validate(raw["request"])
-            if canonical_hash(request.model_dump(mode="json")) != job["input_sha256"]:
+            # Defaults added in later schemas must not invalidate old receipts.
+            if canonical_hash(raw["request"]) != job["input_sha256"]:
                 raise ValueError("conversation input ledger mismatch")
             response = raw["response"]
-            self.jobs[request_id] = {"state": "completed", "fingerprint": job["input_sha256"], "response": response}
-            if request.conversation_id and not changed_knowledge:
+            self.jobs[request_id] = {"state": "completed", "fingerprint": job["input_sha256"], "response": response, "conversation_id": str(request.conversation_id) if request.conversation_id else None}
+            if request.conversation_id and not request.temporary and not changed_knowledge and request_id not in forgotten:
                 key = (str(request.conversation_id), request.variant, request.knowledge_mode)
                 turns = self.conversations.setdefault(key, [])
                 turns.append(ConversationTurn(request_id=request.request_id, question=request.question,
-                    answer=response.get("answer") if response.get("status") == "answered" else None,
-                    status=response.get("status", "unknown")))
-                del turns[:-3]
+                    answer=response.get("answer") if response.get("status") in {"answered", "chat_completed", "clarification_required"} else None,
+                    status=response.get("status", "unknown"),
+                    failure_summary=(response.get("failure_diagnostic") or {}).get("message"),
+                    dialogue_reply=response.get("conversational_reply")))
+                del turns[:-(32 if request.variant == "A" else 3)]
+                update_task_memory(self.task_memories.setdefault(key, TaskMemory()), turns[-1])
+        # Carry exact bounded context across repeated backend transfers even
+        # when older raw jobs live in an earlier session directory.
+        if not changed_knowledge:
+            for snapshot in previous.get("conversation_memory_snapshot", []):
+                key = (str(UUID(snapshot["conversation_id"])), snapshot["variant"], snapshot["knowledge_mode"])
+                turns = [ConversationTurn.model_validate(t) for t in snapshot["turns"]]
+                if len(turns) > 32 or any(str(t.request_id) in forgotten for t in turns):
+                    raise ValueError("invalid or forgotten memory snapshot")
+                if key[1] not in self.allowed_variants or key[2] not in {"source", "wiki", "wiki_graph", "llm_wiki", "llm_wiki_graph"}:
+                    raise ValueError("invalid memory partition")
+                self.conversations[key] = turns
+                self.task_memories[key] = TaskMemory.model_validate(snapshot["task"])
         self.receipt["conversation_transfer"] = {
             "from_session": identifier, "restored_jobs": len(self.jobs),
             "completed_request_ids": list(self.jobs), "history_is_evidence": False,
@@ -1753,12 +1809,33 @@ class ChatService:
                     ) from None
             self.jobs[identifier] = {
                 "fingerprint": fingerprint,
+                "conversation_id": str(request.conversation_id) if request.conversation_id else None,
+                "cancel_event": request._cancel_event,
                 "state": "running",
                 "response": None,
             }
-            if request.conversation_id:
+            if request.conversation_id and not request.temporary:
                 key = (str(request.conversation_id), request.variant, request.knowledge_mode)
-                request._conversation_context = tuple(self.conversations.get(key, [])[-3:])
+                request._conversation_context = select_context(
+                    self.conversations.get(key, []), request.question,
+                    enabled=request.variant == "A" and request._shared_pair is None,
+                    task_memory=self.task_memories.get(key) if request.variant == "A" and request._shared_pair is None else None,
+                )
+                if request.variant == "A" and request._shared_pair is None:
+                    request._conversation_state = session_state(self.conversations.get(key, []), request.question)
+                    request._conversation_state = enrich_state(request._conversation_state,
+                        self.task_memories.get(key, TaskMemory()), request.question)
+            if request.variant == "A" and not request.temporary and request._shared_pair is None:
+                # Corrupt preferences fail closed; do not silently use stale or
+                # unvalidated text as a system instruction.
+                try:
+                    values = load_preferences(self.workspace)
+                    request._conversation_state = enrich_state(request._conversation_state,
+                        self.task_memories.get(key, TaskMemory()) if request.conversation_id else TaskMemory(),
+                        request.question, values)
+                except (OSError, ValueError):
+                    request._conversation_state["saved_preferences"] = {}
+                    request._conversation_state["preference_store_unavailable"] = True
             self.busy = True
             self.persist()
             self.executor.submit(self.execute, request)
@@ -1772,6 +1849,7 @@ class ChatService:
         child = ApplicationGate(
             enforce_nonpeak=self.enforce_nonpeak,
             peak_override_date=self.peak_override_date,
+            cancel_event=request._cancel_event,
             entrypoint="benchmark-live",
             max_calls=min(QUESTION_CALL_CAP - reserve, before),
             parent=self.gate,
@@ -1854,7 +1932,19 @@ class ChatService:
                     status="time_window_closed",
                     answer="已进入工作日高峰时段，按你的安排停止新增API请求；未展示未核验草稿。",
                 )
+            if request._cancel_event.is_set():
+                response.update(status="cancelled", answer="已取消这轮回复。已发出的请求会安全收集，不再启动后续模型步骤。")
             response["failure_diagnostic"] = failure_diagnostic({**row, "status": response["status"]})
+            if request.variant == "A" and request._shared_pair is None:
+                from frontend.dialogue_policy import contextual_failure
+
+                conversational = response.get("conversational_reply") or contextual_failure(
+                    response["failure_diagnostic"], question=request.question,
+                    state=request._conversation_state,
+                )
+                if conversational:
+                    response["answer"] = conversational
+                    response["dialogue_failure_presented"] = True
             write_json(
                 self.workspace
                 / "results/live/application"
@@ -1887,6 +1977,8 @@ class ChatService:
                     status="time_window_closed",
                     answer="已进入工作日高峰时段，按你的安排停止新增API请求。",
                 )
+            if request._cancel_event.is_set():
+                response.update(status="cancelled", answer="已取消这轮回复。已发出的请求会安全收集，不再启动后续模型步骤。")
             response["failure_diagnostic"] = failure_diagnostic(response)
             write_json(
                 self.workspace
@@ -1901,8 +1993,20 @@ class ChatService:
             )
         finally:
             with self.lock:
+                # Cancellation accepted after the last provider step but before
+                # finalization must still win in both UI and the saved receipt.
+                if request._cancel_event.is_set() and response.get("status") != "cancelled":
+                    response.update(status="cancelled", answer="已取消这轮回复。已发出的请求已安全收集，不再启动后续模型步骤。")
+                    response["failure_diagnostic"] = None
+                    response.pop("dialogue_failure_presented", None)
+                    import json
+
+                    raw_path = self.workspace / "results/live/application" / self.session_id / f"{identifier}.json"
+                    raw = json.loads(raw_path.read_text(encoding="utf-8"))
+                    raw["response"] = response
+                    write_json(raw_path, raw)
                 self.jobs[identifier].update(state=response["state"], response=response)
-                if request.conversation_id and response["state"] == "completed":
+                if request.conversation_id and not request.temporary and response["state"] == "completed":
                     key = (str(request.conversation_id), request.variant, request.knowledge_mode)
                     turns = self.conversations.setdefault(key, [])
                     turns.append(
@@ -1910,14 +2014,73 @@ class ChatService:
                             request_id=request.request_id,
                             question=request.question,
                             answer=response.get("answer")
-                            if response.get("status") == "answered"
+                            if response.get("status") in {"answered", "chat_completed", "clarification_required"}
                             else None,
                             status=response.get("status", "unknown"),
+                            failure_summary=(response.get("failure_diagnostic") or {}).get("message"),
+                            dialogue_reply=response.get("conversational_reply"),
                         )
                     )
-                    del turns[:-3]
+                    del turns[:-(32 if request.variant == "A" else 3)]
+                    if request.variant == "A":
+                        update_task_memory(self.task_memories.setdefault(key, TaskMemory()), turns[-1])
                 self.busy = False
                 self.persist()
+
+    def cancel(self, identifier):
+        identifier = str(UUID(str(identifier)))
+        with self.lock:
+            if identifier not in self.jobs:
+                raise HTTPException(404, "本会话无此请求")
+            job = self.jobs[identifier]
+            if job["state"] == "running":
+                job["cancel_event"].set()
+                return {"state": "cancelling", "provider_calls": 0}
+            return {"state": job["state"], "provider_calls": 0}
+
+    def conversation_memory(self, conversation_id, *, forget=False):
+        """Authenticated local session context, never an authorization or model call."""
+        conversation_id = str(UUID(str(conversation_id)))
+        with self.lock:
+            if forget and self.busy:
+                raise HTTPException(409, "请等待当前回复结束后清除上下文")
+            keys = [key for key in self.conversations if key[0] == conversation_id]
+            if forget:
+                ids = set(self.receipt.get("forgotten_context_request_ids", []))
+                ids.update(identifier for identifier, job in self.jobs.items()
+                           if job.get("conversation_id") == conversation_id)
+                for key in keys:
+                    del self.conversations[key]
+                    self.task_memories.pop(key, None)
+                self.receipt["forgotten_context_request_ids"] = sorted(ids)
+                self.persist()
+                return {"state": "forgotten", "provider_calls": 0,
+                        "archives_deleted": False,
+                        "scope": "future_context_only_all_variants_and_knowledge_modes"}
+            return {"conversation_id": conversation_id, "provider_calls": 0,
+                    "scope": "current_conversation_only", "archives_deleted": False,
+                    "groups": [{"variant": key[1], "knowledge_mode": key[2],
+                                "task": self.task_memories.get(key, TaskMemory()).model_dump(mode="json"),
+                                "turns": [{"message_id": str(t.request_id), "question": t.question,
+                                           "status": t.status} for t in self.conversations[key]]}
+                               for key in keys]}
+
+    def preferences(self, *, update=None, forget=False):
+        """Device-local explicit choices only; no automatic personal profiling."""
+        with self.lock:
+            if (update is not None or forget) and self.busy:
+                raise HTTPException(409, "请等待当前回复完成后修改偏好")
+            try:
+                values = {} if forget else load_preferences(self.workspace)
+            except (OSError, ValueError):
+                raise HTTPException(409, "偏好文件无法读取，可清除后重新设置") from None
+            if update is not None:
+                values[update.key] = update.value
+            if update is not None or forget:
+                write_json(self.workspace / ".local/chat-preferences.json",
+                           [{"key": k, "value": v} for k, v in values.items()])
+            return {"values": values, "labels": preference_view(values), "provider_calls": 0,
+                    "scope": "this_device_explicit_preferences_only"}
 
     def result(self, identifier):
         with self.lock:
@@ -1959,6 +2122,21 @@ def create_app(service=None, shutdown=None):
         authorized(authorization)
         return service.result(str(request_id))
 
+    @app.post("/chat/{request_id}/cancel")
+    async def cancel(request_id: UUID, authorization: str | None = Header(default=None)):
+        authorized(authorization)
+        return service.cancel(str(request_id))
+
+    @app.get("/conversations/{conversation_id}/memory")
+    async def conversation_memory(conversation_id: UUID, authorization: str | None = Header(default=None)):
+        authorized(authorization)
+        return service.conversation_memory(conversation_id)
+
+    @app.post("/conversations/{conversation_id}/forget")
+    async def forget_conversation(conversation_id: UUID, authorization: str | None = Header(default=None)):
+        authorized(authorization)
+        return service.conversation_memory(conversation_id, forget=True)
+
     @app.post("/session/close")
     async def close_session(authorization: str | None = Header(default=None)):
         authorized(authorization)
@@ -1970,5 +2148,20 @@ def create_app(service=None, shutdown=None):
         if shutdown is not None:
             shutdown()
         return {"state": "closed", "remaining_calls": service.gate.remaining}
+
+    @app.get("/preferences")
+    async def preferences(authorization: str | None = Header(default=None)):
+        authorized(authorization)
+        return service.preferences()
+
+    @app.post("/preferences")
+    async def save_preference(preference: SavedPreference, authorization: str | None = Header(default=None)):
+        authorized(authorization)
+        return service.preferences(update=preference)
+
+    @app.post("/preferences/forget")
+    async def forget_preferences(authorization: str | None = Header(default=None)):
+        authorized(authorization)
+        return service.preferences(forget=True)
 
     return app

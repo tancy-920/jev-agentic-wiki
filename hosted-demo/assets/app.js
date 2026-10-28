@@ -4,6 +4,9 @@ const $ = selector => document.querySelector(selector);
 const MODAL_NOTICE = "此网页仅回放已有问题。真实问答请使用本地部署版；这里不会调用模型 API。";
 let catalog, busy = false, storageAvailable = true, currentView = "chat";
 let state = { conversations: [{ id: "initial", records: [] }], active: "initial" };
+const ICONS = /* @shared-icons */ {};
+function icon(name) { const node = document.createElementNS("http://www.w3.org/2000/svg", "svg"); node.setAttribute("viewBox", "0 0 24 24"); node.setAttribute("class", "ui-icon"); node.setAttribute("aria-hidden", "true"); node.innerHTML = ICONS[name]; return node; }
+const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const STORAGE = "jev-offline-demo-v1";
 
 function el(tag, className, text) {
@@ -80,7 +83,8 @@ function renderExamples() {
   for (const record of catalog.recordings) {
     if (seen.has(record.question)) continue; seen.add(record.question);
     const button = el("button", "example-card"); button.dataset.question = record.question;
-    button.append(el("small", "", `${String(seen.size).padStart(2, "0")} / ${record.category}`), el("b", "", record.title), el("p", "example-question", record.question), el("span", "choice-mark", "查看解答与相关 Wiki ↗"));
+    button.append(el("b", "", record.title), el("small", "", record.category), el("p", "example-question", record.question), el("span", "choice-mark", "查看解答与相关 Wiki"));
+    button.querySelector(".choice-mark").append(icon("arrow"));
     button.addEventListener("click", () => { if (busy) return; $("#question").value = record.question; setModes(); send(selectedRecord()); }); host.append(button);
   }
 }
@@ -91,11 +95,18 @@ function switchView(view) {
   document.querySelectorAll("nav button").forEach(button => button.classList.toggle("active", button.dataset.view === (view === "answer" ? "examples" : view)));
   $("#config").hidden = view !== "answer";
   $("#page-title").textContent = { chat: "知识概览", examples: "示例问题", answer: "示例解答", wiki: "知识探索", library: "资料库", archive: "实验档案" }[view];
-  $("#eyebrow").textContent = { chat: "YOUR RESEARCH, CONNECTED", examples: "A COLLECTION OF GOOD QUESTIONS", answer: "FOLLOW THE KNOWLEDGE", wiki: "EXPLORE THE KNOWLEDGE", library: "RESEARCH LIBRARY", archive: "RESEARCH ARCHIVE" }[view];
+  document.querySelector("nav button.active")?.setAttribute("aria-current", "page");
+  document.querySelectorAll("nav button:not(.active)").forEach(b => b.removeAttribute("aria-current"));
   history.replaceState(null, "", "#" + view);
   window.scrollTo({ top: 0, behavior: "instant" });
-  document.body.classList.remove("sidebar-open"); $("#menu").setAttribute("aria-expanded", "false");
+  closeSidebar();
+  if (!reducedMotion()) document.querySelector("#" + view + "-view").animate([{opacity:.55},{opacity:1}], {duration:180,easing:"ease-out"});
   message(storageAvailable ? "" : "浏览器未允许保存记录；当前会话仍可正常使用。");
+}
+function closeSidebar() {
+ const wasOpen = document.body.classList.contains("sidebar-open");
+ $("main").inert = false; document.body.classList.remove("sidebar-open"); $("#menu").setAttribute("aria-expanded", "false"); $("#menu").setAttribute("aria-label", "展开侧栏"); $("#menu").replaceChildren(icon("menu"));
+ if (wasOpen) $("#menu").focus();
 }
 function panel(label) {
   const details = el("details", "record-panel"), summary = el("summary", "", label), body = el("div", "panel-body");
@@ -148,18 +159,18 @@ function renderMessages() {
     const item = el("article", "message"), question = el("div", "question-bubble", record.question), answer = el("div", "answer-bubble markdown");
     markdown(answer, record.answer); item.append(question, answer);
     if (record.status !== "answered") item.append(el("p", "diagnostic", "本条历史运行未成功交付答案。原因和资料可在下方详情中查阅。"));
-    const actions = el("div", "actions"), copy = el("button", "", "复制回复"), download = el("button", "", "↓ 导出研究记录");
+    const actions = el("div", "actions"), copy = el("button", "", "复制回复"), download = el("button", "", "导出研究记录");
     copy.addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(answer.innerText); copy.textContent = "已复制"; }
       catch { message("当前浏览器不允许自动复制，请选择正文手动复制。"); }
     });
     download.addEventListener("click", () => exportRecord(record)); actions.append(copy, download); item.append(actions);
     renderEvidence(record, item); renderRun(record, item);
-    const related = el("section", "related-wiki"); related.append(el("h3", "", "继续探索相关 Wiki →"));
+    const related = el("section", "related-wiki"); related.append(el("h3", "", "继续探索相关 Wiki"));
     for (const id of record.wiki_ids) {
       const article = catalog.articles.find(a => a.id === id); if (!article) continue;
-      const link = el("button", "wiki-chip", article.title + " ↗");
-      link.addEventListener("click", () => openWiki(id)); related.append(link);
+      const link = el("button", "wiki-chip", article.title);
+      link.append(icon("arrow")); link.addEventListener("click", () => openWiki(id)); related.append(link);
     }
     item.append(related); host.append(item);
   }
@@ -186,9 +197,9 @@ async function send(record) {
   state.conversations = state.conversations.slice(-30); state.active = identifier; $("#messages").replaceChildren();
   const waiting = el("div", "processing"), dots = el("span", "dots"); dots.append(el("i"), el("i"), el("i"));
   waiting.setAttribute("role", "status"); waiting.append(dots, el("span", "", "正在载入历史记录…")); $("#messages").append(waiting);
-  await new Promise(resolve => setTimeout(resolve, 650));
+  await new Promise(resolve => requestAnimationFrame(resolve));
   active().records.push(record.id); active().records = active().records.slice(-50); persist(); renderMessages(); setBusy(false);
-  $("#messages").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#messages").lastElementChild?.scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "start" });
 }
 function showArticle(article) {
   $("#article-list").querySelectorAll("button").forEach(b => b.classList.toggle("selected", b.dataset.article === article.id));
@@ -198,15 +209,15 @@ function showArticle(article) {
   map.append(hub, nodes);
   for (const id of article.related) {
     const neighbor = catalog.articles.find(a => a.id === id); if (!neighbor) continue;
-    const button = el("button", "graph-node", neighbor.title + " ↗");
-    button.addEventListener("click", () => openWiki(id)); nodes.append(button);
+    const button = el("button", "graph-node", neighbor.title);
+    button.append(icon("arrow")); button.addEventListener("click", () => openWiki(id)); nodes.append(button);
   }
   if (!nodes.childElementCount) nodes.append(el("p", "hint", "暂无关联主题"));
   graph.append(map);
 }
 function openWiki(id) {
   $("#wiki-search").value = ""; renderWiki(id); switchView("wiki");
-  $("#wiki-graph").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#wiki-graph").scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "start" });
 }
 function renderWiki(preferredId) {
   const query = $("#wiki-search").value.trim().toLowerCase(), list = $("#article-list"); list.replaceChildren();
@@ -237,7 +248,7 @@ function renderLibrary() {
 }
 function renderArchive() {
   for (const record of catalog.recordings) {
-    const card = el("article", "archive-card"), content = el("div"), button = el("button", "", "查看回放 ↗");
+    const card = el("article", "archive-card"), content = el("div"), button = el("button", "", "查看回放");
     content.append(el("h2", "", record.question), el("p", "", `${catalog.modes[record.mode]} · ${record.status === "answered" ? "已回答" : "生成失败"} · 历史记录`));
     button.addEventListener("click", () => {
       if (busy) return; $("#question").value = record.question; setModes(); $("#mode").value = record.mode; send(record);
@@ -250,6 +261,7 @@ async function init() {
     if (!response.ok) throw new Error("catalog unavailable");
     catalog = await response.json();
     if (catalog.schema !== 1 || !Array.isArray(catalog.recordings) || !catalog.recordings.length) throw new Error("invalid catalog");
+    $("#knowledge-count").textContent = `${catalog.articles.length} 篇完整词条 · 关键词搜索 · 关联主题导航`;
     const questions = [...new Set(catalog.recordings.map(r => r.question))];
     $("#question").value = questions[0]; renderExamples(); setModes();
     restore(); renderMessages(); renderWiki(); renderLibrary(); renderArchive(); switchView(location.hash.slice(1) || "chat");
@@ -271,7 +283,20 @@ async function init() {
     document.querySelectorAll("[data-topic]").forEach(button => button.addEventListener("click", () => {
       const question = questions.find(q => q.includes(button.dataset.topic)); if (question) { $("#question").value = question; setModes(); send(selectedRecord()); }
     }));
-    $("#menu").addEventListener("click", () => { const opened = document.body.classList.toggle("sidebar-open"); $("#menu").setAttribute("aria-expanded", String(opened)); });
+    document.querySelectorAll("[data-wiki]").forEach(button => button.addEventListener("click", () => openWiki(button.dataset.wiki)));
+    $("#menu").addEventListener("click", () => { if (document.body.classList.contains("sidebar-open")) closeSidebar(); else { document.body.classList.add("sidebar-open"); $("main").inert = true; $("#menu").setAttribute("aria-expanded", "true"); $("#menu").setAttribute("aria-label", "关闭侧栏"); $("#menu").replaceChildren(icon("close")); $("#sidebar nav button.active")?.focus(); } });
+    $("#sidebar-dismiss").addEventListener("click", closeSidebar);
+    matchMedia("(min-width: 761px)").addEventListener("change", event => { if (event.matches) closeSidebar(); });
+    document.addEventListener("keydown", event => {
+      if (!document.body.classList.contains("sidebar-open")) return;
+      if (event.key === "Escape") { closeSidebar(); $("#menu").focus(); }
+      if (event.key === "Tab") {
+        const controls = [$("#menu"), ...$("#sidebar").querySelectorAll("a,button,select,input")].filter(n => !n.disabled && n.getClientRects().length);
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
   } catch {
     message("演示资料暂时无法载入，请刷新重试。若在本机预览，请通过HTTP服务打开，不能直接双击HTML文件。");
     $("#send-example").disabled = true;

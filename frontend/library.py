@@ -1,11 +1,13 @@
 """Local, read-only source library. Never starts a provider session."""
 
+from html import escape
 from pathlib import Path
 
 import streamlit as st
 
+from frontend.local_catalog import verified_store
 from frontend.ui import heading, source_badge
-from jev_rag.knowledge import KnowledgeStore, inside, product_store_path
+from jev_rag.knowledge import inside
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -17,9 +19,9 @@ def filter_sources(sources, query, kind="all"):
 
 
 def main():
-    heading("SOURCE LIBRARY", "资料库", "在同一个空间查阅论文、官方文档、代码与实验记录。")
+    heading("SOURCE LIBRARY", "资料库", "论文、官方文档与代码实现，都能回到原文。")
     try:
-        store = KnowledgeStore(product_store_path(ROOT))
+        store = verified_store(ROOT)
     except (OSError, ValueError):
         st.info("本地资料库尚未准备好，或来源版本已改变。请完成本地构建后再浏览。")
         return
@@ -36,7 +38,7 @@ def main():
     selected = st.selectbox("选择资料", [s.source_id for s in sources],
                             format_func=lambda i: store.sources[i].title)
     source = store.sources[selected]
-    with st.container(border=True):
+    with st.container(key="source_reading_header"):
         st.caption(f"{source_badge(source.kind)} / {source.year} / 本地收录")
         st.subheader(source.title)
         if source.authors:
@@ -55,7 +57,10 @@ def main():
             chunk_id = st.selectbox("定位原文片段", [c.chunk_id for c in chunks],
                                      format_func=lambda i: store.chunks[i].citation)
             chunk = store.chunks[chunk_id]
-            st.code(chunk.text, language="python" if source.kind == "code" else "text", wrap_lines=True)
+            if source.kind == "code":
+                st.code(chunk.text, language="python", wrap_lines=True)
+            else:
+                st.markdown('<div class="source-prose">' + escape(chunk.text) + '</div>', unsafe_allow_html=True)
         with st.expander("查看全部规范化文本"):
             if st.checkbox("加载全文", key="library-full-" + selected):
                 st.code(inside(store.root, source.normalized).read_text("utf-8"), language="text", wrap_lines=True)

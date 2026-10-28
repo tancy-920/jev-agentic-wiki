@@ -7,6 +7,7 @@ links are navigation, never factual evidence or human-reviewed ground truth.
 import hashlib
 import re
 from datetime import datetime, timedelta, timezone
+from functools import cached_property
 from pathlib import Path
 from time import perf_counter
 from typing import Literal
@@ -14,7 +15,6 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from jev_rag.io import read_jsonl, sha256_file
-from jev_rag.retrieval import reciprocal_rank_fusion
 from jev_rag.schema import Chunk
 
 KNOWLEDGE_MODES = ("source", "wiki", "wiki_graph")
@@ -170,9 +170,17 @@ class KnowledgeStore:
                     raise ValueError("duplicate Wiki reading/coverage references")
         if verify:
             self.verify_sources()
+
+    @cached_property
+    def term_catalog(self):
+        """Build attested spelling suggestions only for callers that need them.
+
+        Read-only browsing still verifies every source, but does not prepare
+        model-planning vocabulary on every page interaction.
+        """
         from jev_rag.terms import TermCatalog
 
-        self.term_catalog = TermCatalog(self.pages.values(), self.chunks.values())
+        return TermCatalog(self.pages.values(), self.chunks.values())
 
     def verify_sources(self):
         texts = {}
@@ -329,6 +337,7 @@ class WikiRetriever:
         if not 1 <= top_k <= min(20, self.base.config.retrieval.top_k):
             raise ValueError("evidence budget exceeded")
         from jev_rag.agent.intent import validate_search_query
+        from jev_rag.retrieval import reciprocal_rank_fusion
 
         for query in [original_query, *queries]:
             validate_search_query(query)

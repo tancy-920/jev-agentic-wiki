@@ -60,7 +60,7 @@ def test_mock_rebinding_changed_knowledge_preserves_display_without_stale_contex
     write_json(tmp_path / "results/live/application" / old_id / (rid + ".json"), {
         "request": request.model_dump(mode="json"),
         "response": {"status": "answered", "answer": "MOCK historical answer"}})
-    service = SimpleNamespace(workspace=tmp_path, jobs={}, conversations={}, persist=lambda: None,
+    service = SimpleNamespace(workspace=tmp_path, jobs={}, conversations={}, task_memories={}, persist=lambda: None,
         receipt={"binding": {**binding, "knowledge_binding": "MOCK new" if changed else "MOCK old"}})
     ChatService.restore_conversations(service, dict(session_id=old_id, receipt_sha256=sha256_file(previous_path)))
     assert service.jobs[rid]["response"]["answer"] == "MOCK historical answer"

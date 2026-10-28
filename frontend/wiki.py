@@ -5,8 +5,9 @@ from pathlib import Path
 
 import streamlit as st
 
+from frontend.local_catalog import verified_store
 from frontend.ui import heading
-from jev_rag.knowledge import KnowledgeStore, inside, product_store_path
+from jev_rag.knowledge import inside
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,11 +39,11 @@ def graph_dot(store, page_id):
     return "\n".join([*dot, "}"])
 
 
-def main():
-    heading("KNOWLEDGE EXPLORER", "知识探索", "从概念出发，连接原理、实现与实验。选择一条阅读路线，逐步建立你的知识地图。")
+def source_navigation():
+    st.caption("原文导航 · 阅读路线与来源片段")
     st.caption("Transformer 原理、优化技术与 mygpt：Wiki → 原文 → 实现 → 实验。浏览不调用 API。")
     try:
-        store = KnowledgeStore(product_store_path(ROOT))
+        store = verified_store(ROOT)
     except (OSError, ValueError):
         st.info("Wiki 来源尚未准备好，或来源版本已改变；请完成本地构建后再浏览。")
         return
@@ -146,3 +147,14 @@ def main():
                     st.code(chunk.text, language="python" if source.kind == "code" else "text")
                 if st.checkbox("查看该来源全部规范化文本", key=f"full-source-{selected}-{source_id}"):
                     st.code(inside(store.root, source.normalized).read_text("utf-8"), language="text")
+
+
+def main():
+    from frontend.offline_knowledge import atlas
+
+    heading("KNOWLEDGE EXPLORER", "知识探索", "从一篇完整词条出发，沿关联主题读懂 Transformer。")
+    mode = st.segmented_control("浏览内容", ["完整词条", "原文导航"], default="完整词条", key="wiki_browse_mode", label_visibility="collapsed")
+    if mode == "原文导航":
+        source_navigation()
+    else:
+        atlas()

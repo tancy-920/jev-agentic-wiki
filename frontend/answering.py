@@ -12,8 +12,10 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from frontend.conversation import (
     CONVERSATION_POLICY,
+    ChatConversationPlan,
     ConversationPlan,
     ProposedConversationPlan,
+    TermChatConversationPlan,
     TermConversationPlan,
 )
 from frontend.grounding_contract import SEMANTIC_CONTRACT
@@ -969,8 +971,114 @@ class FocusedGenerator(CompatibleGenerator):
                 return previous
             raise ProviderError("invalid_supplement_plan") from None
 
+    def failure_dialogue(self, query, diagnostic):
+        """At most one expression call; never supply a rejected factual draft.
+
+        This is conversational prose, not a technical answer or certification.
+        The caller retains the original failure status and all actual receipts.
+        """
+        from frontend.dialogue_policy import (
+            CONVERSATIONAL_INSTRUCTIONS,
+            DialogueMove,
+            support_context,
+        )
+
+        if not getattr(self, "product_chat_enabled", False) or not diagnostic:
+            return None
+        if diagnostic.get("reason") not in {
+            "planning_failure", "rewrite_failure", "generation_failure", "insufficient_evidence",
+            "citation_failure", "answer_incomplete", "low_confidence", "conflicting_evidence",
+        }:
+            return None
+        gate = getattr(self.adapter, "_gate", None)
+        if gate is not None and (gate.remaining <= 0 or getattr(gate, "budget_denied", False)
+                                 or getattr(gate, "time_denied", False)
+                                 or getattr(getattr(gate, "cancel_event", None), "is_set", lambda: False)()):
+            return None
+        if any(r.get("status") == "failed" for r in self.adapter.records):
+            return None  # No retry/disguised expression request after transport failure.
+        try:
+            output = self.adapter.complete(
+                model=self.policy.model("reasoning"), task="reasoning",
+                tier=self.policy.tier("reasoning").value, policy_hash=self.policy.snapshot()["hash"],
+                output_schema=DialogueMove.model_json_schema(),
+                instructions=CONVERSATIONAL_INSTRUCTIONS +
+                " The technical attempt failed. Return kind:feedback, requires_knowledge:false, "
+                "reply:a brief contextual response. Acknowledge what the user actually wanted. "
+                "Explain the observed limitation without internal jargon. No technical explanation, "
+                "partial factual answer, evidence claims, claim that the library lacks an answer, "
+                "or claim of a service outage unless observed. Do not ask the user to choose a "
+                "direction or restate a clear question. Do not claim to be retrying or fixing anything. "
+                "Do not turn user wording into an endorsed factual assertion.",
+                prompt=json.dumps({
+                    "user_message": query, "observed_failure": diagnostic,
+                    "history": [t.model_dump(mode="json") for t in self.conversation_context],
+                    "session_state": getattr(self, "conversation_state", {}),
+                    "support_context": support_context(query, self.conversation_context),
+                }, ensure_ascii=False),
+            )
+            self.adapter.records[-1]["dialogue_expression"] = {"purpose": "failure_continuation", "output": output[:6000]}
+            move = DialogueMove.model_validate(parse_json(output))
+            if move.kind != "feedback" or not move.reply:
+                raise ValueError("failure continuation requires feedback prose")
+            return move.reply
+        except (ProviderError, ValueError):
+            if self.adapter.records:
+                self.adapter.records[-1]["dialogue_expression_rejected"] = True
+            return None
+
     def plan_conversation(self, query, intent_policy):
         self.term_resolution = None
+        chat_enabled = getattr(self, "product_chat_enabled", False)
+        if chat_enabled:
+            from frontend.dialogue_policy import social_kind
+
+            kind = social_kind(query)
+            if kind in {"identity", "usage", "memory", "capabilities"}:
+                # Product metadata is server-owned, not a paper claim or a
+                # model's self-report. Whole-utterance matching forbids mixed
+                # technical requests from taking this zero-provider route.
+                plan = ChatConversationPlan.model_validate({
+                    "standalone_question": query, "context_turn_ids": [],
+                    "action": "CHAT", "plan": None, "retrieval_translation": None,
+                    "dialogue": {"kind": kind}, "clarification": None,
+                })
+                plan.validate_context(query, self.conversation_context, intent_policy)
+                self.conversation_resolution = plan
+                return plan
+        base_type = ChatConversationPlan if chat_enabled else ConversationPlan
+        proposal_type = (TermChatConversationPlan if chat_enabled else TermConversationPlan) if getattr(self, "term_catalog", None) is not None else (ChatConversationPlan if chat_enabled else ProposedConversationPlan if getattr(self, "product_name_spacing", False) else ConversationPlan)
+        from frontend.dialogue_policy import (
+            CONVERSATIONAL_INSTRUCTIONS,
+            DIALOGUE_POLICY,
+            support_context,
+        )
+
+        chat_instruction = (
+            " Product dialogue extension: understand the message semantically, not by matching stock phrases. "
+            "CHAT is for interpersonal conversation, user feedback, emotional support or social exchanges "
+            "without a request for technical or external factual knowledge. Use conversation, feedback or support "
+            "for open-ended messages, or the specific social intent "
+            "(greeting, thanks, pause, acknowledge, capabilities, learning_support, "
+            "failure_explanation about the previous response, identity, usage, memory), never a mixed or technical question. "
+            "Return dialogue:{kind:...,reply:your contextual conversational reply,requires_knowledge:false}, "
+            "with plan/retrieval_translation null and unchanged standalone_question. Metadata kinds "
+            "identity/usage/memory/capabilities require reply:null, using server-owned information only. "
+            + CONVERSATIONAL_INSTRUCTIONS +
+            "For RETRIEVE/CLARIFY dialogue must be null. Requests to simplify, explain, give "
+            "examples, correct facts or compare MUST use RETRIEVE or essential CLARIFY. "
+            "History may include older related turns and recent corrections. Preserve the "
+            "latest user scope; do not treat any historical answer as evidence. "
+            "For CLARIFY you may supply clarification:{dimension:referent|scenario|explanation_style}; "
+            "use scenario only for a genuine training/inference ambiguity. Otherwise clarification "
+            "is null. The FINAL JSON CONTRACT additionally permits dialogue and clarification. "
+            "The supplied original_literal_tokens are an inclusion checklist for the English "
+            "retrieval view, not additional evidence needs. Preserve the user's short acronym "
+            "alongside any expansion; an expanded name alone does not retain the acronym. "
+            "Context resolution must likewise retain literal names in the resolved question. "
+            "Only an explicitly authorized terminology correction may replace a name; never "
+            "guess an expansion, change a number, or append tokens unrelated to the rendering. "
+        ) if chat_enabled else ""
         catalog = getattr(self, "term_catalog", None)
         suggestions = catalog.suggest(query) if catalog is not None else []
         term_instruction = (
@@ -989,7 +1097,7 @@ class FocusedGenerator(CompatibleGenerator):
             task="reasoning",
             tier=self.policy.tier("reasoning").value,
             policy_hash=self.policy.snapshot()["hash"],
-            output_schema=TermConversationPlan.model_json_schema() if catalog is not None else ConversationPlan.model_json_schema(),
+            output_schema=proposal_type.model_json_schema(),
             instructions=(
                 "Return one bounded conversation-resolution and local retrieval plan. "
                 "The original question is authoritative. Use history ONLY to resolve pronouns "
@@ -1018,7 +1126,9 @@ class FocusedGenerator(CompatibleGenerator):
                 "It is separate from plan.user_constraints: ordinary comparison requirements "
                 "are NOT protected clauses. If there are no protected clauses, return [] here. "
                 "Every returned span must occur verbatim, with identical case, in english_query. "
-                "Keep explicit negative polarity. This fallible translation is not evidence. "
+                "Keep explicit negative polarity. Chinese A-not-A questions (是不是/能不能/有没有) "
+                "are questions, not negative assertions; translate whether/can/does faithfully. "
+                "This fallible translation is not evidence. "
                 "Use FACT_LOOKUP, CONCEPT_EXPLANATION, COMPARISON or MULTI_HOP; never "
                 "CLARIFY inside a retrieval plan. Ordinary queries have one local search; "
                 "comparison/multi-hop at most two distinct searches. Use English search terms "
@@ -1033,13 +1143,20 @@ class FocusedGenerator(CompatibleGenerator):
                 "Inside plan use ONLY intent, goal, evidence_needs, queries, user_constraints. "
                 "No queries_note, comments, explanations or other extra fields, even null. "
                 "Do not repeat object keys; all nested objects must close before their siblings."
+                + chat_instruction
             ),
             prompt=json.dumps(
                 {
                     "original_question": query,
                     "original_protected_clauses": protected_spans(query),
                     "history": [t.model_dump(mode="json") for t in self.conversation_context],
-                    "policy": CONVERSATION_POLICY,
+                    **({"session_state": getattr(self, "conversation_state", {})} if chat_enabled else {}),
+                    **({"runtime_profile": getattr(self, "assistant_profile", {})} if chat_enabled else {}),
+                    **({"support_context": support_context(query, self.conversation_context)} if chat_enabled else {}),
+                    **({"original_literal_tokens": list(dict.fromkeys(re.findall(
+                        r"[A-Za-z_][A-Za-z0-9_.-]*|\d+(?:\.\d+)?", query)))
+                        } if chat_enabled else {}),
+                    "policy": {**CONVERSATION_POLICY, **(DIALOGUE_POLICY if chat_enabled else {})},
                     **({"terminology_candidates": suggestions} if catalog is not None else {}),
                 },
                 ensure_ascii=False,
@@ -1051,7 +1168,6 @@ class FocusedGenerator(CompatibleGenerator):
             product_name_spacing=getattr(self, "product_name_spacing", False),
         )
         try:
-            proposal_type = TermConversationPlan if catalog is not None else ProposedConversationPlan if getattr(self, "product_name_spacing", False) else ConversationPlan
             data = parse_json(output)
             if getattr(self, "product_name_spacing", False):
                 from jev_rag.product_json import remove_null_plan_annotation
@@ -1060,15 +1176,30 @@ class FocusedGenerator(CompatibleGenerator):
             proposed = proposal_type.model_validate(data)
             term_resolution = catalog.authorize(query, suggestions, proposed.term_choices) if catalog is not None else None
             if catalog is not None:
-                proposed = ProposedConversationPlan.model_validate(proposed.model_dump(exclude={"term_choices"}))
+                proposed = (ChatConversationPlan if chat_enabled else ProposedConversationPlan).model_validate(proposed.model_dump(exclude={"term_choices"}))
             authorized = proposed.bounded_queries(intent_policy)
-            plan = ConversationPlan.model_validate(authorized.model_dump(mode="json"))
+            plan = base_type.model_validate(authorized.model_dump(mode="json"))
             self.adapter.records[-1]["conversation_query_budget"] = {
                 "proposed": proposed.plan.queries if proposed.plan else [],
                 "authorized": plan.plan.queries if plan.plan else [],
                 "changed": proposed != plan,
                 "selection": "first distinct queries within intent limit; no extra provider call",
             }
+            if (getattr(self, "product_name_spacing", False) and plan.action == "RETRIEVE"
+                and not plan.context_turn_ids and plan.standalone_question != query):
+                # No referent resolution is needed. Discard the fallible rewrite,
+                # rather than approving its semantics or failing on a harmless
+                # typo/punctuation change. All plan/translation checks below now
+                # bind to the exact original, including names and constraints.
+                self.adapter.records[-1]["unreferenced_query_preservation"] = {
+                    "policy": "original-question-authority-v1",
+                    "original_question": query,
+                    "proposed_question": plan.standalone_question,
+                    "authorized_question": query,
+                    "rewrite_accepted": False,
+                    "extra_provider_calls": 0,
+                }
+                plan = plan.model_copy(update={"standalone_question": query})
             plan.validate_context(
                 query, self.conversation_context, intent_policy,
                 allow_name_spacing=getattr(self, "product_name_spacing", False),
@@ -1837,6 +1968,10 @@ class FocusedGenerator(CompatibleGenerator):
                 article_tasks = article_repair_tasks(evidence, feedback, previous_draft)
                 for item in article_tasks:
                     item["citation_id"] = refs_by_id.get(item["article_id"], item["article_id"])
+        if getattr(self, "product_chat_enabled", False):
+            from frontend.dialogue_policy import GENERATION_STYLE
+
+            instruction += GENERATION_STYLE
         output = self.adapter.complete(
             model=self.policy.model(task),
             task=task,
@@ -1845,6 +1980,8 @@ class FocusedGenerator(CompatibleGenerator):
             prompt=json.dumps(
                 {
                     "original_query": query,
+                    **({"session_state": getattr(self, "conversation_state", {})}
+                       if getattr(self, "product_chat_enabled", False) else {}),
                     **({"local_arithmetic_witnesses": local_witnesses} if local_witnesses else {}),
                     "original_question_parts": original_question_parts(query),
                     **(comparison_navigation(query) if cell_plan is not None or getattr(self, 'product_comparison_grid_enabled', False) else {}),

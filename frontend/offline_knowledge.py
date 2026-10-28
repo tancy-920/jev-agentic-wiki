@@ -1,8 +1,10 @@
 """Provider-free complete Wiki browsing and actual manifest graph navigation."""
 
 import json
+from html import escape
 
 from frontend.demo_catalog import CASE_TOPICS, search_articles, wiki_articles
+from frontend.ui_icons import icon
 
 
 def choose_topic(identifier):
@@ -63,3 +65,63 @@ def related_entries(case_id, key):
     for identifier in CASE_TOPICS[case_id]:
         st.button(by_id[identifier]['title'] + ' ↗', key=f'wiki_entry_{key}_{identifier}',
                   on_click=choose_topic, args=(identifier,))
+
+
+def atlas_graph(article, by_id):
+    """Actual manifest links, with ordinary keyboard-accessible destinations."""
+    nodes = ''.join(
+        f'<a href="?mode=wiki&amp;topic={escape(identifier)}" target="_self">'
+        f'{escape(by_id[identifier]["title"])}{icon("arrow")}</a>'
+        for identifier in article['related']
+    )
+    return (f'<div class="atlas-map" aria-label="关联主题">'
+            f'<div class="atlas-hub">{icon("book")}<strong>{escape(article["title"])}</strong></div>'
+            f'<div class="atlas-links">{nodes}</div></div>')
+
+
+def atlas():
+    """Whole articles first; no full source corpus or planning vocabulary."""
+    import streamlit as st
+
+    try:
+        articles = wiki_articles()
+    except (OSError, ValueError, KeyError):
+        st.error('本地词条缺失或版本校验失败，请检查知识库文件。')
+        return
+    by_id = {a['id']: a for a in articles}
+    topic = st.query_params.get('topic', '')
+    if topic != st.session_state.get('atlas_topic_param'):
+        st.session_state['atlas_topic_param'] = topic
+        st.session_state['atlas_query'] = '' if topic in by_id else topic
+        if topic in by_id:
+            st.session_state['atlas_selected'] = topic
+    with st.container(key='atlas_search'):
+        query = st.text_input('搜索完整词条', placeholder='输入概念、机制或实现，例如 GQA、位置编码', key='atlas_query')
+        st.caption(f'{len(articles)} 篇完整词条 · 关联主题导航 · 本地浏览')
+    found = search_articles(articles, query)
+    if not found:
+        st.info('没有匹配词条，请尝试其他关键词。')
+        return
+    ids = [a['id'] for a in found]
+    selected = st.session_state.get('atlas_selected')
+    if selected not in ids:
+        selected = ids[0]
+        st.session_state['atlas_selected'] = selected
+    index, reading = st.columns([1, 2.6], gap='large')
+    with index:
+        st.markdown('**词条目录**')
+        st.caption(f'{len(found)} 个匹配主题')
+        with st.container(height=520, border=False, key='atlas_index'):
+            for article in found:
+                st.button(article['title'], key='atlas_topic_' + article['id'], width='stretch',
+                          type='primary' if selected == article['id'] else 'secondary',
+                          on_click=lambda value: st.session_state.update(atlas_selected=value), args=(article['id'],))
+    with reading:
+        article = by_id[selected]
+        with st.container(key='atlas_connections'):
+            st.markdown('**关联图谱**')
+            st.caption('点击关联主题，沿知识脉络继续阅读。')
+            st.markdown(atlas_graph(article, by_id), unsafe_allow_html=True)
+        with st.container(key='atlas_article'):
+            st.markdown(article['text'])
+            st.download_button('下载完整词条', article['text'], file_name=selected+'.md', mime='text/markdown')

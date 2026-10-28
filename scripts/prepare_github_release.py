@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ["build_static_demo.py", "benchmark_live_app.py", "answer_text_coverage_candidate.py",
            "prepare_local_workspace.py", "prepare_github_release.py"]
 TESTS = ["conftest.py", "test_static_demo.py", "test_math_display.py", "test_offline_simulation.py",
-         "test_session_recovery.py", "test_answer_gaps.py", "test_article_repairs.py", "test_dependency_scope.py", "test_semantic_scope.py", "test_quantity_scope.py"]
+         "test_session_recovery.py", "test_answer_gaps.py", "test_article_repairs.py", "test_dependency_scope.py", "test_semantic_scope.py", "test_quantity_scope.py", "test_chat_agent.py"]
 
 
 def publication_files():

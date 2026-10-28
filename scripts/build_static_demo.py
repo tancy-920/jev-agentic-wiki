@@ -23,6 +23,7 @@ from frontend.demo_catalog import (  # noqa: E402
 )
 from frontend.math_display import answer_markdown  # noqa: E402
 from frontend.offline_replay import MODES, load_recordings  # noqa: E402
+from frontend.ui_icons import ICONS  # noqa: E402
 
 SITE = ROOT / "hosted-demo"
 
@@ -72,28 +73,46 @@ def source_hashes():
              ROOT / "frontend/demo_catalog.py", ROOT / "frontend/offline_knowledge.py",
              ROOT / "knowledge/llm_wiki/manifest.json",
              ROOT / "frontend/chat.py", ROOT / "frontend/simulation.py", ROOT / "frontend/styles.css",
-             ROOT / "frontend/ui.py", Path(__file__), SITE / "package-lock.json"]
+             ROOT / "frontend/ui.py", ROOT / "frontend/ui_icons.py", ROOT / "frontend/design-system.css", Path(__file__), SITE / "package-lock.json"]
     paths += sorted((SITE / "assets").glob("*"))
     paths += sorted((ROOT / "knowledge/llm_wiki").glob("*.md"))
     return {p.relative_to(ROOT).as_posix(): digest(p) for p in paths}
 
 
+def asset_bytes(name):
+    """One authored icon set and content-versioned resources for both frontends."""
+    assets = SITE / "assets"
+    if name == "style.css":
+        return (ROOT / "frontend/design-system.css").read_bytes() + (assets / name).read_bytes()
+    if name == "app.js":
+        return (assets / name).read_text("utf8").replace(
+            "/* @shared-icons */ {}", json.dumps(ICONS, ensure_ascii=False)
+        ).encode("utf8")
+    version = hashlib.sha256(asset_bytes("style.css") + asset_bytes("app.js")).hexdigest()[:12]
+    return (assets / name).read_text("utf8").replace("__BUILD__", version).encode("utf8")
+
+
 def build(check=False):
     output = SITE / "dist"
-    data = (json.dumps(make_catalog(), ensure_ascii=False, separators=(",", ":")) + "\n").encode()
+    catalog = make_catalog()
+    counts = dict(recordings=len(catalog["recordings"]),
+                  questions=len({r["question"] for r in catalog["recordings"]}),
+                  articles=len(catalog["articles"]))
+    data = (json.dumps(catalog, ensure_ascii=False, separators=(",", ":")) + "\n").encode()
     hashes = source_hashes()
     if check:
         old = json.loads((output / "build-info.json").read_text(encoding="utf-8"))
         if old["source_hashes"] != hashes or (output / "catalog.json").read_bytes() != data:
             raise SystemExit("Static demo is stale. Run scripts/build_static_demo.py, then republish.")
         for name in ("index.html", "app.js", "style.css"):
-            if (output / name).read_bytes() != (SITE / "assets" / name).read_bytes():
+            expected = asset_bytes(name)
+            if (output / name).read_bytes() != expected:
                 raise SystemExit("Static UI output is stale: " + name)
-        print("Static demo matches shared UI presentation, 10 featured questions and 35 articles.")
+        print(f"Static demo matches shared UI presentation, {counts['questions']} featured questions and {counts['articles']} articles.")
         return
     output.mkdir(parents=True, exist_ok=True)
     for name in ("index.html", "app.js", "style.css"):
-        shutil.copyfile(SITE / "assets" / name, output / name)
+        (output / name).write_bytes(asset_bytes(name))
     vendor = output / "vendor"
     vendor.mkdir(exist_ok=True)
     packages = SITE / "node_modules"
@@ -111,7 +130,7 @@ def build(check=False):
     (output / "catalog.json").write_bytes(data)
     (output / ".nojekyll").write_text("", encoding="utf-8")
     info = {"source_hashes": hashes, "catalog_sha256": hashlib.sha256(data).hexdigest(),
-            "recordings": 16, "questions": 10, "articles": 35, "provider_calls": 0}
+            **counts, "provider_calls": 0}
     (output / "build-info.json").write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
     # Netlify/Cloudflare Pages honor this; other static hosts may ignore it.
     (output / "_headers").write_text(
@@ -119,7 +138,7 @@ def build(check=False):
         "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
         "font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'\n",
         encoding="utf-8")
-    print("Built static demo: 10 questions / 16 recordings / 35 articles. Provider calls: 0.")
+    print(f"Built static demo: {counts['questions']} questions / {counts['recordings']} recordings / {counts['articles']} articles. Provider calls: 0.")
 
 
 if __name__ == "__main__":

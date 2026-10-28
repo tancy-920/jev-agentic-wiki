@@ -131,7 +131,7 @@ class ApplicationResearchAgent(ResearchAgent):
             self._event(
                 state,
                 "plan_query",
-                ["RETRIEVE", "CLARIFY"],
+                ["RETRIEVE", "CLARIFY", "CHAT"] if getattr(self.generator, "product_chat_enabled", False) else ["RETRIEVE", "CLARIFY"],
                 executed=True,
                 action=resolution.action,
                 latency=(perf_counter() - started) * 1000,
@@ -140,9 +140,24 @@ class ApplicationResearchAgent(ResearchAgent):
             state["events"][-1]["conversation_policy"] = CONVERSATION_POLICY
             if terminology is not None:
                 state["events"][-1]["query_terminology"] = terminology
-            if resolution.action == "CLARIFY":
+            if resolution.action == "CHAT":
+                from frontend.dialogue_policy import social_reply
+
+                # Recheck even substituted/MOCK planners; no unchecked draft is exposed.
+                resolution.validate_context(state["query"], self.generator.conversation_context, self.intent_policy)
+                state["termination_reason"], state["next_node"] = "chat_completed", "finish"
+                state["final_answer"] = resolution.dialogue.reply or social_reply(
+                    resolution.dialogue.kind, getattr(self.generator, "conversation_state", {}),
+                    profile=getattr(self.generator, "assistant_profile", None),
+                )
+            elif resolution.action == "CLARIFY":
                 state["termination_reason"], state["next_node"] = "clarification_required", "finish"
-                state["final_answer"] = f"{self.mode} — 请说明问题中的术语或追问具体指向哪个模型、机制或研究对象。"
+                if getattr(self.generator, "product_chat_enabled", False):
+                    from frontend.dialogue_policy import clarification_reply
+
+                    state["final_answer"] = clarification_reply(getattr(resolution, "clarification", None))
+                else:
+                    state["final_answer"] = f"{self.mode} — 请说明问题中的术语或追问具体指向哪个模型、机制或研究对象。"
             else:
                 state["retrieval_plan"] = resolution.plan.model_dump()
                 state["retrieval_query"] = resolution.retrieval_translation.english_query

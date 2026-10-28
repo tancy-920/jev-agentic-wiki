@@ -40,11 +40,11 @@ def poll_replay():
 def example_gallery(recordings, busy):
     st.subheader("全部示例问题 · 10 题")
     st.caption("选择一个感兴趣的问题，查看完整解答，再继续探索相关 Wiki。")
-    for index, (case_id, (title, category)) in enumerate(FEATURED_CASES.items(), 1):
+    for case_id, (title, category) in FEATURED_CASES.items():
         example = next(r["question"] for r in recordings if r["case_id"] == case_id)
         with st.container(border=True):
-            st.caption(f"{index:02d} / {category}")
             st.subheader(title)
+            st.caption(category)
             st.write(example)
             if st.button("选择此问题 →", key="offline_card_" + case_id, disabled=busy):
                 st.session_state["offline_example"] = example

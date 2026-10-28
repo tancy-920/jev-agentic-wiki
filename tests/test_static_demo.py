@@ -14,7 +14,7 @@ def test_every_record_uses_same_clean_prose_as_local_ui():
     catalog = make_catalog()
     assert len(catalog["recordings"]) == 16
     assert len({r["question"] for r in catalog["recordings"]}) == 10
-    assert len(catalog["articles"]) == 35
+    assert len(catalog["articles"]) == 36
     for original, exported in zip(raw, catalog["recordings"], strict=True):
         assert exported["answer"] == answer_markdown(original["result"]["answer"])
         assert exported["evidence"]
@@ -68,7 +68,7 @@ def test_real_manifest_graph_and_reading_entries_are_exported():
     catalog = make_catalog()
     articles = wiki_articles()
     by_id = {a["id"]: a for a in articles}
-    assert len(by_id) == 35
+    assert len(by_id) == 36
     assert search_articles(articles, "GQA")[0]["id"] == "gqa"
     assert search_articles(articles, "MOCK-no-such-concept-123") == []
     assert "mqa" in by_id["gqa"]["related"]

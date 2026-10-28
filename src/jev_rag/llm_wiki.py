@@ -130,8 +130,13 @@ class ArticleStore:
             # all specific requested concepts. Score only article content/title,
             # excluding provenance and links; keep exact matches as eligibility.
             ranked.append(((bool(exact), body_overlap, title_overlap), row.article_id))
-        if any(score[0] for score, _ in ranked):
-            ranked = [(score, identifier) for score, identifier in ranked if score[0]]
+        # Keep partial title matches only when they cover a requested concept
+        # absent from exact hits. A shared word like KV must not add unrelated
+        # neighbors, while an exact hit for topic A cannot erase topic B.
+        covered = set().union(*(query_tokens & self.title_tokens[i]
+                                for score, i in ranked if score[0]))
+        ranked = [(score, i) for score, i in ranked
+                  if score[0] or (query_tokens & self.title_tokens[i]) - covered]
         ranked.sort(key=lambda item: (tuple(-n for n in item[0]), item[1]))
         return [self.pages[i] for _, i in ranked[:limit]]
 

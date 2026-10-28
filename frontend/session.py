@@ -279,7 +279,7 @@ def authorize_and_start(
             "authorization_id": identifier,
             "human_attested": True,
             "approval_origin": "explicit_local_demo_authorize_button",
-            "approval_text": f"用户点击授权并启动Transformer知识对话，最多{max_calls}次实际API请求；允许向配置的LLM提供方发送问题、最近三轮已完成对话、AI整理的完整Wiki词条，以及用户选择原文RAG时的公开论文/官方文档及本地mygpt技术代码和实验JSON来源片段，不发送密钥、权重或训练数据。",
+            "approval_text": f"用户点击授权并启动Transformer知识对话，最多{max_calls}次实际API请求；允许向配置的LLM提供方发送问题、最多6条相关历史消息、当前对话中有消息出处且限长的讨论条件/纠正/未解决问题，以及用户明确保存的讲解偏好；近期全文仅保留最近32轮，任务原话可跨越该窗口但不是技术证据。临时对话不读取或积累这些记忆。还允许发送AI整理的完整Wiki词条，以及用户选择原文RAG时的公开论文/官方文档及本地mygpt技术代码和实验JSON来源片段，不发送密钥、权重或训练数据。",
             "allowed_variants": ["A"],
             "approved_at_utc": datetime.now(timezone.utc).isoformat(),
             "scopes": ["m6-application"],

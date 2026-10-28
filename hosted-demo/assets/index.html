@@ -4,21 +4,23 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Jev Agentic Wiki：从原文、完整知识词条与关联图谱理解Transformer。离线历史问答演示，无需密钥。">
   <title>Jev Agentic Wiki</title>
-  <link rel="stylesheet" href="./vendor/katex.css"><link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./vendor/katex.css"><link rel="stylesheet" href="./style.css?v=__BUILD__">
   <script defer src="./vendor/marked.js"></script><script defer src="./vendor/purify.js"></script>
   <script defer src="./vendor/katex.js"></script><script defer src="./vendor/auto-render.js"></script>
-  <script defer src="./app.js"></script>
+  <script defer src="./app.js?v=__BUILD__"></script>
 </head>
 <body>
-<button id="menu" aria-label="展开侧栏" aria-controls="sidebar" aria-expanded="false">☰</button>
+<a class="sr-only skip-link" href="#main">跳到主要内容</a>
+<button id="sidebar-dismiss" aria-label="关闭侧栏" tabindex="-1"></button>
+<button id="menu" aria-label="展开侧栏" aria-controls="sidebar" aria-expanded="false"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14"/></svg></button>
 <aside id="sidebar">
-  <a class="brand" href="#chat"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 9c5-2 10-1 14 2 4-3 9-4 14-2v23c-5-2-10-1-14 2-4-3-9-4-14-2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M20 11v23" stroke="currentColor" stroke-width="1.5"/><text x="20" y="27" text-anchor="middle" fill="currentColor" font-size="15" font-family="Georgia,serif">W</text></svg></span><span><b>Wiki</b><small>JEV · KNOWLEDGE ATLAS</small></span></a>
+  <a class="brand" href="#chat"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 9c5-2 10-1 14 2 4-3 9-4 14-2v23c-5-2-10-1-14 2-4-3-9-4-14-2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M20 11v23" stroke="currentColor" stroke-width="1.5"/><text x="20" y="27" text-anchor="middle" fill="currentColor" font-size="15" font-family="Georgia,serif">W</text></svg></span><span><b>Wiki</b><small>Jev · Knowledge Atlas</small></span></a>
   <nav aria-label="工作空间">
-    <button data-view="chat" class="active">◌ <span>知识概览</span></button>
-    <button data-view="examples">▦ <span>示例问题</span><span class="nav-count">10</span></button>
-    <button data-view="wiki">⌘ <span>知识探索</span></button>
-    <button data-view="library">▤ <span>资料库</span></button>
-    <button data-view="archive">◷ <span>实验档案</span></button>
+    <button data-view="chat" class="active"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>知识概览</span></button>
+    <button data-view="examples"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v13H9l-4 4V4Z"/><path d="M10 8a2 2 0 1 1 3 1.7c-1 .6-1 1.3-1 2.3M12 14h.01"/></svg><span>示例问题</span><span class="nav-count">10</span></button>
+    <button data-view="wiki"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m7.2 10.8 8.6-4.6M7.2 13.2l8.6 4.6"/></svg><span>知识探索</span></button>
+    <button data-view="library"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h5v16H4zM10 4h5v16h-5zM17 5l4 1-3 14-4-1"/></svg><span>资料库</span></button>
+    <button data-view="archive"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v4H4zM6 10v10h12V10M10 14h4"/></svg><span>实验档案</span></button>
   </nav>
   <section class="config" id="config">
     <div class="section-label">解答记录 <span>零 API</span></div>
@@ -31,28 +33,24 @@
     <div class="section-label history-heading">已浏览示例</div><div id="history"></div>
     <button class="quiet" id="clear-history">清空本机演示记录</button>
   </section>
-  <footer>本地研究空间<br><span>TRANSFORMER · PAPERS · CODE</span><div class="offline-dot">离线演示 · 无需密钥</div></footer>
+  <footer>本地研究空间<br><span>Transformer · Papers · Code</span><div class="offline-dot">离线演示 · 无需密钥</div></footer>
 </aside>
-<main>
-  <header><div><span class="eyebrow" id="eyebrow">YOUR RESEARCH, CONNECTED</span><h1 id="page-title">知识概览</h1></div><span class="mode-badge">● 离线演示</span></header>
+<main id="main" tabindex="-1">
+  <header><div><h1 id="page-title">知识概览</h1></div><span class="mode-badge">离线演示</span></header>
   <div id="notice" role="status" aria-live="polite"></div>
   <section id="chat-view" class="view">
-    <form id="knowledge-search-form" class="knowledge-search"><label for="knowledge-query">探索 Wiki 与关联图谱</label><div><input id="knowledge-query" type="search" placeholder="输入关键词，例如 KV Cache、GQA、归一化"><button class="search-submit" type="submit">搜索 Wiki ↗</button></div><p>35 篇完整词条 · 关键词搜索 · 关联主题导航</p></form>
-
-    <div id="welcome" class="welcome">
-      <span class="hero-symbol">✳</span><h2>从一个概念，<br>构建你的知识地图。</h2>
-      <p>连接论文、实现与实验记录。<br>沿着知识脉络，理解 Transformer。</p>
-      <div class="tags"><span>论文原文</span><span>完整词条</span><span>关联图谱</span></div>
-      <button id="browse-examples" class="examples-entry"><span class="entry-icon">▦</span><span><small>EXPLORE BY QUESTION</small><b>从示例问题开始</b><em>10 个精选问题 · 架构、机制与推理优化</em></span><span class="entry-arrow">↗</span></button>
-      <p class="welcome-note">不运行新检索或生成 · 本次 API 0 次</p>
-    </div>
-
+    <div id="welcome" class="welcome"><div><h2>从一个概念，<br>构建你的知识地图。</h2><p>连接论文、实现与实验记录。<br>沿着知识脉络，理解 Transformer。</p>
+      <div class="tags"><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c4-1 6 0 9 2 3-2 5-3 9-2v15c-4-1-6 0-9 2-3-2-5-3-9-2V5Zm9 2v15"/></svg>论文原文</span><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6-5 6 5 6m8-12 5 6-5 6M14 4l-4 16"/></svg>完整词条</span><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m7.2 10.8 8.6-4.6M7.2 13.2l8.6 4.6"/></svg>关联图谱</span></div></div>
+      <div class="topic-paths" aria-label="热门知识入口"><button data-wiki="self-attention"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m7.2 10.8 8.6-4.6M7.2 13.2l8.6 4.6"/></svg>注意力机制<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button><button data-wiki="kv-cache"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6-5 6 5 6m8-12 5 6-5 6M14 4l-4 16"/></svg>KV Cache<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button><button data-wiki="normalization"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c4-1 6 0 9 2 3-2 5-3 9-2v15c-4-1-6 0-9 2-3-2-5-3-9-2V5Zm9 2v15"/></svg>归一化<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button></div></div>
+    <form id="knowledge-search-form" class="knowledge-search"><label for="knowledge-query">探索 Wiki 与关联图谱</label><div><div class="search-field"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="knowledge-query" type="search" placeholder="输入关键词，例如 KV Cache、GQA、归一化"></div><button class="search-submit" type="submit">搜索 Wiki</button></div><p id="knowledge-count">完整词条 · 关键词搜索 · 关联主题导航</p></form>
+    <button id="browse-examples" class="examples-entry"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v13H9l-4 4V4Z"/><path d="M10 8a2 2 0 1 1 3 1.7c-1 .6-1 1.3-1 2.3M12 14h.01"/></svg><span><b>从示例问题开始</b><em>10 个精选问题 · 架构、机制与推理优化</em></span><span class="entry-arrow"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span></button>
+    <p class="welcome-note">离线历史回放 · 不运行新检索或生成 · 本次 API 0 次</p>
   </section>
   <section id="examples-view" class="view" hidden>
-    <div class="examples-intro"><span class="collection-label">TRANSFORMER / 10 QUESTIONS</span><h2>从好问题，进入知识。</h2><p>选择一个感兴趣的问题，查看解答，并沿相关 Wiki 继续探索。</p></div>
+    <div class="examples-intro"><h2>从好问题，进入知识。</h2><p>选择一个感兴趣的问题，查看解答，并沿相关 Wiki 继续探索。</p></div>
     <div id="example-cards" class="example-grid" aria-label="全部示例问题"></div>
   </section>
-  <section id="answer-view" class="view" hidden><button id="back-examples" class="back-link">← 全部示例问题</button><div id="messages"></div></section>
+  <section id="answer-view" class="view" hidden><button id="back-examples" class="back-link"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>全部示例问题</button><div id="messages"></div></section>
   <section id="wiki-view" class="view" hidden><label class="sr-only" for="wiki-search">搜索词条</label><input id="wiki-search" type="search" placeholder="搜索概念、机制或实现…"><div class="knowledge-layout"><div id="article-list"></div><div class="wiki-detail"><section id="wiki-graph" class="wiki-graph" aria-label="Wiki 关联图谱"></section><article id="article-body" class="paper"></article></div></div></section>
   <section id="library-view" class="view" hidden><p class="view-description">历史问答中的论文、官方文档与实现资料。</p><div id="source-list"></div></section>
   <section id="archive-view" class="view" hidden><p class="view-description">16 份历史记录。配置缺测如实保留；此处展示不代表新增实验或人工验收。</p><div id="archive-list"></div></section>

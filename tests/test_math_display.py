@@ -79,7 +79,7 @@ def test_all_article_headers_and_titles_use_clean_display():
     from pathlib import Path
 
     articles = list(Path("knowledge/llm_wiki").rglob("*.md"))
-    assert len(articles) == 35
+    assert len(articles) == 36
     for path in articles:
         raw = path.read_text(encoding="utf-8")
         shown = article_text(raw)

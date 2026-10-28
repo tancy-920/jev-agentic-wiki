@@ -96,7 +96,10 @@ class TranslationDraft(BaseModel):
         for source, translated in zip(spans, self.constraint_translations, strict=True):
             if not translated.strip() or translated not in self.english_query:
                 raise ValueError("constraint must be a literal translated-query span")
-            if re.search(r"不要|不得|不能|不应|不把|不将|而非|不是|并非|没有|避免", source) and not re.search(
+            # A-not-A questions ask about polarity; they do not assert a
+            # negative. Product opt-in leaves frozen research behavior intact.
+            polarity_source = re.sub(r"是不是|能不能|会不会|有没有|应不应该|要不要|可不可以", "", source) if allow_name_spacing else source
+            if re.search(r"不要|不得|不能|不应|不把|不将|而非|不是|并非|没有|避免", polarity_source) and not re.search(
                 r"\b(?:not|no|never|cannot|without|avoid|rather than|instead of)\b|n't", translated, re.I
             ):
                 raise ValueError("negative clause lost explicit polarity")

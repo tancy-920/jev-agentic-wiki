@@ -198,3 +198,64 @@ def test_answer_has_working_wiki_entry(monkeypatch):
     assert not app.exception
     assert app.selectbox(key="offline_article").value == "transformer"
     assert any(e.label == "完整 Wiki · Transformer 架构" for e in app.expander)
+
+
+def test_complete_article_explorer_does_not_build_original_corpus(monkeypatch):
+    import frontend.wiki as wiki
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('Whole article browsing must not build the original corpus')
+
+    monkeypatch.setattr(wiki, 'verified_store', forbidden)
+    app = app_without_backend(monkeypatch)
+    app.sidebar.radio[0].set_value('知识 Wiki').run()
+    assert not app.exception
+    assert app.text_input(key='atlas_query')
+    app.text_input(key='atlas_query').set_value('GQA').run()
+    app.button(key='atlas_topic_gqa').click().run()
+    assert not app.exception
+    assert app.session_state['atlas_selected'] == 'gqa'
+    assert any('分组查询' in item.value for item in app.markdown)
+    app.text_input(key='atlas_query').set_value('MOCK_NO_SUCH_TOPIC_987').run()
+    assert any('没有匹配词条' in item.value for item in app.info)
+
+
+def test_browsing_cache_revalidates_changed_source_and_catalog(tmp_path, monkeypatch):
+    import hashlib
+    import json
+
+    from frontend import local_catalog
+    from jev_rag.io import write_json, write_jsonl
+    from jev_rag.knowledge import KnowledgeSource, WikiCatalog
+    from jev_rag.schema import Chunk
+
+    text = 'MOCK original source.\n'
+    digest = hashlib.sha256(text.encode()).hexdigest()
+    source = KnowledgeSource(source_id='mock', title='MOCK', kind='code', origin='MOCK', version='MOCK',
+        snapshot='mock.txt', normalized='mock.txt', snapshot_sha256=digest, normalized_sha256=digest,
+        parser='MOCK', retrieved_at_utc='MOCK')
+    chunk = Chunk(source_id='mock', source_kind='code', source_sha256=digest, title='MOCK', authors=[],
+        year=2026, chunk_id='mock:1', source_url='', locator='L1', text=text, token_count=4,
+        start_char=0, end_char=len(text))
+    (tmp_path/'mock.txt').write_text(text, 'utf8', newline='')
+    write_jsonl(tmp_path/'sources.jsonl', [source.model_dump()])
+    write_jsonl(tmp_path/'chunks.jsonl', [chunk.model_dump()])
+    hashes = {n: hashlib.sha256((tmp_path/n).read_bytes()).hexdigest() for n in ('sources.jsonl', 'chunks.jsonl')}
+    write_json(tmp_path/'wiki.json', WikiCatalog(sources_sha256=hashes['sources.jsonl'],
+        chunks_sha256=hashes['chunks.jsonl'], pages=[], edges=[]).model_dump())
+    monkeypatch.setattr(local_catalog, 'product_store_path', lambda _: tmp_path)
+    local_catalog._verified_store.cache_clear()
+    a = local_catalog.verified_store(tmp_path)
+    assert 'term_catalog' not in a.__dict__
+    assert local_catalog.verified_store(tmp_path) is a
+    # Raw bytes drift must invalidate a warm browsing cache and fail closed.
+    (tmp_path/'mock.txt').write_text('MOCK changed source.\n', 'utf8', newline='')
+    with pytest.raises(ValueError, match='snapshot changed'):
+        local_catalog.verified_store(tmp_path)
+    (tmp_path/'mock.txt').write_text(text, 'utf8', newline='')
+    row = json.loads((tmp_path/'wiki.json').read_text('utf8'))
+    row['chunks_sha256'] = '0'*64
+    write_json(tmp_path/'wiki.json', row)
+    with pytest.raises(ValueError, match='stale Wiki'):
+        local_catalog.verified_store(tmp_path)
+    local_catalog._verified_store.cache_clear()
